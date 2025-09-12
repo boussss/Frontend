@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bem-vindo ao Chivo - Crie sua Conta</title>
+    <!-- Boxicons CSS -->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* CSS Reset e Configurações Globais */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        /* Paleta de Cores */
+        :root {
+            --bg-color: #F4F7FC; /* Branco azulado */
+            --primary-blue: #0052FF;
+            --secondary-blue: #007BFF;
+            --accent-yellow: #FFC107;
+            --text-dark: #121826;
+            --text-light: #6C757D;
+            --input-bg: #FFFFFF;
+            --border-color: #DEE2E6;
+        }
+
+        /* Animação de Criptomoedas no Fundo */
+        .crypto-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background-color: var(--bg-color);
+            overflow: hidden;
+            z-index: -1;
+        }
+
+        .crypto-bg li {
+            position: absolute;
+            display: block;
+            list-style: none;
+            width: 20px;
+            height: 20px;
+            background: rgba(0, 123, 255, 0.15); /* Azul translúcido */
+            animation: float 25s linear infinite;
+            bottom: -150px;
+        }
+        
+        .crypto-bg li:nth-child(1) { left: 25%; width: 80px; height: 80px; animation-delay: 0s; }
+        .crypto-bg li:nth-child(2) { left: 10%; width: 20px; height: 20px; animation-delay: 2s; animation-duration: 12s; }
+        .crypto-bg li:nth-child(3) { left: 70%; width: 20px; height: 20px; animation-delay: 4s; }
+        .crypto-bg li:nth-child(4) { left: 40%; width: 60px; height: 60px; animation-delay: 0s; animation-duration: 18s; }
+        .crypto-bg li:nth-child(5) { left: 65%; width: 20px; height: 20px; animation-delay: 0s; }
+        .crypto-bg li:nth-child(6) { left: 75%; width: 110px; height: 110px; animation-delay: 3s; background: rgba(255, 193, 7, 0.15); } /* Amarelo translúcido */
+        .crypto-bg li:nth-child(7) { left: 35%; width: 150px; height: 150px; animation-delay: 7s; }
+        .crypto-bg li:nth-child(8) { left: 50%; width: 25px; height: 25px; animation-delay: 15s; animation-duration: 45s; }
+        .crypto-bg li:nth-child(9) { left: 20%; width: 15px; height: 15px; animation-delay: 2s; animation-duration: 35s; }
+        .crypto-bg li:nth-child(10) { left: 85%; width: 150px; height: 150px; animation-delay: 0s; animation-duration: 11s; background: rgba(255, 193, 7, 0.15); }
+
+        @keyframes float {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; border-radius: 0; }
+            100% { transform: translateY(-1000px) rotate(720deg); opacity: 0; border-radius: 50%; }
+        }
+        
+        /* Ticker de Notificações no Topo */
+        .ticker-wrap {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            overflow: hidden;
+            background-color: var(--text-dark);
+            color: white;
+            padding: 8px 0;
+            z-index: 10;
+        }
+
+        .ticker {
+            display: inline-block;
+            white-space: nowrap;
+            /* A animação agora é aplicada para um loop perfeito */
+            animation: ticker-scroll 60s linear infinite;
+        }
+
+        .ticker span {
+            margin: 0 25px; /* Espaçamento entre as mensagens */
+            font-size: 0.8rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px; /* Espaço entre o emoji e o texto */
+        }
+
+        /* Animação de scroll contínuo */
+        @keyframes ticker-scroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); } /* Rola exatamente o comprimento do conteúdo original */
+        }
+
+        /* Corpo da Página */
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding-top: 50px; /* Espaço para o ticker */
+        }
+
+        /* Container Principal */
+        .container {
+            width: 100%;
+            max-width: 420px;
+            padding: 2.5rem;
+            background-color: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px 0 rgba(0, 82, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            text-align: center;
+        }
+
+        .brand-logo { font-size: 3rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text-dark); }
+        .brand-logo span { color: var(--primary-blue); }
+        .info-text { color: var(--text-light); margin-bottom: 2rem; }
+        #register-form { width: 100%; display: flex; flex-direction: column; gap: 1rem; }
+        .input-group { position: relative; }
+        .input-group i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); font-size: 1.2rem; color: #aaa; }
+        
+        .input-field {
+            width: 100%; padding: 1rem 1rem 1rem 3rem; background-color: var(--input-bg);
+            border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-dark);
+            font-size: 1rem; transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        .input-field::placeholder { color: #aaa; }
+        .input-field:focus {
+            outline: none; border-color: var(--primary-blue);
+            box-shadow: 0 0 8px rgba(0, 82, 255, 0.2);
+        }
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
+
+        .submit-btn {
+            width: 100%; padding: 1rem; background: linear-gradient(90deg, var(--secondary-blue), var(--primary-blue));
+            border: none; border-radius: 8px; color: #ffffff; font-size: 1.1rem;
+            font-weight: 600; cursor: pointer; transition: all 0.3s ease;
+            display: flex; justify-content: center; align-items: center; margin-top: 1rem;
+        }
+        .submit-btn:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0, 82, 255, 0.3); }
+        .submit-btn:disabled { background: #999; cursor: not-allowed; }
+        
+        .spinner { width: 20px; height: 20px; border: 3px solid rgba(255, 255, 255, 0.3); border-top-color: #fff; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .bottom-text { margin-top: 1.5rem; color: var(--text-light); font-size: 0.9rem; }
+        .bottom-text a { color: var(--primary-blue); text-decoration: none; font-weight: 600; }
+        #error-message { margin-top: 1rem; color: #D93025; font-weight: 500; min-height: 1.2em; }
+    </style>
+</head>
+<body>
+
+    <ul class="crypto-bg">
+        <li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li>
+    </ul>
+
+    <div class="ticker-wrap">
+        <div class="ticker" id="ticker-content">
+            <!-- Conteúdo é gerado e duplicado via JS para um loop perfeito -->
+        </div>
+    </div>
+
+    <div class="container">
+        <h2 class="brand-logo">Chi<span>vo</span></h2>
+        <p class="info-text">Sua jornada para o sucesso financeiro começa aqui. Crie sua conta gratuitamente.</p>
+
+        <form id="register-form">
+            <div class="input-group">
+                <i class='bx bx-user'></i>
+                <input type="text" id="name" class="input-field" placeholder="Nome Completo" required>
+            </div>
+            <div class="input-group">
+                <i class='bx bxs-user-detail'></i>
+                <input type="text" id="username" class="input-field" placeholder="Nome de Usuário" required>
+            </div>
+             <div class="input-group">
+                <i class='bx bx-phone'></i>
+                <input type="tel" id="phone" class="input-field" placeholder="Número de Telefone" required>
+            </div>
+            <div class="input-group">
+                <i class='bx bx-key'></i>
+                <input type="number" id="pin" class="input-field" placeholder="Crie um PIN (4 a 6 dígitos)" required>
+            </div>
+            <div class="input-group">
+                <i class='bx bx-user-plus'></i>
+                <input type="number" id="invitedById" class="input-field" placeholder="ID de quem convidou (opcional)">
+            </div>
+            
+            <button type="submit" class="submit-btn" id="submit-button">
+                <span id="button-text">Criar Conta</span>
+                <div class="spinner" id="spinner" style="display: none;"></div>
+            </button>
+        </form>
+
+        <p class="bottom-text">
+            Já tem uma conta? <a href="login.html">Faça Login</a>
+        </p>
+        <div id="error-message"></div>
+    </div>
+
+    <script>
+        // --- Constantes ---
+        const API_URL = "https://daksk.onrender.com";
+        const registerForm = document.getElementById('register-form');
+        // ... (resto das constantes do formulário)
+        const nameInput = document.getElementById('name');
+        const usernameInput = document.getElementById('username');
+        const phoneInput = document.getElementById('phone');
+        const pinInput = document.getElementById('pin');
+        const invitedByIdInput = document.getElementById('invitedById');
+        const errorMessageDiv = document.getElementById('error-message');
+        const submitButton = document.getElementById('submit-button');
+        const buttonText = document.getElementById('button-text');
+        const spinner = document.getElementById('spinner');
+        const tickerContent = document.getElementById('ticker-content');
+
+        // --- Funções ---
+        function fillReferrerIdFromUrl() {
+            const params = new URLSearchParams(window.location.search);
+            const refId = params.get('ref');
+            if (refId) {
+                invitedByIdInput.value = refId;
+                invitedByIdInput.readOnly = true;
+                invitedByIdInput.style.backgroundColor = '#E9ECEF';
+            }
+        }
+
+        function setLoading(isLoading) {
+            submitButton.disabled = isLoading;
+            buttonText.style.display = isLoading ? 'none' : 'block';
+            spinner.style.display = isLoading ? 'block' : 'none';
+        }
+        
+        function showErrorMessage(message) {
+            errorMessageDiv.textContent = message;
+        }
+        
+        // ATUALIZAÇÃO: Função para gerar o ticker com emojis e garantir loop contínuo
+        function generateTickerNotifications() {
+            const emojis = ['💰', '🎉', '🚀', '💵', '🎊', '🏆'];
+            let notificationsHTML = '';
+
+            for (let i = 0; i < 15; i++) { // Aumentei para 15 para preencher mais a tela
+                const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
+                const phonePrefix = ['84', '82', '86', '87', '85'][Math.floor(Math.random() * 5)];
+                const randomPhoneEnd = Math.floor(1000 + Math.random() * 9000);
+                const randomAmount = Math.floor(1000 + Math.random() * 8000);
+                notificationsHTML += `<span>${randomEmoji} ${phonePrefix}***${randomPhoneEnd} sacou ${randomAmount} MT</span>`;
+            }
+
+            // O truque para o loop perfeito: duplicar o conteúdo.
+            tickerContent.innerHTML = notificationsHTML + notificationsHTML;
+        }
+
+        // --- Lógica Principal ---
+        document.addEventListener('DOMContentLoaded', () => {
+            fillReferrerIdFromUrl();
+            generateTickerNotifications(); // Inicia o ticker assim que a página carrega
+        });
+
+        registerForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            showErrorMessage('');
+            setLoading(true);
+
+            const name = nameInput.value;
+            const username = usernameInput.value;
+            const phone = phoneInput.value;
+            const pin = pinInput.value;
+            const invitedById = invitedByIdInput.value;
+            
+            if (pin.length < 4 || pin.length > 6) {
+                showErrorMessage('O PIN deve conter entre 4 e 6 dígitos.');
+                setLoading(false);
+                return;
+            }
+
+            try {
+                const requestBody = { name, username, phone, pin };
+                if (invitedById) { requestBody.invitedById = invitedById; }
+
+                const response = await fetch(`${API_URL}/api/users/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestBody),
+                });
+                
+                const data = await response.json();
+
+                if (!response.ok) { throw new Error(data.message || 'Ocorreu um erro no cadastro.'); }
+                
+                localStorage.setItem('chivo-token', data.token);
+                window.location.href = 'dashboard.html';
+
+            } catch (error) {
+                showErrorMessage(error.message);
+            } finally {
+                setLoading(false);
+            }
+        });
+    </script>
+</body>
+</html>

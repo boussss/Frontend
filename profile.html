@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Meu Perfil - Chivo</title>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        :root {
+            --bg-color: #F4F7FC; --primary-blue: #0052FF; --secondary-blue: #007BFF;
+            --accent-yellow: #FFC107; --text-dark: #121826; --text-light: #6C757D;
+            --card-bg: #FFFFFF; --border-color: #DEE2E6; --success-color: #28a745; --error-color: #dc3545;
+        }
+        body { background-color: var(--bg-color); color: var(--text-dark); padding-bottom: 64px; }
+        
+        .main-container { padding: 1.2rem 0.8rem; }
+        
+        .header {
+            display: flex; align-items: center; justify-content: center;
+            position: relative; margin-bottom: 1.5rem; text-align: center;
+        }
+        .back-button {
+            position: absolute; left: 0; font-size: 1.8rem;
+            color: var(--text-dark); text-decoration: none;
+        }
+        .header h1 { font-size: 1.5rem; font-weight: 600; color: var(--text-dark); }
+
+        .card {
+            background-color: var(--card-bg); padding: 1.2rem; border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 82, 255, 0.08); margin-bottom: 1.2rem;
+        }
+        
+        .profile-header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.8rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .profile-pic-container {
+            position: relative;
+            width: 80px;
+            height: 80px;
+        }
+        .profile-pic, .profile-icon {
+            width: 100%; height: 100%;
+            border-radius: 50%;
+            border: 3px solid var(--primary-blue);
+        }
+        .profile-icon {
+            display: flex; justify-content: center; align-items: center;
+            background-color: #eee;
+            color: var(--text-light);
+            font-size: 3.2rem;
+        }
+        .profile-pic {
+            position: absolute; top: 0; left: 0;
+            object-fit: cover;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        #change-pic-btn {
+            background-color: var(--secondary-blue);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        #profile-pic-input {
+            display: none;
+        }
+
+        .profile-details {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+        }
+        .detail-item .label {
+            font-weight: 500;
+            color: var(--text-light);
+        }
+        .detail-item .value {
+            font-weight: 500;
+            color: var(--text-dark);
+            background-color: #f8f9fa;
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+        }
+
+        /* --- ESTILOS PARA NOVOS LINKS DE AÇÃO --- */
+        .action-links {
+            margin-top: 1.5rem;
+            border-top: 1px solid var(--border-color);
+            padding-top: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .action-link-item {
+            display: flex;
+            align-items: center;
+            padding: 0.8rem 0.5rem;
+            text-decoration: none;
+            color: var(--text-dark);
+            border-radius: 8px;
+            transition: background-color 0.2s;
+        }
+        .action-link-item:hover {
+            background-color: #f8f9fa;
+        }
+        .action-link-item i:first-child {
+            font-size: 1.3rem;
+            color: var(--primary-blue);
+            margin-right: 1rem;
+            width: 24px;
+            text-align: center;
+        }
+        .action-link-item span {
+            flex-grow: 1;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+        .action-link-item i:last-child {
+            font-size: 1.5rem;
+            color: var(--text-light);
+        }
+        
+        .logout-btn {
+            width: 100%;
+            padding: 0.8rem;
+            margin-top: 1.2rem;
+            background-color: var(--error-color);
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background-color: var(--card-bg); box-shadow: 0 -2px 15px rgba(0,0,0,0.05); display: flex; justify-content: space-around; padding: 0.4rem 0; border-top-left-radius: 18px; border-top-right-radius: 18px; }
+        .nav-link { display: flex; flex-direction: column; align-items: center; text-decoration: none; gap: 0.1rem; padding: 0.4rem; color: var(--text-light); flex-grow: 1; text-align: center; }
+        .nav-link i { font-size: 1.3rem; }
+        .nav-link span { font-size: 0.6rem; }
+        .nav-link.active { color: var(--primary-blue); }
+        
+        #toast-container { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); z-index: 200; }
+        .toast { padding: 0.7rem 1.2rem; border-radius: 8px; color: #fff; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); opacity: 0; transform: translateY(20px); animation: slide-in-out 3.5s forwards; }
+        .toast.success { background-color: var(--success-color); }
+        .toast.error { background-color: var(--error-color); }
+        @keyframes slide-in-out { 0%, 100% { opacity: 0; transform: translateY(20px); } 15%, 85% { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <div class="main-container">
+        <header class="header">
+            <a href="dashboard.html" class="back-button"><i class='bx bx-chevron-left'></i></a>
+            <h1>Meu Perfil</h1>
+        </header>
+
+        <div class="card">
+            <div class="profile-header">
+                <div class="profile-pic-container">
+                    <div class="profile-icon"><i class='bx bxs-user-circle'></i></div>
+                    <img src="" alt="Foto de Perfil" id="profile-pic-display" class="profile-pic">
+                </div>
+                <input type="file" id="profile-pic-input" accept="image/*">
+                <button id="change-pic-btn">Alterar Foto</button>
+            </div>
+
+            <div id="profile-details-container" class="profile-details">
+                <p>Carregando informações...</p>
+            </div>
+
+            <div class="action-links">
+                <a href="invite.html" class="action-link-item">
+                    <i class='bx bxs-user-plus'></i>
+                    <span>Convidar Amigos</span>
+                    <i class='bx bx-chevron-right'></i>
+                </a>
+                <a href="plan-history.html" class="action-link-item">
+                    <i class='bx bx-history'></i>
+                    <span>Histórico de Planos</span>
+                    <i class='bx bx-chevron-right'></i>
+                </a>
+            </div>
+            
+            <button id="logout-btn" class="logout-btn">Sair</button>
+        </div>
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="dashboard.html" class="nav-link"><i class='bx bxs-home'></i><span>Início</span></a>
+        <a href="plans.html" class="nav-link"><i class='bx bxs-rocket'></i><span>Planos</span></a>
+        <a href="wallet.html" class="nav-link"><i class='bx bxs-wallet'></i><span>Carteira</span></a>
+        <a href="profile.html" class="nav-link active"><i class='bx bxs-user'></i><span>Perfil</span></a>
+    </nav>
+
+    <div id="toast-container"></div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const API_URL = "https://daksk.onrender.com";
+            const TOKEN = localStorage.getItem('chivo-token');
+            if (!TOKEN) { window.location.href = 'login.html'; return; }
+
+            const elements = {
+                profilePicDisplay: document.getElementById('profile-pic-display'),
+                profilePicInput: document.getElementById('profile-pic-input'),
+                changePicBtn: document.getElementById('change-pic-btn'),
+                profileDetailsContainer: document.getElementById('profile-details-container'),
+                logoutBtn: document.getElementById('logout-btn'),
+            };
+
+            const fetchAPI = async (endpoint, options = {}) => {
+                const defaultHeaders = { 'Authorization': `Bearer ${TOKEN}` };
+                if (!(options.body instanceof FormData)) {
+                    defaultHeaders['Content-Type'] = 'application/json';
+                }
+                options.headers = { ...defaultHeaders, ...options.headers };
+
+                const response = await fetch(`${API_URL}${endpoint}`, options);
+                if (response.status === 401) { 
+                    localStorage.removeItem('chivo-token'); 
+                    window.location.href = 'login.html'; 
+                    throw new Error('Sessão expirada.');
+                }
+                if (!response.ok) { 
+                    const err = await response.json(); 
+                    throw new Error(err.message || 'Ocorreu um erro.');
+                }
+                return response.json();
+            };
+
+            const loadProfileData = async () => {
+                try {
+                    const user = await fetchAPI('/api/users/me');
+                    renderProfile(user);
+                } catch (error) {
+                    showToast(error.message, 'error');
+                }
+            };
+
+            const renderProfile = (user) => {
+                if (user.profilePicture) {
+                    elements.profilePicDisplay.src = user.profilePicture;
+                    elements.profilePicDisplay.onload = () => {
+                        elements.profilePicDisplay.style.opacity = '1';
+                    };
+                }
+                
+                elements.profileDetailsContainer.innerHTML = `
+                    <div class="detail-item">
+                        <span class="label">Nome</span>
+                        <span class="value">${user.name}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label">Usuário</span>
+                        <span class="value">@${user.username}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label">Telefone</span>
+                        <span class="value">${user.phone}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label">Seu ID</span>
+                        <span class="value">${user.userId}</span>
+                    </div>
+                `;
+            };
+
+            const handlePhotoUpload = async (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const formData = new FormData();
+                formData.append('image', file);
+                
+                elements.changePicBtn.disabled = true;
+                elements.changePicBtn.textContent = 'Enviando...';
+
+                try {
+                    const result = await fetchAPI('/api/users/profile/picture', {
+                        method: 'POST',
+                        body: formData,
+                    });
+                    
+                    elements.profilePicDisplay.src = result.profilePictureUrl; 
+                    showToast(result.message, 'success');
+
+                } catch (error) {
+                    showToast(error.message, 'error');
+                } finally {
+                    elements.changePicBtn.disabled = false;
+                    elements.changePicBtn.textContent = 'Alterar Foto';
+                }
+            };
+            
+            const handleLogout = () => {
+                localStorage.removeItem('chivo-token');
+                showToast('Sessão encerrada com sucesso.', 'success');
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 1000);
+            };
+
+            const showToast = (message, type = 'success') => {
+                const toastContainer = document.getElementById('toast-container');
+                if (!toastContainer) return;
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                toast.textContent = message;
+                toastContainer.appendChild(toast);
+                setTimeout(() => toast.remove(), 3400);
+            };
+
+            elements.changePicBtn.addEventListener('click', () => elements.profilePicInput.click());
+            elements.profilePicInput.addEventListener('change', handlePhotoUpload);
+            elements.logoutBtn.addEventListener('click', handleLogout);
+            
+            loadProfileData();
+        });
+    </script>
+</body>
+</html>

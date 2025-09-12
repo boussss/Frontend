@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Histórico - Chivo</title>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        :root {
+            --bg-color: #F4F7FC; --primary-blue: #0052FF; --secondary-blue: #007BFF;
+            --accent-yellow: #FFC107; --text-dark: #121826; --text-light: #6C757D;
+            --card-bg: #FFFFFF; --border-color: #DEE2E6; --success-color: #28a745; --error-color: #dc3545;
+        }
+        body { background-color: var(--bg-color); color: var(--text-dark); padding-bottom: 64px; }
+        
+        .main-container { padding: 1.2rem 0.8rem; }
+        
+        .header { display: flex; align-items: center; justify-content: center; position: relative; margin-bottom: 1.5rem; text-align: center; }
+        .back-button { position: absolute; left: 0; font-size: 1.8rem; color: var(--text-dark); text-decoration: none; }
+        .header h1 { font-size: 1.5rem; font-weight: 600; color: var(--text-dark); }
+
+        .card { background-color: var(--card-bg); padding: 1.2rem; border-radius: 10px; box-shadow: 0 4px 20px rgba(0, 82, 255, 0.08); margin-bottom: 1.2rem; }
+        
+        .section-title { font-size: 1rem; font-weight: 600; margin-bottom: 0.8rem; }
+
+        .plan-history-list { display: flex; flex-direction: column; gap: 1rem; }
+        .plan-item {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 1rem;
+            border-left: 4px solid var(--primary-blue);
+        }
+        .plan-item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem; }
+        .plan-item-header h4 { font-size: 1rem; font-weight: 600; }
+        .plan-status { padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.7rem; font-weight: 600; color: #fff; }
+        .status-active { background-color: var(--success-color); }
+        .status-expired { background-color: var(--error-color); }
+        .plan-item-details { font-size: 0.8rem; color: var(--text-light); border-top: 1px solid var(--border-color); padding-top: 0.8rem; }
+        .plan-item-details p { margin-bottom: 0.3rem; }
+        .plan-item-details strong { color: var(--text-dark); }
+        .renew-btn {
+            width: 100%;
+            padding: 0.6rem;
+            margin-top: 1rem;
+            border: none;
+            border-radius: 8px;
+            background-color: var(--primary-blue);
+            color: #fff;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .renew-btn:disabled { background-color: var(--text-light); cursor: not-allowed; }
+
+        .transaction-list { display: flex; flex-direction: column; gap: 1.2rem; }
+        .transaction-item { display: flex; justify-content: space-between; align-items: center; }
+        .transaction-info h4 { font-size: 0.9rem; font-weight: 500; margin-bottom: 0.2rem; }
+        .transaction-info p { font-size: 0.7rem; color: var(--text-light); }
+        .transaction-info .transaction-fee { font-size: 0.7rem; color: var(--error-color); font-style: italic; } /* Estilo para a taxa */
+        .transaction-right { text-align: right; }
+        .transaction-amount { font-size: 1rem; font-weight: 600; display: block; }
+        .transaction-amount.positive { color: var(--success-color); }
+        .transaction-amount.negative { color: var(--error-color); }
+        
+        .transaction-status {
+            padding: 0.15rem 0.5rem;
+            border-radius: 10px;
+            font-size: 0.6rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 0.2rem;
+            display: inline-block;
+        }
+        .status-approved { background-color: var(--success-color); color: #fff; }
+        .status-pending { background-color: var(--accent-yellow); color: var(--text-dark); }
+        .status-rejected { background-color: var(--error-color); color: #fff; }
+
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background-color: var(--card-bg); box-shadow: 0 -2px 15px rgba(0,0,0,0.05); display: flex; justify-content: space-around; padding: 0.4rem 0; border-top-left-radius: 18px; border-top-right-radius: 18px; }
+        .nav-link { display: flex; flex-direction: column; align-items: center; text-decoration: none; gap: 0.1rem; padding: 0.4rem; color: var(--text-light); flex-grow: 1; text-align: center; }
+        .nav-link i { font-size: 1.3rem; }
+        .nav-link span { font-size: 0.6rem; }
+        .nav-link.active { color: var(--primary-blue); }
+        
+        #toast-container { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); z-index: 200; display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
+        .toast { padding: 0.7rem 1.2rem; border-radius: 8px; color: #fff; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); opacity: 0; transform: translateY(20px); animation: slide-in-out 3.5s forwards; }
+        .toast.success { background-color: var(--success-color); }
+        .toast.error { background-color: var(--error-color); }
+        @keyframes slide-in-out { 0%, 100% { opacity: 0; transform: translateY(20px); } 15%, 85% { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <div class="main-container">
+        <header class="header">
+            <a href="dashboard.html" class="back-button"><i class='bx bx-chevron-left'></i></a>
+            <h1>Histórico Geral</h1>
+        </header>
+
+        <h3 class="section-title">Meus Planos</h3>
+        <div class="card">
+            <div id="plan-history-container" class="plan-history-list">
+                <p>Carregando histórico de planos...</p>
+            </div>
+        </div>
+
+        <h3 class="section-title">Minhas Transações</h3>
+        <div class="card">
+            <div id="transaction-list-container" class="transaction-list">
+                <p>Carregando histórico de transações...</p>
+            </div>
+        </div>
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="dashboard.html" class="nav-link"><i class='bx bxs-home'></i><span>Início</span></a>
+        <a href="plans.html" class="nav-link"><i class='bx bxs-rocket'></i><span>Planos</span></a>
+        <a href="wallet.html" class="nav-link"><i class='bx bxs-wallet'></i><span>Carteira</span></a>
+        <a href="profile.html" class="nav-link"><i class='bx bxs-user'></i><span>Perfil</span></a>
+    </nav>
+    
+    <div id="toast-container"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const API_URL = "https://daksk.onrender.com";
+            const TOKEN = localStorage.getItem('chivo-token');
+            if (!TOKEN) { window.location.href = 'login.html'; return; }
+
+            const elements = {
+                planHistoryContainer: document.getElementById('plan-history-container'),
+                transactionListContainer: document.getElementById('transaction-list-container'),
+            };
+
+            const fetchAPI = async (endpoint, options = {}) => {
+                options.headers = { ...options.headers, 'Authorization': `Bearer ${TOKEN}` };
+                const response = await fetch(`${API_URL}${endpoint}`, options);
+                if (response.status === 401) { localStorage.removeItem('chivo-token'); window.location.href = 'login.html'; throw new Error('Sessão expirada.'); }
+                if (!response.ok) { const err = await response.json(); throw new Error(err.message || 'Ocorreu um erro.'); }
+                return response.json();
+            };
+
+            const formatCurrency = (value = 0, currency = 'MZN', precision = 2) => {
+                if (typeof value !== 'number') value = 0;
+                return new Intl.NumberFormat('pt-MZ', { style: 'currency', currency: currency, minimumFractionDigits: precision, maximumFractionDigits: precision }).format(value);
+            }
+
+            const loadHistoryData = async () => {
+                try {
+                    const data = await fetchAPI('/api/users/history');
+                    renderPlanHistory(data.planInstances);
+                    renderTransactions(data.transactions);
+                } catch (error) { 
+                    showToast(error.message, 'error');
+                    elements.planHistoryContainer.innerHTML = '<p>Não foi possível carregar o histórico de planos.</p>';
+                    elements.transactionListContainer.innerHTML = '<p>Não foi possível carregar o histórico de transações.</p>';
+                }
+            };
+
+            const renderPlanHistory = (plans) => {
+                const container = elements.planHistoryContainer;
+                if (!plans || plans.length === 0) {
+                    container.innerHTML = '<p style="text-align: center;">Nenhum plano foi ativado ainda.</p>';
+                    return;
+                }
+                
+                container.innerHTML = plans.map(p => `
+                    <div class="plan-item">
+                        <div class="plan-item-header">
+                            <h4>${p.plan.name}</h4>
+                            <span class="plan-status ${p.status === 'active' ? 'status-active' : 'status-expired'}">${p.status === 'active' ? 'Ativo' : 'Expirado'}</span>
+                        </div>
+                        <div class="plan-item-details">
+                            <p>Início: <strong>${new Date(p.startDate).toLocaleDateString('pt-BR')}</strong></p>
+                            <p>Fim: <strong>${new Date(p.endDate).toLocaleDateString('pt-BR')}</strong></p>
+                            <p>Total Investido: <strong>${formatCurrency(p.investedAmount)}</strong></p>
+                            <p>Lucro Coletado: <strong>${formatCurrency(p.totalCollected)}</strong></p>
+                        </div>
+                        ${p.status === 'expired' ? `<button class="renew-btn" data-instance-id="${p._id}">Renovar Plano</button>` : ''}
+                    </div>
+                `).join('');
+            };
+
+            const renderTransactions = (transactions) => {
+                const container = elements.transactionListContainer;
+                if (!transactions || transactions.length === 0) {
+                    container.innerHTML = '<p style="text-align: center;">Nenhuma transação encontrada.</p>';
+                    return;
+                }
+                
+                const statusMap = {
+                    approved: { text: 'Concluído', class: 'status-approved' },
+                    pending: { text: 'Pendente', class: 'status-pending' },
+                    rejected: { text: 'Rejeitado', class: 'status-rejected' }
+                };
+
+                container.innerHTML = transactions.map(t => {
+                    const isPositive = ['deposit', 'collection', 'commission', 'welcome_bonus'].includes(t.type) && t.amount > 0 && t.status !== 'rejected';
+                    const amountClass = isPositive ? 'positive' : 'negative';
+                    const prefix = isPositive ? '+' : '';
+                    const statusInfo = statusMap[t.status] || { text: t.status, class: '' };
+                    
+                    let feeHtml = '';
+                    if (t.type === 'withdrawal' && t.transactionDetails && t.transactionDetails.fee) {
+                        feeHtml = `<p class="transaction-fee">Taxa: ${formatCurrency(t.transactionDetails.fee)}</p>`;
+                    }
+
+                    return `
+                        <div class="transaction-item">
+                            <div class="transaction-info">
+                                <h4>${t.description}</h4>
+                                <p>${new Date(t.createdAt).toLocaleString('pt-BR')}</p>
+                                ${feeHtml}
+                            </div>
+                            <div class="transaction-right">
+                                <span class="transaction-amount ${amountClass}">${prefix}${formatCurrency(t.amount)}</span>
+                                <span class="transaction-status ${statusInfo.class}">${statusInfo.text}</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            };
+            
+            const handleRenewPlan = async (event) => {
+                const btn = event.target;
+                if (!btn.classList.contains('renew-btn')) return;
+
+                const instanceId = btn.dataset.instanceId;
+                btn.disabled = true;
+                btn.textContent = 'Processando...';
+
+                try {
+                    const result = await fetchAPI(`/api/plans/${instanceId}/renew`, { method: 'POST' });
+                    showToast(result.message, 'success');
+                    setTimeout(() => { window.location.href = 'dashboard.html'; }, 1500);
+                } catch (error) {
+                    showToast(error.message, 'error');
+                    btn.disabled = false;
+                    btn.textContent = 'Renovar Plano';
+                }
+            };
+
+            elements.planHistoryContainer.addEventListener('click', handleRenewPlan);
+
+            const showToast = (message, type = 'success') => {
+                const toastContainer = document.getElementById('toast-container');
+                if (!toastContainer) return;
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                toast.textContent = message;
+                toastContainer.appendChild(toast);
+                setTimeout(() => toast.remove(), 3400);
+            };
+
+            loadHistoryData();
+        });
+    </script>
+</body>
+</html>

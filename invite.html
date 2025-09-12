@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Convidar Amigos - Chivo</title>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        :root {
+            --bg-color: #F4F7FC; --primary-blue: #0052FF; --secondary-blue: #007BFF;
+            --accent-yellow: #FFC107; --text-dark: #121826; --text-light: #6C757D;
+            --card-bg: #FFFFFF; --border-color: #DEE2E6; --success-color: #28a745; --error-color: #dc3545;
+        }
+        body { background-color: var(--bg-color); color: var(--text-dark); padding-bottom: 64px; }
+        
+        .main-container { padding: 1.2rem 0.8rem; }
+        
+        .header {
+            display: flex; align-items: center; justify-content: center;
+            position: relative; margin-bottom: 1.5rem; text-align: center;
+        }
+        .back-button {
+            position: absolute; left: 0; font-size: 1.8rem;
+            color: var(--text-dark); text-decoration: none;
+        }
+        .header h1 { font-size: 1.5rem; font-weight: 600; color: var(--text-dark); }
+
+        .card {
+            background-color: var(--card-bg); padding: 1.2rem; border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 82, 255, 0.08); margin-bottom: 1.2rem;
+        }
+
+        .invite-card h2 { font-size: 1.3rem; text-align: center; margin-bottom: 0.8rem; }
+        .invite-benefits { list-style: none; margin-bottom: 1.2rem; font-size: 0.9rem; }
+        .invite-benefits li { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.4rem; }
+        .invite-benefits i { font-size: 1.3rem; color: var(--success-color); }
+        
+        .invite-link-group { display: flex; flex-direction: column; gap: 0.8rem; }
+        .invite-link-group input {
+            width: 100%; padding: 0.7rem; border: 1px solid var(--border-color);
+            border-radius: 8px; background-color: #f8f9fa; text-align: center; font-size: 0.9rem;
+        }
+        .invite-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; }
+        .invite-actions button {
+            padding: 0.8rem; border: none; border-radius: 8px; font-size: 0.9rem;
+            font-weight: 600; cursor: pointer; display: flex; align-items: center;
+            justify-content: center; gap: 0.5rem; transition: background-color 0.3s;
+        }
+        .copy-btn { background-color: var(--secondary-blue); color: #fff; }
+        .share-btn { background-color: var(--success-color); color: #fff; }
+
+        .stats-card { display: flex; justify-content: space-between; align-items: center; }
+        .stats-card h3 { font-size: 1rem; }
+        .stats-card .value { font-size: 1.8rem; font-weight: 600; }
+
+        .section-title { font-size: 1rem; font-weight: 600; margin: 1.5rem 0 0.8rem 0; }
+        
+        .referral-list { display: flex; flex-direction: column; gap: 1rem; }
+        .referral-item {
+            display: flex;
+            flex-direction: column;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 1rem;
+            border-left: 4px solid var(--primary-blue);
+        }
+        .ref-header {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            margin-bottom: 1rem;
+        }
+        .ref-header i {
+            font-size: 2rem;
+            color: var(--primary-blue);
+        }
+        .ref-user-info h4 {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+        .ref-user-info p {
+            font-size: 0.7rem;
+            color: var(--text-light);
+        }
+        .ref-details-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            border-top: 1px solid var(--border-color);
+            padding-top: 1rem;
+        }
+        .ref-detail-item {
+            text-align: center;
+        }
+        .ref-detail-item .label {
+            font-size: 0.7rem;
+            color: var(--text-light);
+            display: block;
+            margin-bottom: 0.2rem;
+        }
+        .ref-detail-item .value {
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        .ref-detail-item .value.yield {
+            font-weight: 600;
+            color: var(--success-color);
+        }
+
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background-color: var(--card-bg); box-shadow: 0 -2px 15px rgba(0,0,0,0.05); display: flex; justify-content: space-around; padding: 0.4rem 0; border-top-left-radius: 18px; border-top-right-radius: 18px; }
+        .nav-link { display: flex; flex-direction: column; align-items: center; text-decoration: none; gap: 0.1rem; padding: 0.4rem; color: var(--text-light); flex-grow: 1; text-align: center; }
+        .nav-link i { font-size: 1.3rem; }
+        .nav-link span { font-size: 0.6rem; }
+        .nav-link.active { color: var(--primary-blue); }
+        
+        #toast-container { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); z-index: 200; }
+        .toast { padding: 0.7rem 1.2rem; border-radius: 8px; color: #fff; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); opacity: 0; transform: translateY(20px); animation: slide-in-out 3.5s forwards; }
+        .toast.success { background-color: var(--success-color); }
+        @keyframes slide-in-out { 0%, 100% { opacity: 0; transform: translateY(20px); } 15%, 85% { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <div class="main-container">
+        <header class="header">
+            <a href="dashboard.html" class="back-button"><i class='bx bx-chevron-left'></i></a>
+            <h1>Convidar Amigos</h1>
+        </header>
+
+        <div class="card invite-card">
+            <h2>Convide e Ganhe</h2>
+            <ul class="invite-benefits">
+                <li><i class='bx bxs-badge-check'></i> <span>Ganhe <strong>30%</strong> do valor do plano ativado.</span></li>
+                <li><i class='bx bxs-badge-check'></i> <span>Receba <strong>15%</strong> dos lucros diários de cada convidado ativo.</span></li>
+            </ul>
+            <div class="invite-link-group">
+                <input type="text" id="invite-link-input" value="Carregando seu link..." readonly>
+                <div class="invite-actions">
+                    <button id="copy-btn" class="copy-btn"><i class='bx bx-copy'></i> Copiar</button>
+                    <button id="share-btn" class="share-btn"><i class='bx bx-share-alt'></i> Partilhar</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card stats-card">
+            <h3>Total de Convidados</h3>
+            <span id="referral-count" class="value">0</span>
+        </div>
+
+        <h3 class="section-title">Meus Convidados</h3>
+        <div class="card" style="padding: 0.8rem;">
+            <div id="referral-list-container" class="referral-list">
+                <p>Carregando lista de convidados...</p>
+            </div>
+        </div>
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="dashboard.html" class="nav-link"><i class='bx bxs-home'></i><span>Início</span></a>
+        <a href="plans.html" class="nav-link"><i class='bx bxs-rocket'></i><span>Planos</span></a>
+        <a href="wallet.html" class="nav-link"><i class='bx bxs-wallet'></i><span>Carteira</span></a>
+        <a href="profile.html" class="nav-link"><i class='bx bxs-user'></i><span>Perfil</span></a>
+    </nav>
+
+    <div id="toast-container"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const API_URL = "https://daksk.onrender.com";
+            const TOKEN = localStorage.getItem('chivo-token');
+            if (!TOKEN) { window.location.href = 'login.html'; return; }
+
+            const elements = {
+                inviteLinkInput: document.getElementById('invite-link-input'),
+                copyBtn: document.getElementById('copy-btn'),
+                shareBtn: document.getElementById('share-btn'),
+                referralCount: document.getElementById('referral-count'),
+                referralListContainer: document.getElementById('referral-list-container'),
+            };
+
+            const fetchAPI = async (endpoint, options = {}) => {
+                options.headers = { ...options.headers, 'Authorization': `Bearer ${TOKEN}` };
+                const response = await fetch(`${API_URL}${endpoint}`, options);
+                if (response.status === 401) { 
+                    localStorage.removeItem('chivo-token'); 
+                    window.location.href = 'login.html'; 
+                    throw new Error('Sessão expirada.');
+                }
+                if (!response.ok) { 
+                    const err = await response.json(); 
+                    throw new Error(err.message || 'Ocorreu um erro.');
+                }
+                return response.json();
+            };
+
+            const formatCurrency = (value, currency = 'MZN', precision = 2) => {
+                if (typeof value !== 'number') value = 0;
+                return new Intl.NumberFormat('pt-MZ', { style: 'currency', currency: currency, minimumFractionDigits: precision, maximumFractionDigits: precision }).format(value);
+            }
+
+            const loadReferralData = async () => {
+                try {
+                    const data = await fetchAPI('/api/users/referrals');
+                    renderReferralData(data);
+                } catch (error) {
+                    showToast(error.message, 'error');
+                }
+            };
+
+            const renderReferralData = (data) => {
+                elements.inviteLinkInput.value = data.inviteLink;
+                elements.referralCount.textContent = data.referralCount;
+
+                if (data.referralsList.length === 0) {
+                    elements.referralListContainer.innerHTML = '<p style="text-align: center; padding: 1rem 0;">Você ainda não convidou ninguém.</p>';
+                    return;
+                }
+
+                elements.referralListContainer.innerHTML = data.referralsList.map(ref => `
+                    <div class="referral-item">
+                        <div class="ref-header">
+                            <i class='bx bxs-user-circle'></i>
+                            <div class="ref-user-info">
+                                <h4>@${ref.username}</h4>
+                                <p>Cadastrado em: ${new Date(ref.joinDate).toLocaleDateString('pt-BR')}</p>
+                            </div>
+                        </div>
+                        <div class="ref-details-grid">
+                            <div class="ref-detail-item">
+                                <span class="label">Plano Ativo</span>
+                                <p class="value">${ref.planName}</p>
+                            </div>
+                            <div class="ref-detail-item">
+                                <span class="label">Rendimento Gerado</span>
+                                <p class="value yield">${formatCurrency(ref.totalYield, 'MZN')}</p>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            };
+
+            const copyInviteLink = () => {
+                navigator.clipboard.writeText(elements.inviteLinkInput.value)
+                    .then(() => showToast('Link copiado com sucesso!', 'success'))
+                    .catch(() => showToast('Falha ao copiar o link.', 'error'));
+            };
+
+            const shareInviteLink = () => {
+                if (navigator.share) {
+                    navigator.share({
+                        title: 'Junte-se ao Chivo!',
+                        text: 'Venha investir comigo no Chivo e comece a ganhar. Use meu link de convite:',
+                        url: elements.inviteLinkInput.value,
+                    }).catch((error) => console.log('Erro ao partilhar', error));
+                } else {
+                    copyInviteLink();
+                    showToast('A função de partilha não é suportada. O link foi copiado para você.', 'success');
+                }
+            };
+
+            const showToast = (message, type = 'success') => {
+                const toastContainer = document.getElementById('toast-container');
+                if (!toastContainer) return;
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                toast.textContent = message;
+                toastContainer.appendChild(toast);
+                setTimeout(() => toast.remove(), 3400);
+            };
+
+            elements.copyBtn.addEventListener('click', copyInviteLink);
+            elements.shareBtn.addEventListener('click', shareInviteLink);
+
+            loadReferralData();
+        });
+    </script>
+</body>
+</html>
