@@ -20,7 +20,7 @@
             font-family: 'Poppins', sans-serif;
         }
 
-        /* Paleta de Cores (Consistente com register.html) */
+        /* Paleta de Cores */
         :root {
             --bg-color: #F4F7FC;
             --primary-blue: #0052FF;
@@ -32,7 +32,7 @@
             --border-color: #DEE2E6;
         }
 
-        /* Animação de Criptomoedas no Fundo (Consistente com register.html) */
+        /* Animação de Fundo */
         .crypto-bg {
             position: fixed; top: 0; left: 0; width: 100%; height: 100vh;
             background-color: var(--bg-color); overflow: hidden; z-index: -1;
@@ -57,7 +57,7 @@
             100% { transform: translateY(-1000px) rotate(720deg); opacity: 0; border-radius: 50%; }
         }
         
-        /* Ticker de Notificações no Topo (Consistente com register.html) */
+        /* Ticker de Notificações */
         .ticker-wrap {
             position: fixed; top: 0; left: 0; width: 100%; overflow: hidden;
             background-color: var(--text-dark); color: white; padding: 8px 0; z-index: 10;
@@ -73,23 +73,25 @@
         /* Corpo da Página */
         body { display: flex; justify-content: center; align-items: center; min-height: 100vh; padding-top: 50px; }
 
-        /* Container Principal (Consistente com register.html) */
+        /* Container Principal (ATUALIZADO) */
         .container {
-            width: 100%; max-width: 420px; padding: 2.5rem; background-color: rgba(255, 255, 255, 0.85);
+            width: 100%; max-width: 400px; /* Reduzido */
+            padding: 2rem; /* Reduzido */
+            background-color: rgba(255, 255, 255, 0.85);
             backdrop-filter: blur(10px); border-radius: 20px; box-shadow: 0 8px 32px 0 rgba(0, 82, 255, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.18); text-align: center;
         }
-        .brand-logo { font-size: 3rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text-dark); }
+        .brand-logo { font-size: 2.5rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text-dark); }
         .brand-logo span { color: var(--primary-blue); }
-        .info-text { color: var(--text-light); margin-bottom: 2rem; }
-        #login-form { width: 100%; display: flex; flex-direction: column; gap: 1rem; }
+        .info-text { color: var(--text-light); margin-bottom: 1.5rem; font-size: 0.9rem; } /* Reduzido */
+        #login-form { width: 100%; display: flex; flex-direction: column; gap: 0.8rem; } /* Reduzido */
         .input-group { position: relative; }
-        .input-group i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); font-size: 1.2rem; color: #aaa; }
+        .input-group i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); font-size: 1.1rem; color: #aaa; } /* Reduzido */
         
         .input-field {
-            width: 100%; padding: 1rem 1rem 1rem 3rem; background-color: var(--input-bg);
+            width: 100%; padding: 0.8rem 0.8rem 0.8rem 2.5rem; background-color: var(--input-bg); /* Reduzido */
             border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-dark);
-            font-size: 1rem; transition: border-color 0.3s, box-shadow 0.3s;
+            font-size: 0.9rem; transition: border-color 0.3s, box-shadow 0.3s; /* Reduzido */
         }
         .input-field::placeholder { color: #aaa; }
         .input-field:focus { outline: none; border-color: var(--primary-blue); box-shadow: 0 0 8px rgba(0, 82, 255, 0.2); }
@@ -98,10 +100,10 @@
         input[type=number] { -moz-appearance: textfield; }
 
         .submit-btn {
-            width: 100%; padding: 1rem; background: linear-gradient(90deg, var(--secondary-blue), var(--primary-blue));
-            border: none; border-radius: 8px; color: #ffffff; font-size: 1.1rem;
+            width: 100%; padding: 0.9rem; background: linear-gradient(90deg, var(--secondary-blue), var(--primary-blue)); /* Reduzido */
+            border: none; border-radius: 8px; color: #ffffff; font-size: 1rem; /* Reduzido */
             font-weight: 600; cursor: pointer; transition: all 0.3s ease;
-            display: flex; justify-content: center; align-items: center; margin-top: 1rem;
+            display: flex; justify-content: center; align-items: center; margin-top: 0.8rem; /* Reduzido */
         }
         .submit-btn:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0, 82, 255, 0.3); }
         .submit-btn:disabled { background: #999; cursor: not-allowed; }
@@ -109,7 +111,7 @@
         .spinner { width: 20px; height: 20px; border: 3px solid rgba(255, 255, 255, 0.3); border-top-color: #fff; border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        .bottom-text { margin-top: 1.5rem; color: var(--text-light); font-size: 0.9rem; }
+        .bottom-text { margin-top: 1.2rem; color: var(--text-light); font-size: 0.85rem; } /* Reduzido */
         .bottom-text a { color: var(--primary-blue); text-decoration: none; font-weight: 600; }
         #error-message { margin-top: 1rem; color: #D93025; font-weight: 500; min-height: 1.2em; }
     </style>
@@ -151,7 +153,6 @@
     </div>
 
     <script>
-        // --- Constantes ---
         const API_URL = "https://daksk.onrender.com";
         const loginForm = document.getElementById('login-form');
         const phoneInput = document.getElementById('phone');
@@ -162,7 +163,6 @@
         const spinner = document.getElementById('spinner');
         const tickerContent = document.getElementById('ticker-content');
 
-        // --- Funções Auxiliares ---
         function setLoading(isLoading) {
             submitButton.disabled = isLoading;
             buttonText.style.display = isLoading ? 'none' : 'block';
@@ -186,7 +186,6 @@
             tickerContent.innerHTML = notificationsHTML + notificationsHTML;
         }
 
-        // --- Lógica Principal ---
         document.addEventListener('DOMContentLoaded', () => {
             generateTickerNotifications();
         });
@@ -206,23 +205,17 @@
                     body: JSON.stringify({ phone, pin }),
                 });
                 
-                // --- ATUALIZAÇÃO PRINCIPAL AQUI ---
                 if (!response.ok) {
-                    // Tenta ler a resposta de erro como JSON
                     try {
                         const errorData = await response.json();
-                        // Se conseguir, a API enviou um erro JSON formatado. Usa a mensagem dele.
                         throw new Error(errorData.message || 'Ocorreu um erro desconhecido.');
                     } catch (jsonError) {
-                        // Se falhar (erro 'Unexpected token <'), significa que o servidor enviou HTML/texto.
-                        // Nesse caso, usamos a mensagem padrão do backend.
                         throw new Error('Telefone ou PIN inválido.');
                     }
                 }
                 
                 const data = await response.json();
                 
-                // Se o login for bem-sucedido, salva o token e redireciona
                 localStorage.setItem('chivo-token', data.token);
                 window.location.href = 'dashboard.html';
 
