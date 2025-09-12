@@ -1,1 +1,260 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - Chivo</title>
+    <!-- Boxicons CSS -->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 
+    <style>
+        /* CSS Reset e Configurações Globais */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        /* Paleta de Cores para o Admin */
+        :root {
+            --bg-dark: #121826;
+            --primary-blue: #0052FF;
+            --card-bg: #1A2233;
+            --text-light: #F4F7FC;
+            --text-muted: #8A93A2;
+            --border-color: #333d52;
+        }
+
+        /* Corpo da Página */
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: var(--bg-dark);
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(0, 82, 255, 0.1), transparent 30%),
+                radial-gradient(circle at 85% 30%, rgba(0, 82, 255, 0.1), transparent 30%);
+        }
+
+        /* Container Principal */
+        .container {
+            width: 100%;
+            max-width: 400px;
+            padding: 2.5rem;
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .brand-logo {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--text-light);
+        }
+
+        .brand-logo span {
+            color: var(--primary-blue);
+        }
+
+        .info-text {
+            color: var(--text-muted);
+            margin-bottom: 2.5rem;
+        }
+
+        #login-form {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .input-group {
+            position: relative;
+        }
+
+        .input-group i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.2rem;
+            color: var(--text-muted);
+        }
+        
+        .input-field {
+            width: 100%;
+            padding: 1rem 1rem 1rem 3rem;
+            background-color: var(--bg-dark);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-light);
+            font-size: 1rem;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .input-field::placeholder {
+            color: var(--text-muted);
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 8px rgba(0, 82, 255, 0.3);
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 1rem;
+            background: var(--primary-blue);
+            border: none;
+            border-radius: 8px;
+            color: #ffffff;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 1rem;
+        }
+
+        .submit-btn:hover {
+            opacity: 0.9;
+            box-shadow: 0 6px 20px rgba(0, 82, 255, 0.2);
+        }
+
+        .submit-btn:disabled {
+            background: #555;
+            cursor: not-allowed;
+        }
+        
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        #error-message {
+            margin-top: 1.5rem;
+            color: #FF5B5B;
+            font-weight: 500;
+            min-height: 1.2em;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2 class="brand-logo">Chi<span>vo</span></h2>
+        <p class="info-text">Painel Administrativo</p>
+
+        <form id="login-form">
+            <div class="input-group">
+                <i class='bx bxs-user-circle'></i>
+                <input type="text" id="username" class="input-field" placeholder="Username" required autocomplete="username">
+            </div>
+            <div class="input-group">
+                <i class='bx bxs-lock'></i>
+                <input type="password" id="password" class="input-field" placeholder="Password" required autocomplete="current-password">
+            </div>
+            
+            <button type="submit" class="submit-btn" id="submit-button">
+                <span id="button-text">Login</span>
+                <div class="spinner" id="spinner" style="display: none;"></div>
+            </button>
+        </form>
+
+        <div id="error-message"></div>
+    </div>
+
+    <script>
+        // --- Constantes ---
+        const API_URL = "https://daksk.onrender.com"; // Certifique-se que esta URL está correta
+        const loginForm = document.getElementById('login-form');
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+        const errorMessageDiv = document.getElementById('error-message');
+        const submitButton = document.getElementById('submit-button');
+        const buttonText = document.getElementById('button-text');
+        const spinner = document.getElementById('spinner');
+
+        // --- Funções Auxiliares ---
+        function setLoading(isLoading) {
+            submitButton.disabled = isLoading;
+            buttonText.style.display = isLoading ? 'none' : 'block';
+            spinner.style.display = isLoading ? 'block' : 'none';
+        }
+        
+        function showErrorMessage(message) {
+            errorMessageDiv.textContent = message;
+        }
+        
+        // --- Lógica Principal ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Verifica se o admin já está logado e redireciona
+            if (localStorage.getItem('chivo-admin-token')) {
+                window.location.href = 'admin-dashboard.html'; 
+            }
+        });
+
+        loginForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            showErrorMessage('');
+            setLoading(true);
+
+            const username = usernameInput.value;
+            const password = passwordInput.value;
+            
+            try {
+                const response = await fetch(`${API_URL}/api/admin/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password }),
+                });
+                
+                // --- ATUALIZAÇÃO PRINCIPAL AQUI ---
+                if (!response.ok) {
+                    // Tenta ler a resposta de erro como JSON
+                    try {
+                        const errorData = await response.json();
+                        // Se conseguir, a API enviou um erro JSON formatado. Usa a mensagem dele.
+                        throw new Error(errorData.message || 'Ocorreu um erro desconhecido.');
+                    } catch (jsonError) {
+                        // Se falhar (erro 'Unexpected token <'), significa que o servidor enviou HTML/texto.
+                        // Nesse caso, usamos a mensagem de erro padrão que o backend enviaria.
+                        throw new Error('Username ou password inválido.');
+                    }
+                }
+                
+                const data = await response.json();
+
+                // Se o login for bem-sucedido, salva o token específico do admin e redireciona
+                localStorage.setItem('chivo-admin-token', data.token);
+                window.location.href = 'admin-dashboard.html';
+
+            } catch (error) {
+                showErrorMessage(error.message);
+            } finally {
+                setLoading(false);
+            }
+        });
+    </script>
+</body>
+</html>

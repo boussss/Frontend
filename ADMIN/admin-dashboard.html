@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Admin Chivo</title>
+    <!-- Boxicons CSS -->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        :root {
+            --bg-dark: #121826;
+            --primary-blue: #0052FF;
+            --card-bg: #1A2233;
+            --text-light: #F4F7FC;
+            --text-muted: #8A93A2;
+            --border-color: #333d52;
+            --accent-yellow: #FFC107;
+            --accent-green: #28a745;
+            --accent-red: #dc3545;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+        }
+
+        .main-container {
+            padding: 2rem 1.5rem;
+            max-width: 1200px;
+            margin: auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+        }
+
+        .logout-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.8rem;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+        .logout-btn:hover {
+            color: var(--accent-red);
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text-light);
+        }
+
+        /* Grade de Estatísticas */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .stat-card {
+            background-color: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .stat-card .icon {
+            font-size: 2.5rem;
+            padding: 1rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .stat-card.users .icon { color: var(--primary-blue); background-color: rgba(0, 82, 255, 0.1); }
+        .stat-card.deposits .icon { color: var(--accent-green); background-color: rgba(40, 167, 69, 0.1); }
+        .stat-card.withdrawals .icon { color: var(--accent-yellow); background-color: rgba(255, 193, 7, 0.1); }
+        
+        .stat-card .info .value {
+            font-size: 2.2rem;
+            font-weight: 700;
+        }
+        .stat-card .info .label {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        /* Grade de Ações */
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .action-card {
+            background-color: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 12px;
+            text-align: center;
+            text-decoration: none;
+            color: var(--text-light);
+            border: 1px solid var(--border-color);
+            transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+        }
+        .action-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary-blue);
+            box-shadow: 0 8px 25px rgba(0, 82, 255, 0.15);
+        }
+        .action-card i {
+            font-size: 2.5rem;
+            margin-bottom: 0.8rem;
+            color: var(--primary-blue);
+        }
+        .action-card span {
+            font-weight: 500;
+        }
+        
+        /* Skeleton Loaders */
+        .skeleton { animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite; background-color: rgba(255,255,255,0.1); }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+        .skeleton-value { width: 60px; height: 2.2rem; border-radius: 6px; margin-bottom: 0.5rem; }
+        .skeleton-label { width: 100px; height: 0.9rem; border-radius: 4px; }
+        .skeleton-icon { width: 64px; height: 64px; border-radius: 50%; }
+
+        /* Toast Notifications */
+        #toast-container { position: fixed; top: 20px; right: 20px; z-index: 200; display: flex; flex-direction: column; gap: 0.5rem; }
+        .toast { padding: 0.8rem 1.5rem; border-radius: 8px; color: #fff; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); opacity: 0; transform: translateX(20px); animation: slide-in-out 3.5s forwards; }
+        .toast.error { background-color: var(--accent-red); }
+        @keyframes slide-in-out { 0%, 100% { opacity: 0; transform: translateX(20px); } 15%, 85% { opacity: 1; transform: translateX(0); } }
+    </style>
+</head>
+<body>
+
+    <div class="main-container">
+        <header class="header">
+            <h1>Dashboard</h1>
+            <button class="logout-btn" id="logout-btn" title="Sair"><i class='bx bx-log-out'></i></button>
+        </header>
+
+        <section id="stats-section">
+            <h2 class="section-title">Visão Geral</h2>
+            <div class="stats-grid" id="stats-grid-container">
+                <!-- Skeleton Loader -->
+                <div class="stat-card users">
+                    <div class="icon skeleton skeleton-icon"></div>
+                    <div class="info">
+                        <div class="value skeleton skeleton-value"></div>
+                        <div class="label skeleton skeleton-label"></div>
+                    </div>
+                </div>
+                <div class="stat-card deposits">
+                    <div class="icon skeleton skeleton-icon"></div>
+                    <div class="info">
+                        <div class="value skeleton skeleton-value"></div>
+                        <div class="label skeleton skeleton-label"></div>
+                    </div>
+                </div>
+                <div class="stat-card withdrawals">
+                    <div class="icon skeleton skeleton-icon"></div>
+                    <div class="info">
+                        <div class="value skeleton skeleton-value"></div>
+                        <div class="label skeleton skeleton-label"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="management-section">
+            <h2 class="section-title">Gerenciamento</h2>
+            <div class="actions-grid">
+                <a href="admin-users.html" class="action-card">
+                    <i class='bx bxs-user-detail'></i>
+                    <span>Gerenciar Usuários</span>
+                </a>
+                <a href="admin-plans.html" class="action-card">
+                    <i class='bx bxs-rocket'></i>
+                    <span>Gerenciar Planos</span>
+                </a>
+                <a href="admin-deposits.html" class="action-card">
+                    <i class='bx bxs-arrow-to-bottom'></i>
+                    <span>Aprovar Depósitos</span>
+                </a>
+                <a href="admin-withdrawals.html" class="action-card">
+                    <i class='bx bxs-arrow-from-bottom'></i>
+                    <span>Aprovar Saques</span>
+                </a>
+                <a href="admin-banners.html" class="action-card">
+                    <i class='bx bxs-image'></i>
+                    <span>Gerenciar Banners</span>
+                </a>
+                <a href="admin-settings.html" class="action-card">
+                    <i class='bx bxs-cog'></i>
+                    <span>Configurações</span>
+                </a>
+            </div>
+        </section>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const API_URL = "https://daksk.onrender.com";
+            // 1. Proteção da Rota (Auth Guard)
+            const TOKEN = localStorage.getItem('chivo-admin-token');
+            if (!TOKEN) {
+                window.location.href = 'admin-login.html';
+                return; 
+            }
+
+            const elements = {
+                statsContainer: document.getElementById('stats-grid-container'),
+                logoutBtn: document.getElementById('logout-btn')
+            };
+
+            const fetchAPI = async (endpoint, options = {}) => {
+                options.headers = { ...options.headers, 'Authorization': `Bearer ${TOKEN}` };
+                const response = await fetch(`${API_URL}${endpoint}`, options);
+                
+                if (response.status === 401) { 
+                    localStorage.removeItem('chivo-admin-token'); 
+                    window.location.href = 'admin-login.html'; 
+                    throw new Error('Sessão expirada. Faça login novamente.');
+                }
+                if (!response.ok) { 
+                    const err = await response.json(); 
+                    throw new Error(err.message || 'Ocorreu um erro na API.');
+                }
+                return response.json();
+            };
+
+            const loadDashboardData = async () => {
+                try {
+                    // Fetch all data in parallel for better performance
+                    const [users, pendingDeposits, pendingWithdrawals] = await Promise.all([
+                        fetchAPI('/api/admin/users'),
+                        fetchAPI('/api/admin/deposits'),
+                        fetchAPI('/api/admin/withdrawals')
+                    ]);
+
+                    renderStats({
+                        totalUsers: users.length,
+                        pendingDeposits: pendingDeposits.length,
+                        pendingWithdrawals: pendingWithdrawals.length
+                    });
+
+                } catch (error) {
+                    showToast(error.message, 'error');
+                    // Opcional: mostrar uma mensagem de erro no lugar dos stats
+                    elements.statsContainer.innerHTML = `<p>Não foi possível carregar os dados.</p>`;
+                }
+            };
+            
+            const renderStats = (data) => {
+                elements.statsContainer.innerHTML = `
+                    <div class="stat-card users">
+                        <div class="icon"><i class='bx bxs-group'></i></div>
+                        <div class="info">
+                            <div class="value" id="total-users-stat">${data.totalUsers}</div>
+                            <div class="label">Total de Usuários</div>
+                        </div>
+                    </div>
+                    <div class="stat-card deposits">
+                        <div class="icon"><i class='bx bxs-wallet'></i></div>
+                        <div class="info">
+                            <div class="value" id="pending-deposits-stat">${data.pendingDeposits}</div>
+                            <div class="label">Depósitos Pendentes</div>
+                        </div>
+                    </div>
+                    <div class="stat-card withdrawals">
+                        <div class="icon"><i class='bx bx-money'></i></div>
+                        <div class="info">
+                            <div class="value" id="pending-withdrawals-stat">${data.pendingWithdrawals}</div>
+                            <div class="label">Saques Pendentes</div>
+                        </div>
+                    </div>
+                `;
+            };
+
+            const handleLogout = () => {
+                localStorage.removeItem('chivo-admin-token');
+                window.location.href = 'admin-login.html';
+            };
+
+            const showToast = (message, type = 'error') => {
+                const toastContainer = document.getElementById('toast-container');
+                if (!toastContainer) return;
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                toast.textContent = message;
+                toastContainer.appendChild(toast);
+                setTimeout(() => toast.remove(), 3400);
+            };
+
+            // Adicionar Event Listeners
+            elements.logoutBtn.addEventListener('click', handleLogout);
+
+            // Carregar os dados iniciais
+            loadDashboardData();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciar Banners - Admin Chivo</title>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        :root {
+            --bg-dark: #121826; --primary-blue: #0052FF; --card-bg: #1A2233;
+            --text-light: #F4F7FC; --text-muted: #8A93A2; --border-color: #333d52;
+            --accent-green: #28a745; --accent-red: #dc3545;
+        }
+        body { background-color: var(--bg-dark); color: var(--text-light); }
+        .main-container { padding: 2rem 1.5rem; max-width: 900px; margin: auto; }
+        
+        .header { display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; }
+        .back-button { background: none; border: none; font-size: 2rem; color: var(--text-light); cursor: pointer; }
+        .header h1 { font-size: 1.8rem; }
+
+        .section-title {
+            font-size: 1.3rem; margin-bottom: 1.5rem; padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .card {
+            background-color: var(--card-bg); padding: 2rem;
+            border-radius: 12px; border: 1px solid var(--border-color);
+            margin-bottom: 2rem;
+        }
+
+        .form-group { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.5rem; }
+        .form-group label { color: var(--text-muted); font-weight: 500; }
+        .form-group input {
+            background-color: var(--bg-dark); border: 1px solid var(--border-color);
+            border-radius: 8px; padding: 0.8rem 1rem; color: var(--text-light);
+            font-size: 1rem;
+        }
+        .form-group input[type="file"] { padding: 0.5rem; }
+
+        .submit-btn {
+            display: flex; justify-content: center; align-items: center;
+            width: 100%; padding: 0.8rem; background-color: var(--primary-blue);
+            border: none; border-radius: 8px; color: #fff; font-size: 1.1rem;
+            font-weight: 600; cursor: pointer;
+        }
+        .submit-btn:disabled { background-color: #555; }
+        .spinner { width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.3); border-top-color:#fff; border-radius:50%; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .banners-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+        .banner-card {
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+        .banner-card img {
+            width: 100%;
+            height: 140px;
+            object-fit: cover;
+            display: block;
+        }
+        .banner-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+            padding: 2rem 1rem 1rem;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+        }
+        .delete-btn {
+            background-color: var(--accent-red);
+            color: #fff;
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        #empty-message { text-align: center; color: var(--text-muted); padding: 2rem; }
+        #toast-container { position: fixed; top: 20px; right: 20px; z-index: 200; }
+        .toast { padding: 0.8rem 1.5rem; border-radius: 8px; color: #fff; margin-bottom: 0.5rem; }
+        .toast.success { background-color: var(--accent-green); }
+        .toast.error { background-color: var(--accent-red); }
+    </style>
+</head>
+<body>
+
+    <div class="main-container">
+        <header class="header">
+            <button class="back-button" onclick="window.location.href='admin-dashboard.html'"><i class='bx bx-arrow-back'></i></button>
+            <h1>Gerenciar Banners</h1>
+        </header>
+
+        <section id="add-banner-section">
+            <h2 class="section-title">Adicionar Novo Banner</h2>
+            <form id="banner-form" class="card">
+                <div class="form-group">
+                    <label for="image">Arquivo de Imagem (Recomendado: 800x400 pixels)</label>
+                    <input type="file" id="image" accept="image/*" required>
+                </div>
+                <div class="form-group">
+                    <label for="linkUrl">Link de Destino (Opcional)</label>
+                    <input type="url" id="linkUrl" placeholder="https://exemplo.com">
+                </div>
+                <button type="submit" id="submit-btn" class="submit-btn">
+                    <span id="button-text">Enviar Banner</span>
+                    <div class="spinner" id="spinner" style="display: none;"></div>
+                </button>
+            </form>
+        </section>
+
+        <section id="current-banners-section">
+            <h2 class="section-title">Banners Atuais</h2>
+            <div id="banners-container" class="banners-grid">
+                <!-- Banners serão carregados aqui -->
+            </div>
+            <p id="empty-message" style="display: none;">Nenhum banner encontrado.</p>
+        </section>
+
+    </div>
+
+    <div id="toast-container"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const API_URL = "https://daksk.onrender.com";
+            const TOKEN = localStorage.getItem('chivo-admin-token');
+            if (!TOKEN) {
+                window.location.href = 'admin-login.html';
+                return;
+            }
+
+            const elements = {
+                form: document.getElementById('banner-form'),
+                imageInput: document.getElementById('image'),
+                linkUrlInput: document.getElementById('linkUrl'),
+                submitBtn: document.getElementById('submit-btn'),
+                buttonText: document.getElementById('button-text'),
+                spinner: document.getElementById('spinner'),
+                container: document.getElementById('banners-container'),
+                emptyMessage: document.getElementById('empty-message'),
+            };
+
+            const fetchAPI = async (endpoint, options = {}) => {
+                const headers = { 'Authorization': `Bearer ${TOKEN}` };
+                // Não definir Content-Type para FormData
+                if (!(options.body instanceof FormData)) {
+                    headers['Content-Type'] = 'application/json';
+                }
+                options.headers = { ...headers, ...options.headers };
+
+                const response = await fetch(`${API_URL}${endpoint}`, options);
+                if (response.status === 401) {
+                    localStorage.removeItem('chivo-admin-token');
+                    window.location.href = 'admin-login.html';
+                }
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.message || 'Erro na API.');
+                return data;
+            };
+
+            const renderBanners = (banners) => {
+                elements.container.innerHTML = '';
+                if (banners.length === 0) {
+                    elements.emptyMessage.style.display = 'block';
+                    return;
+                }
+                elements.emptyMessage.style.display = 'none';
+
+                banners.forEach(banner => {
+                    const card = document.createElement('div');
+                    card.className = 'banner-card';
+                    card.innerHTML = `
+                        <img src="${banner.imageUrl}" alt="Banner">
+                        <div class="banner-overlay">
+                            <button class="delete-btn" data-id="${banner._id}" title="Deletar Banner">
+                                <i class='bx bxs-trash'></i>
+                            </button>
+                        </div>
+                    `;
+                    elements.container.appendChild(card);
+                });
+            };
+
+            const loadBanners = async () => {
+                try {
+                    // Precisaremos de uma rota para buscar os banners no adminController
+                    const banners = await fetchAPI('/api/admin/banners'); 
+                    renderBanners(banners);
+                } catch (error) {
+                    showToast(error.message, 'error');
+                }
+            };
+
+            const handleFormSubmit = async (e) => {
+                e.preventDefault();
+                const imageFile = elements.imageInput.files[0];
+                if (!imageFile) {
+                    showToast('Por favor, selecione um arquivo de imagem.', 'error');
+                    return;
+                }
+
+                setLoading(true);
+
+                const formData = new FormData();
+                formData.append('image', imageFile);
+                formData.append('linkUrl', elements.linkUrlInput.value);
+
+                try {
+                    const newBanner = await fetchAPI('/api/admin/banners', {
+                        method: 'POST',
+                        body: formData,
+                    });
+                    showToast('Banner adicionado com sucesso!', 'success');
+                    elements.form.reset();
+                    loadBanners(); // Recarrega a lista
+                } catch (error) {
+                    showToast(error.message, 'error');
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            const handleDeleteBanner = async (bannerId, button) => {
+                if (!confirm('Tem certeza que deseja deletar este banner?')) {
+                    return;
+                }
+                button.disabled = true;
+                try {
+                    const result = await fetchAPI(`/api/admin/banners/${bannerId}`, { method: 'DELETE' });
+                    showToast(result.message, 'success');
+                    loadBanners(); // Recarrega a lista
+                } catch (error) {
+                    showToast(error.message, 'error');
+                    button.disabled = false;
+                }
+            };
+
+            const setLoading = (isLoading) => {
+                elements.submitBtn.disabled = isLoading;
+                elements.buttonText.style.display = isLoading ? 'none' : 'block';
+                elements.spinner.style.display = isLoading ? 'block' : 'none';
+            };
+
+            elements.form.addEventListener('submit', handleFormSubmit);
+
+            elements.container.addEventListener('click', (e) => {
+                const deleteBtn = e.target.closest('.delete-btn');
+                if (deleteBtn) {
+                    handleDeleteBanner(deleteBtn.dataset.id, deleteBtn);
+                }
+            });
+
+            const showToast = (message, type = 'success') => {
+                const toastContainer = document.getElementById('toast-container');
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                toast.textContent = message;
+                toastContainer.appendChild(toast);
+                setTimeout(() => toast.remove(), 4000);
+            };
+
+            loadBanners();
+        });
+    </script>
+</body>
+</html>
