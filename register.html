@@ -12,7 +12,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
-        /* CSS Reset e Configurações Globais */
         * {
             margin: 0;
             padding: 0;
@@ -20,9 +19,8 @@
             font-family: 'Poppins', sans-serif;
         }
 
-        /* Paleta de Cores */
         :root {
-            --bg-color: #F4F7FC; /* Branco azulado */
+            --bg-color: #F4F7FC;
             --primary-blue: #0052FF;
             --secondary-blue: #007BFF;
             --accent-yellow: #FFC107;
@@ -32,7 +30,6 @@
             --border-color: #DEE2E6;
         }
 
-        /* Animação de Fundo */
         .crypto-bg {
             position: fixed;
             top: 0;
@@ -71,7 +68,6 @@
             100% { transform: translateY(-1000px) rotate(720deg); opacity: 0; border-radius: 50%; }
         }
         
-        /* Ticker de Notificações */
         .ticker-wrap {
             position: fixed;
             top: 0;
@@ -100,7 +96,6 @@
             100% { transform: translateX(-50%); }
         }
 
-        /* Corpo da Página */
         body {
             display: flex;
             justify-content: center;
@@ -109,11 +104,10 @@
             padding-top: 50px;
         }
 
-        /* Container Principal (ATUALIZADO) */
         .container {
             width: 100%;
-            max-width: 400px; /* Reduzido */
-            padding: 2rem; /* Reduzido */
+            max-width: 400px;
+            padding: 2rem;
             background-color: rgba(255, 255, 255, 0.85);
             backdrop-filter: blur(10px);
             border-radius: 20px;
@@ -124,15 +118,15 @@
 
         .brand-logo { font-size: 2.5rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text-dark); }
         .brand-logo span { color: var(--primary-blue); }
-        .info-text { color: var(--text-light); margin-bottom: 1.5rem; font-size: 0.9rem; } /* Reduzido */
-        #register-form { width: 100%; display: flex; flex-direction: column; gap: 0.8rem; } /* Reduzido */
+        .info-text { color: var(--text-light); margin-bottom: 1.5rem; font-size: 0.9rem; }
+        #register-form { width: 100%; display: flex; flex-direction: column; gap: 0.8rem; }
         .input-group { position: relative; }
-        .input-group i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); font-size: 1.1rem; color: #aaa; } /* Reduzido */
+        .input-group i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); font-size: 1.1rem; color: #aaa; }
         
         .input-field {
-            width: 100%; padding: 0.8rem 0.8rem 0.8rem 2.5rem; background-color: var(--input-bg); /* Reduzido */
+            width: 100%; padding: 0.8rem 0.8rem 0.8rem 2.5rem; background-color: var(--input-bg);
             border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-dark);
-            font-size: 0.9rem; transition: border-color 0.3s, box-shadow 0.3s; /* Reduzido */
+            font-size: 0.9rem; transition: border-color 0.3s, box-shadow 0.3s;
         }
         .input-field::placeholder { color: #aaa; }
         .input-field:focus {
@@ -144,10 +138,10 @@
         input[type=number] { -moz-appearance: textfield; }
 
         .submit-btn {
-            width: 100%; padding: 0.9rem; background: linear-gradient(90deg, var(--secondary-blue), var(--primary-blue)); /* Reduzido */
-            border: none; border-radius: 8px; color: #ffffff; font-size: 1rem; /* Reduzido */
+            width: 100%; padding: 0.9rem; background: linear-gradient(90deg, var(--secondary-blue), var(--primary-blue));
+            border: none; border-radius: 8px; color: #ffffff; font-size: 1rem;
             font-weight: 600; cursor: pointer; transition: all 0.3s ease;
-            display: flex; justify-content: center; align-items: center; margin-top: 0.8rem; /* Reduzido */
+            display: flex; justify-content: center; align-items: center; margin-top: 0.8rem;
         }
         .submit-btn:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0, 82, 255, 0.3); }
         .submit-btn:disabled { background: #999; cursor: not-allowed; }
@@ -155,7 +149,7 @@
         .spinner { width: 20px; height: 20px; border: 3px solid rgba(255, 255, 255, 0.3); border-top-color: #fff; border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        .bottom-text { margin-top: 1.2rem; color: var(--text-light); font-size: 0.85rem; } /* Reduzido */
+        .bottom-text { margin-top: 1.2rem; color: var(--text-light); font-size: 0.85rem; }
         .bottom-text a { color: var(--primary-blue); text-decoration: none; font-weight: 600; }
         #error-message { margin-top: 1rem; color: #D93025; font-weight: 500; min-height: 1.2em; }
     </style>
@@ -222,6 +216,10 @@
         const spinner = document.getElementById('spinner');
         const tickerContent = document.getElementById('ticker-content');
 
+        /**
+         * ESTA FUNÇÃO É RESPONSÁVEL POR PREENCHER O ID DE REFERÊNCIA.
+         * Ela lê o parâmetro 'ref' da URL e preenche o campo.
+         */
         function fillReferrerIdFromUrl() {
             const params = new URLSearchParams(window.location.search);
             const refId = params.get('ref');
@@ -256,7 +254,7 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            fillReferrerIdFromUrl();
+            fillReferrerIdFromUrl(); // Executa a função assim que a página carrega
             generateTickerNotifications();
         });
 
