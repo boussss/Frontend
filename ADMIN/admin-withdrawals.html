@@ -147,15 +147,20 @@
                 elements.emptyMessage.style.display = 'none';
 
                 withdrawals.forEach(withdrawal => {
-                    if (!withdrawal.user) return; // Pula se o usuário foi deletado
+                    if (!withdrawal.user) return;
 
                     const card = document.createElement('div');
                     card.className = 'withdrawal-card';
                     card.setAttribute('data-id', withdrawal._id);
 
-                    const hasSufficientBalance = withdrawal.user.walletBalance >= withdrawal.amount;
+                    // --- CORREÇÃO IMPORTANTE AQUI ---
+                    const totalDeducted = withdrawal.transactionDetails.totalDeducted || Math.abs(withdrawal.amount);
+                    const hasSufficientBalance = withdrawal.user.walletBalance >= totalDeducted;
+                    // --- FIM DA CORREÇÃO ---
+                    
                     const balanceClass = hasSufficientBalance ? 'balance-ok' : 'balance-insufficient';
                     const balanceText = hasSufficientBalance ? 'Saldo suficiente' : 'SALDO INSUFICIENTE!';
+                    const withdrawalFee = withdrawal.transactionDetails.fee || 0;
 
                     card.innerHTML = `
                         <div class="user-info">
@@ -171,15 +176,15 @@
                         <div class="withdrawal-details">
                              <div class="info-item">
                                 <h4>Valor Solicitado</h4>
-                                <p><strong class="amount">${formatCurrency(withdrawal.amount)}</strong></p>
+                                <p><strong class="amount">${formatCurrency(Math.abs(withdrawal.amount))}</strong></p>
+                            </div>
+                            <div class="info-item">
+                                <h4>Taxa de Saque</h4>
+                                <p>${formatCurrency(withdrawalFee)}</p>
                             </div>
                             <div class="info-item">
                                 <h4>Número de Destino</h4>
                                 <p>${withdrawal.transactionDetails.destinationNumber || 'N/A'}</p>
-                            </div>
-                            <div class="info-item">
-                                <h4>Data do Pedido</h4>
-                                <p>${new Date(withdrawal.createdAt).toLocaleString('pt-BR')}</p>
                             </div>
                         </div>
                         <div class="withdrawal-actions">
@@ -249,7 +254,6 @@
                 const toast = document.createElement('div');
                 toast.className = `toast ${type}`;
                 toast.textContent = message;
-                toastContainer.appendChild(toast);
                 setTimeout(() => toast.remove(), 4000);
             };
 
