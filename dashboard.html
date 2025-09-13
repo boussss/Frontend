@@ -13,7 +13,7 @@
             --bg-color: #F4F7FC; --primary-blue: #0052FF; --secondary-blue: #007BFF;
             --accent-yellow: #FFC107; --text-dark: #121826; --text-light: #6C757D;
             --card-bg: #FFFFFF; --border-color: #DEE2E6; --success-color: #28a745; --error-color: #dc3545;
-            --whatsapp-color: #25D366;
+            --telegram-color: #2AABEE; /* Cor do Telegram */
             --skeleton-base-color: #e2e8f0;
         }
         body { background-color: var(--bg-color); color: var(--text-dark); padding-bottom: 64px; }
@@ -100,7 +100,6 @@
         .skeleton-action-item { height: 75px; }
         .skeleton-plan-card { height: 250px; }
 
-        /* --- ESTILOS DO NOVO MODAL --- */
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); backdrop-filter: blur(5px); display: none; justify-content: center; align-items: center; z-index: 1000; animation: fadeIn 0.3s; }
         .modal.show { display: flex; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -119,8 +118,8 @@
             transition: transform 0.2s;
         }
         .welcome-btn:hover { transform: scale(1.03); }
-        .whatsapp-group-btn { background-color: var(--whatsapp-color); color: #fff; }
-        .whatsapp-support-btn { background-color: var(--secondary-blue); color: #fff; }
+        .telegram-group-btn { background-color: var(--telegram-color); color: #fff; }
+        .telegram-support-btn { background-color: var(--secondary-blue); color: #fff; }
         #close-welcome-btn {
             margin-top: 1rem; background: none; border: none;
             color: var(--text-light); cursor: pointer; font-size: 0.8rem;
@@ -150,14 +149,14 @@
         </div>
     </div>
 
-    <!-- HTML DO NOVO MODAL -->
+    <!-- HTML DO MODAL ATUALIZADO PARA TELEGRAM -->
     <div id="welcome-modal" class="modal">
         <div class="welcome-modal-content">
             <h2>Bem-vindo à Chivo!</h2>
             <p>Sua jornada para o sucesso financeiro começa agora. Junte-se à nossa comunidade para receber suporte e ficar por dentro de todas as novidades.</p>
             <div class="welcome-modal-actions">
-                <a href="https://chat.whatsapp.com/BDar7X5gF3DF4JtoFhpKUs?mode=ems_copy_t" class="welcome-btn whatsapp-group-btn" target="_blank"><i class='bx bxl-whatsapp'></i> Entrar no Grupo</a>
-                <a href="https://wa.me/258867969698" class="welcome-btn whatsapp-support-btn" target="_blank">Contactar Suporte</a>
+                <a href="https://t.me/chivomoz" class="welcome-btn telegram-group-btn" target="_blank"><i class='bx bxl-telegram'></i> Entrar no Grupo</a>
+                <a href="https://t.me/Hchivomoz" class="welcome-btn telegram-support-btn" target="_blank"><i class='bx bxl-telegram'></i> Contactar Suporte</a>
             </div>
             <button id="close-welcome-btn" class="close-welcome-btn">Fechar</button>
         </div>
@@ -189,7 +188,6 @@
                 referralProfit: document.getElementById('referral-profit'),
                 bannerContainer: document.getElementById('banner-container'),
                 bannerCarousel: document.getElementById('banner-carousel'),
-                // Elementos do novo modal
                 welcomeModal: document.getElementById('welcome-modal'),
                 closeWelcomeBtn: document.getElementById('close-welcome-btn'),
             };
@@ -358,9 +356,12 @@
                 setTimeout(() => toast.remove(), 3400);
             };
 
-            // --- LÓGICA DO NOVO MODAL ---
             const showWelcomeModal = () => {
-                elements.welcomeModal.classList.add('show');
+                // Usando sessionStorage para mostrar o modal uma vez por sessão de navegação
+                if (!sessionStorage.getItem('welcomeModalShown')) {
+                    elements.welcomeModal.classList.add('show');
+                    sessionStorage.setItem('welcomeModalShown', 'true');
+                }
             };
 
             const hideWelcomeModal = () => {
@@ -369,13 +370,11 @@
 
             elements.closeWelcomeBtn.addEventListener('click', hideWelcomeModal);
             elements.welcomeModal.addEventListener('click', (event) => {
-                // Fecha o modal se o clique for no fundo escuro
                 if (event.target === elements.welcomeModal) {
                     hideWelcomeModal();
                 }
             });
             
-            // Inicia o processo de busca de dados e mostra o modal
             fetchDashboardData();
             showWelcomeModal();
         });
