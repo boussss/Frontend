@@ -118,6 +118,7 @@
         #toast-container { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); z-index: 200; }
         .toast { padding: 0.7rem 1.2rem; border-radius: 8px; color: #fff; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); opacity: 0; transform: translateY(20px); animation: slide-in-out 3.5s forwards; }
         .toast.success { background-color: var(--success-color); }
+        .toast.error { background-color: var(--error-color); }
         @keyframes slide-in-out { 0%, 100% { opacity: 0; transform: translateY(20px); } 15%, 85% { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
@@ -242,9 +243,25 @@
             };
 
             const copyInviteLink = () => {
-                navigator.clipboard.writeText(elements.inviteLinkInput.value)
-                    .then(() => showToast('Link copiado com sucesso!', 'success'))
-                    .catch(() => showToast('Falha ao copiar o link.', 'error'));
+                const link = elements.inviteLinkInput.value;
+
+                // Tenta a API de Clipboard moderna primeiro (requer HTTPS/localhost)
+                if (navigator.clipboard && window.isSecureContext) {
+                    navigator.clipboard.writeText(link)
+                        .then(() => showToast('Link copiado com sucesso!', 'success'))
+                        .catch(() => showToast('Falha ao copiar o link.', 'error'));
+                } else {
+                    // Fallback para ambientes não seguros (como file://) ou navegadores antigos
+                    try {
+                        const input = elements.inviteLinkInput;
+                        input.select(); // Seleciona o texto no input
+                        document.execCommand('copy'); // Comando de cópia do navegador
+                        input.setSelectionRange(0, 0); // Desseleciona o texto
+                        showToast('Link copiado com sucesso!', 'success');
+                    } catch (err) {
+                        showToast('Não foi possível copiar o link. Por favor, copie manualmente.', 'error');
+                    }
+                }
             };
 
             const shareInviteLink = () => {

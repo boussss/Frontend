@@ -98,49 +98,13 @@
 <body>
 
     <div class="main-container">
-        <header class="header">
-            <a href="dashboard.html" class="back-button"><i class='bx bx-chevron-left'></i></a>
-            <h1>Minha Carteira</h1>
-        </header>
-
-        <div class="card">
-            <div class="balances-grid">
-                <div class="balance-item"><h3>Carteira</h3><p id="wallet-balance">--</p></div>
-                <div class="balance-item"><h3>Bônus</h3><p id="bonus-balance" class="bonus">--</p></div>
-            </div>
-        </div>
-
-        <div class="wallet-actions">
-            <button class="action-btn deposit-btn" id="deposit-action-btn"><i class='bx bx-down-arrow-alt'></i> Depositar</button>
-            <button class="action-btn withdraw-btn" id="withdraw-action-btn"><i class='bx bx-up-arrow-alt'></i> Sacar</button>
-        </div>
-
+        <header class="header"><a href="dashboard.html" class="back-button"><i class='bx bx-chevron-left'></i></a><h1>Minha Carteira</h1></header>
+        <div class="card"><div class="balances-grid"><div class="balance-item"><h3>Carteira</h3><p id="wallet-balance">--</p></div><div class="balance-item"><h3>Bônus</h3><p id="bonus-balance" class="bonus">--</p></div></div></div>
+        <div class="wallet-actions"><button class="action-btn deposit-btn" id="deposit-action-btn"><i class='bx bx-down-arrow-alt'></i> Depositar</button><button class="action-btn withdraw-btn" id="withdraw-action-btn"><i class='bx bx-up-arrow-alt'></i> Sacar</button></div>
         <h3 class="section-title">Resumo da Carteira</h3>
-        <div class="card">
-            <ul class="wallet-summary-list">
-                <li class="summary-item">
-                    <span class="label">Total Depositado</span>
-                    <strong class="value positive" id="total-deposited">--</strong>
-                </li>
-                <li class="summary-item">
-                    <span class="label">Total Sacado</span>
-                    <strong class="value negative" id="total-withdrawn">--</strong>
-                </li>
-                 <li class="summary-item">
-                    <span class="label">Lucro Total</span>
-                    <strong class="value positive" id="total-profit">--</strong>
-                </li>
-            </ul>
-        </div>
-
+        <div class="card"><ul class="wallet-summary-list"><li class="summary-item"><span class="label">Total Depositado</span><strong class="value positive" id="total-deposited">--</strong></li><li class="summary-item"><span class="label">Total Sacado</span><strong class="value negative" id="total-withdrawn">--</strong></li><li class="summary-item"><span class="label">Lucro Total</span><strong class="value positive" id="total-profit">--</strong></li></ul></div>
         <h3 class="section-title">Atividade Recente</h3>
-        <div class="card">
-            <div id="transaction-list-container" class="transaction-list">
-                <p>Carregando atividade...</p>
-            </div>
-            <a href="history.html" class="view-history-btn">Ver Histórico Completo</a>
-        </div>
-
+        <div class="card"><div id="transaction-list-container" class="transaction-list"><p>Carregando atividade...</p></div><a href="history.html" class="view-history-btn">Ver Histórico Completo</a></div>
     </div>
 
     <div id="deposit-modal" class="modal">
@@ -150,10 +114,7 @@
                 <div id="deposit-step-1">
                     <p style="margin-bottom:0.5rem; font-size: 0.9rem;">Insira o valor que deseja depositar.</p>
                     <p style="margin-bottom:1rem; font-size: 0.8rem; color: var(--text-light);">Mínimo: 50 MT / Máximo: 25.000 MT</p>
-                    <form id="deposit-amount-form">
-                        <div class="input-group"><input type="number" id="deposit-amount-input" placeholder="Valor a depositar" required></div>
-                        <button type="submit" class="modal-submit-btn">Avançar</button>
-                    </form>
+                    <form id="deposit-amount-form"><div class="input-group"><input type="number" id="deposit-amount-input" placeholder="Valor a depositar" required></div><button type="submit" class="modal-submit-btn">Avançar</button></form>
                 </div>
                 <div id="deposit-step-2" class="hidden-step">
                     <p style="margin-bottom:1rem; font-size: 0.9rem;">Escolha a rede para o pagamento:</p>
@@ -162,10 +123,7 @@
                     <form id="deposit-proof-form" style="display: none;">
                         <hr style="margin: 1.2rem 0;">
                         <p style="margin-bottom:1rem; font-size: 0.9rem;">Após pagar, envie o comprovativo.</p>
-                        <div class="proof-options">
-                            <button type="button" class="proof-btn selected" data-proof-type="image">Imagem</button>
-                            <button type="button" class="proof-btn" data-proof-type="text">Texto (SMS)</button>
-                        </div>
+                        <div class="proof-options"><button type="button" class="proof-btn selected" data-proof-type="image">Imagem</button><button type="button" class="proof-btn" data-proof-type="text">Texto (SMS)</button></div>
                         <div id="proof-input-image" class="input-group"><input type="file" id="deposit-proof-file" accept="image/*"></div>
                         <div id="proof-input-text" class="input-group hidden-step"><textarea id="deposit-proof-text" rows="3" placeholder="Cole a mensagem de confirmação aqui"></textarea></div>
                         <button type="submit" class="modal-submit-btn">Enviar Comprovativo</button>
@@ -184,30 +142,16 @@
                     <div class="input-group"><input type="tel" id="withdraw-number" placeholder="Número" required></div>
                     <p style="margin-bottom:0.5rem; font-size: 0.8rem; color: var(--text-light);">Mínimo: 100 MT / Máximo: 25.000 MT</p>
                     <div class="input-group"><input type="number" id="withdraw-amount" placeholder="Valor a sacar" required></div>
-                    
-                    <div id="withdraw-fee-details" class="fee-details" style="display: none;">
-                        <div><span>Taxa de Saque (3%)</span><span id="withdraw-fee">--</span></div>
-                        <div><span>Total a ser Deduzido</span><span id="withdraw-total">--</span></div>
-                    </div>
-
+                    <div id="withdraw-fee-details" class="fee-details" style="display: none;"><div><span>Taxa de Saque (3%)</span><span id="withdraw-fee">--</span></div><div><span>Total a ser Deduzido</span><span id="withdraw-total">--</span></div></div>
                     <p style="font-size: 0.8rem; color: var(--text-light); margin-top: 1rem; margin-bottom: 0.5rem;">Selecione a rede:</p>
-                    <div class="network-options">
-                        <button type="button" class="network-btn" data-network="M-Pesa">M-Pesa</button>
-                        <button type="button" class="network-btn" data-network="Emola">Emola</button>
-                    </div>
+                    <div class="network-options"><button type="button" class="network-btn" data-network="M-Pesa">M-Pesa</button><button type="button" class="network-btn" data-network="Emola">Emola</button></div>
                     <button type="submit" class="modal-submit-btn">Solicitar Saque</button>
                 </form>
             </div>
         </div>
     </div>
 
-    <nav class="bottom-nav">
-        <a href="dashboard.html" class="nav-link"><i class='bx bxs-home'></i><span>Início</span></a>
-        <a href="plans.html" class="nav-link"><i class='bx bxs-rocket'></i><span>Planos</span></a>
-        <a href="wallet.html" class="nav-link active"><i class='bx bxs-wallet'></i><span>Carteira</span></a>
-        <a href="profile.html" class="nav-link"><i class='bx bxs-user'></i><span>Perfil</span></a>
-    </nav>
-
+    <nav class="bottom-nav"><a href="dashboard.html" class="nav-link"><i class='bx bxs-home'></i><span>Início</span></a><a href="plans.html" class="nav-link"><i class='bx bxs-rocket'></i><span>Planos</span></a><a href="wallet.html" class="nav-link active"><i class='bx bxs-wallet'></i><span>Carteira</span></a><a href="profile.html" class="nav-link"><i class='bx bxs-user'></i><span>Perfil</span></a></nav>
     <div id="toast-container"></div>
 
     <script>
@@ -293,13 +237,8 @@
                     const prefix = isPositive && t.amount > 0 ? '+' : '';
                     return `
                         <div class="transaction-item">
-                            <div class="transaction-info">
-                                <h4>${t.description}</h4>
-                                <p>${new Date(t.createdAt).toLocaleDateString('pt-BR')}</p>
-                            </div>
-                            <div class="transaction-right">
-                                <span class="transaction-amount ${amountClass}">${prefix}${formatCurrency(t.amount)}</span>
-                            </div>
+                            <div class="transaction-info"><h4>${t.description}</h4><p>${new Date(t.createdAt).toLocaleDateString('pt-BR')}</p></div>
+                            <div class="transaction-right"><span class="transaction-amount ${amountClass}">${prefix}${formatCurrency(t.amount)}</span></div>
                         </div>
                     `;
                 }).join('');
@@ -328,15 +267,24 @@
                 elements.withdrawForm.addEventListener('submit', handleWithdrawSubmit);
                 elements.withdrawAmountInput.addEventListener('input', calculateWithdrawalFee);
                 
+                // <<<<<<<<<<<<<<<<<<<< INÍCIO DA CORREÇÃO >>>>>>>>>>>>>>>>>>>>
                 document.getElementById('deposit-proof-form').addEventListener('click', (e) => {
                     if (e.target.matches('.proof-btn')) {
                         document.querySelector('.proof-btn.selected').classList.remove('selected');
                         e.target.classList.add('selected');
                         selectedProofType = e.target.dataset.proofType;
-                        elements.proofInputImage.style.display = selectedProofType === 'image' ? 'block' : 'none';
-                        elements.proofInputText.style.display = selectedProofType === 'text' ? 'none' : 'block';
+                        
+                        // Lógica corrigida para usar classes em vez de style.display
+                        if (selectedProofType === 'image') {
+                            elements.proofInputImage.classList.remove('hidden-step');
+                            elements.proofInputText.classList.add('hidden-step');
+                        } else { // 'text'
+                            elements.proofInputImage.classList.add('hidden-step');
+                            elements.proofInputText.classList.remove('hidden-step');
+                        }
                     }
                 });
+                // <<<<<<<<<<<<<<<<<<<< FIM DA CORREÇÃO >>>>>>>>>>>>>>>>>>>>
 
                 document.getElementById('withdraw-form').addEventListener('click', (e) => {
                     if (e.target.matches('.network-btn')) {
@@ -442,21 +390,20 @@
                 submitButton.disabled = true;
                 
                 try {
-                    let body;
-                    let endpoint = '/api/users/deposit';
+                    const formData = new FormData();
+                    formData.append('amount', depositAmount);
+                    
                     if (selectedProofType === 'image') {
                         const proofFile = elements.depositProofFile.files[0];
                         if (!proofFile) throw new Error('Por favor, selecione um arquivo de imagem.');
-                        body = new FormData();
-                        body.append('amount', depositAmount);
-                        body.append('proof', proofFile); 
+                        formData.append('proof', proofFile); 
                     } else { 
                         const proofText = elements.depositProofText.value;
                         if (!proofText) throw new Error('Por favor, cole o texto do comprovativo.');
-                        body = JSON.stringify({ amount: depositAmount, proofText: proofText });
+                        formData.append('proofText', proofText);
                     }
                     
-                    const result = await fetchAPI(endpoint, { method: 'POST', body });
+                    const result = await fetchAPI('/api/users/deposit', { method: 'POST', body: formData });
                     showToast(result.message, 'success');
                     closeModal(elements.depositModal);
                     loadWalletData();
@@ -502,7 +449,6 @@
                 setTimeout(() => toast.remove(), 3400);
             };
 
-            // INICIALIZAÇÃO
             loadWalletData();
             setupEventListeners();
         });

@@ -376,13 +376,17 @@
                 bonusUsageInfo.textContent = '';
                 investForm.reset();
                 
+                // <<<<<<<<<<<<<<<<<<<< INÍCIO DA CORREÇÃO >>>>>>>>>>>>>>>>>>>>
                 if (action === 'upgrade') {
                     investAmountGroup.style.display = 'none';
+                    investAmountInput.required = false; // Remove a validação para o campo invisível
                     modalConfirmBtn.textContent = 'Confirmar Upgrade';
                 } else {
                     investAmountGroup.style.display = 'block';
+                    investAmountInput.required = true; // Garante que a validação está ativa para novos investimentos
                     modalConfirmBtn.textContent = 'Confirmar Investimento';
                 }
+                // <<<<<<<<<<<<<<<<<<<< FIM DA CORREÇÃO >>>>>>>>>>>>>>>>>>>>
                 
                 investModal.classList.add('show');
             };
@@ -430,7 +434,11 @@
                         const body = { investedAmount: investAmountInput.value };
                         response = await fetchAPI(`/api/plans/${currentAction.planId}/activate`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body) });
                     } else { // Upgrade
-                        response = await fetchAPI(`/api/plans/upgrade/${currentAction.planId}`, { method: 'POST' });
+                        response = await fetchAPI(`/api/plans/upgrade/${currentAction.planId}`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({}) // Enviar corpo vazio para compatibilidade
+                        });
                     }
                     showToast(response.message, 'success');
                     investModal.classList.remove('show');

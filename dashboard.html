@@ -14,6 +14,7 @@
             --accent-yellow: #FFC107; --text-dark: #121826; --text-light: #6C757D;
             --card-bg: #FFFFFF; --border-color: #DEE2E6; --success-color: #28a745; --error-color: #dc3545;
             --whatsapp-color: #25D366;
+            --skeleton-base-color: #e2e8f0;
         }
         body { background-color: var(--bg-color); color: var(--text-dark); padding-bottom: 64px; }
         
@@ -29,17 +30,16 @@
         .profile-pic { position: absolute; top: 0; left: 0; object-fit: cover; opacity: 0; transition: opacity 0.3s; }
         
         .banner-carousel-container {
-            width: 100%;
-            overflow: hidden;
-            margin-bottom: 1.2rem;
-            border-radius: 10px;
+            position: relative; width: 100%; height: 0; padding-bottom: 56.25%;
+            margin-bottom: 1.2rem; border-radius: 10px; overflow: hidden;
+            background-color: var(--skeleton-base-color);
         }
         .banner-carousel {
-            display: flex;
-            transition: transform 0.7s ease-in-out;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; transition: transform 0.7s ease-in-out;
         }
-        .banner-carousel a { flex-shrink: 0; width: 100%; display: block; }
-        .banner-carousel img { width: 100%; height: auto; display: block; border-radius: 10px; }
+        .banner-carousel a { flex-shrink: 0; width: 100%; height: 100%; display: block; }
+        .banner-carousel img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
         .card { background-color: var(--card-bg); padding: 1.2rem; border-radius: 10px; box-shadow: 0 4px 20px rgba(0, 82, 255, 0.08); margin-bottom: 1.2rem; }
         
@@ -70,72 +70,17 @@
         .collect-ui-wrapper { display: flex; justify-content: space-between; align-items: center; gap: 1.5rem; }
         .plan-image-container { flex-shrink: 0; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        .plan-image-spin { width: 100px; height: 100px; animation: spin 1.44s linear infinite; } /* --- VELOCIDADE AUMENTADA AQUI --- */
-
-        .progress-button-container {
-            flex-grow: 1;
-            position: relative;
-            height: 120px;
-        }
-        .collect-button {
-            width: 100%;
-            height: 100%;
-            border: 2px solid var(--border-color);
-            background-color: var(--bg-color);
-            border-radius: 12px;
-            cursor: pointer;
-            position: relative;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
-        .progress-fill {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 0%;
-            background: linear-gradient(to top, var(--primary-blue), var(--secondary-blue));
-            transition: height 0.5s linear, background-color 0.5s;
-            z-index: 1;
-        }
-        .collect-button.ready .progress-fill {
-            background: linear-gradient(to top, #FFC107, #FFD54F);
-        }
-        .collect-button-content {
-            position: relative;
-            z-index: 2;
-            color: var(--text-dark);
-            transition: color 0.5s;
-        }
-        .collect-button.ready .collect-button-content {
-            color: var(--text-dark);
-        }
+        .plan-image-spin { width: 100px; height: 100px; animation: spin 1.44s linear infinite; }
+        
+        .progress-button-container { flex-grow: 1; position: relative; height: 120px; }
+        .collect-button { width: 100%; height: 100%; border: 2px solid var(--border-color); background-color: var(--bg-color); border-radius: 12px; cursor: pointer; position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .progress-fill { position: absolute; bottom: 0; left: 0; width: 100%; height: 0%; background: linear-gradient(to top, var(--primary-blue), var(--secondary-blue)); transition: height 0.5s linear, background-color 0.5s; z-index: 1; }
+        .collect-button.ready .progress-fill { background: linear-gradient(to top, #FFC107, #FFD54F); }
+        .collect-button-content { position: relative; z-index: 2; color: var(--text-dark); transition: color 0.5s; }
+        .collect-button.ready .collect-button-content { color: var(--text-dark); }
         .profit-display { font-size: 1.8rem; font-weight: 700; }
         .countdown-timer { font-size: 0.9rem; font-weight: 500; }
-
         .collect-button:disabled { cursor: not-allowed; }
-        
-        .money-animation-container {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            pointer-events: none;
-            z-index: 9999;
-            overflow: hidden;
-        }
-        @keyframes rise {
-            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
-            100% { transform: translateY(-100vh) rotate(720deg); opacity: 0; }
-        }
-        .money-particle {
-            position: absolute;
-            bottom: 0;
-            font-size: 1.5rem;
-            animation: rise 3s ease-in forwards;
-        }
         
         .no-plan-card { display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .no-plan-card i { font-size: 3.2rem; color: var(--border-color); margin-bottom: 0.8rem; }
@@ -144,43 +89,41 @@
 
         .section-title { font-size: 1rem; font-weight: 600; margin-bottom: 0.8rem; }
         
-        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); backdrop-filter: blur(5px); display: none; justify-content: center; align-items: center; z-index: 100; animation: fadeIn 0.3s; }
+        .skeleton { background-color: var(--skeleton-base-color); border-radius: 8px; animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+        .skeleton-banner { width: 100%; height: 0; padding-bottom: 56.25%; margin-bottom: 1.2rem; border-radius: 10px; }
+        .balance-item .skeleton-text { height: 0.7rem; width: 60%; }
+        .balance-item .skeleton-balance { height: 1.3rem; margin-top: 0.25rem; width: 80%; }
+        .skeleton-title { height: 1rem; width: 40%; margin: 1.5rem 0 0.8rem 0; }
+        .skeleton-stat-item { height: 64px; }
+        .skeleton-actions { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.2rem; }
+        .skeleton-action-item { height: 75px; }
+        .skeleton-plan-card { height: 250px; }
+
+        /* --- ESTILOS DO NOVO MODAL --- */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); backdrop-filter: blur(5px); display: none; justify-content: center; align-items: center; z-index: 1000; animation: fadeIn 0.3s; }
         .modal.show { display: flex; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
         .welcome-modal-content {
-            background-color: var(--card-bg);
-            width: 90%;
-            max-width: 400px;
-            padding: 1.5rem;
-            border-radius: 12px;
-            text-align: center;
+            background-color: var(--card-bg); width: 90%; max-width: 400px;
+            padding: 1.5rem; border-radius: 12px; text-align: center;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.2);
         }
         .welcome-modal-content h2 { font-size: 1.5rem; margin-bottom: 0.5rem; color: var(--primary-blue); }
-        .welcome-modal-content p { font-size: 0.9rem; color: var(--text-light); margin-bottom: 1.5rem; }
+        .welcome-modal-content p { font-size: 0.9rem; color: var(--text-light); margin-bottom: 1.5rem; line-height: 1.6; }
         .welcome-modal-actions { display: flex; flex-direction: column; gap: 0.8rem; }
         .welcome-btn {
-            padding: 0.8rem;
-            border-radius: 8px;
-            border: none;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
+            padding: 0.8rem; border-radius: 8px; border: none; font-size: 1rem;
+            font-weight: 600; cursor: pointer; text-decoration: none;
+            display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+            transition: transform 0.2s;
         }
+        .welcome-btn:hover { transform: scale(1.03); }
         .whatsapp-group-btn { background-color: var(--whatsapp-color); color: #fff; }
-        .whatsapp-support-btn { background-color: transparent; color: var(--text-muted); border: 1px solid var(--border-color); }
-        .close-welcome-btn {
-            margin-top: 1rem;
-            background: none;
-            border: none;
-            color: var(--text-light);
-            cursor: pointer;
-            font-size: 0.8rem;
+        .whatsapp-support-btn { background-color: var(--secondary-blue); color: #fff; }
+        #close-welcome-btn {
+            margin-top: 1rem; background: none; border: none;
+            color: var(--text-light); cursor: pointer; font-size: 0.8rem;
         }
 
         .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background-color: var(--card-bg); box-shadow: 0 -2px 15px rgba(0, 0, 0, 0.05); display: flex; justify-content: space-around; padding: 0.4rem 0; border-top-left-radius: 18px; border-top-right-radius: 18px; }
@@ -191,105 +134,36 @@
 
         #toast-container { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); z-index: 200; }
         .toast { padding: 0.7rem 1.2rem; border-radius: 8px; color: #fff; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); opacity: 0; transform: translateY(20px); animation: slide-in-out 3.5s forwards; }
+        @keyframes slide-in-out { 0%, 100% { opacity: 0; transform: translateY(20px); } 15%, 85% { opacity: 1; transform: translateY(0); } }
         .toast.success { background-color: var(--success-color); }
         .toast.error { background-color: var(--error-color); }
-        @keyframes slide-in-out { 0%, 100% { opacity: 0; transform: translateY(20px); } 15%, 85% { opacity: 1; transform: translateY(0); } }
+
     </style>
 </head>
 <body>
 
     <div class="main-container">
-        <header class="header">
-            <div class="greeting">
-                <h2 id="user-greeting">Olá!</h2>
-                <p>Bem-vindo de volta</p>
-            </div>
-            <a href="profile.html" class="profile-pic-container">
-                <div class="profile-icon"><i class='bx bxs-user-circle'></i></div>
-                <img src="" alt="Foto de Perfil" id="profile-pic-header" class="profile-pic">
-            </a>
-        </header>
-
+        <header class="header"><div class="greeting"><h2 id="user-greeting">Olá!</h2><p>Bem-vindo de volta</p></div><a href="profile.html" class="profile-pic-container"><div class="profile-icon"><i class='bx bxs-user-circle'></i></div><img src="" alt="Foto de Perfil" id="profile-pic-header" class="profile-pic"></a></header>
         <div id="dashboard-content">
-            <div id="skeleton-loader">
-                <div class="skeleton skeleton-banner"></div>
-                <div class="card"><div class="balances-grid"><div class="balance-item"><div class="skeleton skeleton-text" style="width: 50%;"></div><div class="skeleton skeleton-balance"></div></div><div class="balance-item"><div class="skeleton skeleton-text" style="width: 40%;"></div><div class="skeleton skeleton-balance"></div></div></div></div>
-                <div class="skeleton skeleton-title"></div>
-                <div class="card"><div class="stats-grid"><div class="skeleton skeleton-stat-item"></div><div class="skeleton skeleton-stat-item"></div><div class="skeleton skeleton-stat-item"></div><div class="skeleton skeleton-stat-item"></div></div></div>
-                <div class="skeleton skeleton-title"></div>
-                <div class="card"><div class="skeleton skeleton-plan-img"></div></div>
-            </div>
-
-            <div id="real-content" style="display: none;">
-                 <div class="banner-carousel-container" id="banner-container" style="display: none;">
-                    <div class="banner-carousel" id="banner-carousel"></div>
-                </div>
-
-                <div class="card balances-grid">
-                    <div class="balance-item"><h3>Carteira</h3><p id="wallet-balance"></p></div>
-                    <div class="balance-item"><h3>Bônus</h3><p id="bonus-balance" class="bonus"></p></div>
-                </div>
-
-                <h3 class="section-title">Minhas Estatísticas</h3>
-                <div class="card stats-grid">
-                    <div class="stat-item">
-                        <div class="stat-info"><p class="stat-value" id="today-profit">--</p><p class="stat-label">Lucro Hoje</p></div><i class='bx bx-sun stat-icon'></i>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-info"><p class="stat-value" id="yesterday-profit">--</p><p class="stat-label">Lucro Ontem</p></div><i class='bx bx-wind stat-icon'></i>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-info"><p class="stat-value" id="month-profit">--</p><p class="stat-label">Lucro Mês</p></div><i class='bx bx-calendar stat-icon'></i>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-info"><p class="stat-value" id="referral-profit">--</p><p class="stat-label">Ganhos c/ Convidados</p></div><i class='bx bx-group stat-icon'></i>
-                    </div>
-                </div>
-
-                <div class="card actions-grid">
-                    <a href="wallet.html" class="action-btn" data-action="deposit"><div class="action-icon"><i class='bx bx-down-arrow-alt'></i></div><span>Depositar</span></a>
-                    <a href="wallet.html" class="action-btn" data-action="withdraw"><div class="action-icon"><i class='bx bx-up-arrow-alt'></i></div><span>Sacar</span></a>
-                    <a href="invite.html" class="action-btn" data-action="invite"><div class="action-icon"><i class='bx bx-user-plus'></i></div><span>Convidar</span></a>
-                    <a href="history.html" class="action-btn" data-action="history"><div class="action-icon"><i class='bx bx-history'></i></div><span>Histórico</span></a>
-                </div>
-                
-                <h3 class="section-title">Meu Plano Ativo</h3>
-                <div id="active-plan-container"></div>
-            </div>
+            <div id="skeleton-loader"><div class="skeleton skeleton-banner"></div><div class="card"><div class="balances-grid"><div class="balance-item"><div class="skeleton skeleton-text"></div><div class="skeleton skeleton-balance"></div></div><div class="balance-item"><div class="skeleton skeleton-text"></div><div class="skeleton skeleton-balance"></div></div></div></div><div class="skeleton skeleton-title"></div><div class="card"><div class="stats-grid"><div class="skeleton skeleton-stat-item"></div><div class="skeleton skeleton-stat-item"></div><div class="skeleton skeleton-stat-item"></div><div class="skeleton skeleton-stat-item"></div></div></div><div class="card"><div class="skeleton-actions"><div class="skeleton skeleton-action-item"></div><div class="skeleton skeleton-action-item"></div><div class="skeleton skeleton-action-item"></div><div class="skeleton skeleton-action-item"></div></div></div><div class="skeleton skeleton-title"></div><div class="card skeleton-plan-card"></div></div>
+            <div id="real-content" style="display: none;"><div class="banner-carousel-container" id="banner-container" style="display: none;"><div class="banner-carousel" id="banner-carousel"></div></div><div class="card balances-grid"><div class="balance-item"><h3>Carteira</h3><p id="wallet-balance"></p></div><div class="balance-item"><h3>Bônus</h3><p id="bonus-balance" class="bonus"></p></div></div><h3 class="section-title">Minhas Estatísticas</h3><div class="card stats-grid"><div class="stat-item"><div class="stat-info"><p class="stat-value" id="today-profit">--</p><p class="stat-label">Lucro Hoje</p></div><i class='bx bx-sun stat-icon'></i></div><div class="stat-item"><div class="stat-info"><p class="stat-value" id="yesterday-profit">--</p><p class="stat-label">Lucro Ontem</p></div><i class='bx bx-wind stat-icon'></i></div><div class="stat-item"><div class="stat-info"><p class="stat-value" id="month-profit">--</p><p class="stat-label">Lucro Mês</p></div><i class='bx bx-calendar stat-icon'></i></div><div class="stat-item"><div class="stat-info"><p class="stat-value" id="referral-profit">--</p><p class="stat-label">Ganhos c/ Convidados</p></div><i class='bx bx-group stat-icon'></i></div></div><div class="card actions-grid"><a href="wallet.html" class="action-btn" data-action="deposit"><div class="action-icon"><i class='bx bx-down-arrow-alt'></i></div><span>Depositar</span></a><a href="wallet.html" class="action-btn" data-action="withdraw"><div class="action-icon"><i class='bx bx-up-arrow-alt'></i></div><span>Sacar</span></a><a href="invite.html" class="action-btn" data-action="invite"><div class="action-icon"><i class='bx bx-user-plus'></i></div><span>Convidar</span></a><a href="history.html" class="action-btn" data-action="history"><div class="action-icon"><i class='bx bx-history'></i></div><span>Histórico</span></a></div><h3 class="section-title">Meu Plano Ativo</h3><div id="active-plan-container"></div></div>
         </div>
     </div>
 
-    <div id="money-animation-container"></div>
-
+    <!-- HTML DO NOVO MODAL -->
     <div id="welcome-modal" class="modal">
         <div class="welcome-modal-content">
             <h2>Bem-vindo à Chivo!</h2>
-            <p>Sua jornada para o sucesso financeiro começa agora. Junte-se à nossa comunidade e fique por dentro de todas as novidades.</p>
+            <p>Sua jornada para o sucesso financeiro começa agora. Junte-se à nossa comunidade para receber suporte e ficar por dentro de todas as novidades.</p>
             <div class="welcome-modal-actions">
-                <a href="https://chat.whatsapp.com/SEU_LINK_DE_GRUPO_AQUI" class="welcome-btn whatsapp-group-btn" target="_blank"><i class='bx bxl-whatsapp'></i> Entrar no Grupo</a>
-                <a href="https://wa.me/NUMERO_DO_ADMIN_AQUI" class="welcome-btn whatsapp-support-btn" target="_blank">Contactar Suporte</a>
+                <a href="https://chat.whatsapp.com/BDar7X5gF3DF4JtoFhpKUs?mode=ems_copy_t" class="welcome-btn whatsapp-group-btn" target="_blank"><i class='bx bxl-whatsapp'></i> Entrar no Grupo</a>
+                <a href="https://wa.me/258867969698" class="welcome-btn whatsapp-support-btn" target="_blank">Contactar Suporte</a>
             </div>
             <button id="close-welcome-btn" class="close-welcome-btn">Fechar</button>
         </div>
     </div>
 
-    <nav class="bottom-nav">
-        <a href="dashboard.html" class="nav-link active"><i class='bx bxs-home'></i><span>Início</span></a>
-        <a href="plans.html" class="nav-link"><i class='bx bxs-rocket'></i><span>Planos</span></a>
-        <a href="wallet.html" class="nav-link"><i class='bx bxs-wallet'></i><span>Carteira</span></a>
-        <a href="profile.html" class="nav-link"><i class='bx bxs-user'></i><span>Perfil</span></a>
-    </nav>
-
-    <div id="success-modal" class="modal">
-        <div class="success-animation">
-            <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
-                <circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
-                <path class="checkmark-stem" d="M14.1 27.2l7.1 7.2 16.7-16.8" fill="none"/>
-                <path class="checkmark-kick" d="M14.1 27.2l7.1 7.2 16.7-16.8" fill="none" style="display:none;"/>
-            </svg>
-        </div>
-    </div>
-
+    <nav class="bottom-nav"><a href="dashboard.html" class="nav-link active"><i class='bx bxs-home'></i><span>Início</span></a><a href="plans.html" class="nav-link"><i class='bx bxs-rocket'></i><span>Planos</span></a><a href="wallet.html" class="nav-link"><i class='bx bxs-wallet'></i><span>Carteira</span></a><a href="profile.html" class="nav-link"><i class='bx bxs-user'></i><span>Perfil</span></a></nav>
     <div id="toast-container"></div>
 
     <script>
@@ -302,7 +176,6 @@
 
             const elements = {
                 activePlanContainer: document.getElementById('active-plan-container'),
-                successModal: document.getElementById('success-modal'),
                 toastContainer: document.getElementById('toast-container'),
                 userGreeting: document.getElementById('user-greeting'),
                 profilePicHeader: document.getElementById('profile-pic-header'),
@@ -316,6 +189,7 @@
                 referralProfit: document.getElementById('referral-profit'),
                 bannerContainer: document.getElementById('banner-container'),
                 bannerCarousel: document.getElementById('banner-carousel'),
+                // Elementos do novo modal
                 welcomeModal: document.getElementById('welcome-modal'),
                 closeWelcomeBtn: document.getElementById('close-welcome-btn'),
             };
@@ -384,36 +258,13 @@
                 if (planInstance) {
                     const plan = planInstance.plan;
                     elements.activePlanContainer.innerHTML = `
-                        <div class="card collection-station">
-                            <div class="station-header">
-                                <h3>${plan.name}</h3>
-                                <p>Próxima coleta disponível em breve</p>
-                            </div>
-                            <div class="collect-ui-wrapper">
-                                <div class="plan-image-container">
-                                    <img src="${plan.imageUrl || ''}" alt="${plan.name}" class="plan-image-spin">
-                                </div>
-                                <div class="progress-button-container">
-                                    <button id="collect-btn" class="collect-button" disabled>
-                                        <div id="progress-fill" class="progress-fill"></div>
-                                        <div class="collect-button-content">
-                                            <span id="dynamic-profit-display" class="profit-display">--</span>
-                                            <span id="countdown-timer" class="countdown-timer">Calculando...</span>
-                                        </div>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+                        <div class="card collection-station"><div class="station-header"><h3>${plan.name}</h3><p>Próxima coleta disponível em breve</p></div><div class="collect-ui-wrapper"><div class="plan-image-container"><img src="${plan.imageUrl || ''}" alt="${plan.name}" class="plan-image-spin"></div><div class="progress-button-container"><button id="collect-btn" class="collect-button" disabled><div id="progress-fill" class="progress-fill"></div><div class="collect-button-content"><span id="dynamic-profit-display" class="profit-display">--</span><span id="countdown-timer" class="countdown-timer">Calculando...</span></div></button></div></div></div>
                     `;
                     document.getElementById('collect-btn').addEventListener('click', handleCollectProfit);
                     setupCountdownAndProfit(planInstance);
                 } else {
                     elements.activePlanContainer.innerHTML = `
-                        <div class="card no-plan-card">
-                            <i class='bx bxs-server'></i>
-                            <p>Você não tem um plano ativo. Comece a investir agora!</p>
-                            <a href="plans.html">Ver Planos de Investimento</a>
-                        </div>
+                        <div class="card no-plan-card"><i class='bx bxs-server'></i><p>Você não tem um plano ativo. Comece a investir agora!</p><a href="plans.html">Ver Planos de Investimento</a></div>
                     `;
                 }
             };
@@ -425,15 +276,34 @@
                 const profitEl = document.getElementById('dynamic-profit-display');
                 const collectBtn = document.getElementById('collect-btn');
                 const progressFill = document.getElementById('progress-fill');
+
+                let isFirstCollection = true;
+                let lastActionTime = 0;
+
+                if (planInstance.lastCollectedDate) {
+                    const lastCollectionDateObj = new Date(planInstance.lastCollectedDate);
+                    if (!isNaN(lastCollectionDateObj.getTime())) {
+                        isFirstCollection = false;
+                        lastActionTime = lastCollectionDateObj.getTime();
+                    }
+                }
                 
-                const lastCollectedTime = new Date(planInstance.lastCollectedDate).getTime();
-                const nextCollectionTime = lastCollectedTime + (24 * 60 * 60 * 1000);
+                if (isFirstCollection) {
+                    countdownEl.textContent = "Coleta Pronta!";
+                    profitEl.textContent = `+ ${formatCurrency(planInstance.dailyProfit, 'MZN')}`;
+                    progressFill.style.height = '100%';
+                    collectBtn.disabled = false;
+                    collectBtn.classList.add('ready');
+                    return;
+                }
+
+                const nextCollectionTime = lastActionTime + (24 * 60 * 60 * 1000);
                 const totalDuration = 24 * 60 * 60 * 1000;
                 
                 countdownInterval = setInterval(() => {
                     const now = Date.now();
                     const distance = nextCollectionTime - now;
-                    const elapsedTime = now - lastCollectedTime;
+                    const elapsedTime = now - lastActionTime; 
                     const progress = Math.min(elapsedTime / totalDuration, 1);
                     const accruedProfit = planInstance.dailyProfit * progress;
 
@@ -455,33 +325,23 @@
                     countdownEl.textContent = `${h}:${m}:${s}`;
                 }, 1000);
             };
-
-            const triggerMoneyAnimation = () => {
-                const container = document.getElementById('money-animation-container');
-                for (let i = 0; i < 15; i++) {
-                    const particle = document.createElement('div');
-                    particle.className = 'money-particle';
-                    particle.innerHTML = '💰';
-                    particle.style.left = `${Math.random() * 100}vw`;
-                    particle.style.animationDelay = `${Math.random() * 2}s`;
-                    particle.style.fontSize = `${1 + Math.random()}rem`;
-                    container.appendChild(particle);
-                    setTimeout(() => particle.remove(), 3000);
-                }
-            };
             
             const handleCollectProfit = async () => {
                 const collectBtn = document.getElementById('collect-btn');
-                if (collectBtn) { collectBtn.disabled = true; }
+                if (collectBtn) { 
+                    collectBtn.disabled = true;
+                    collectBtn.querySelector('.countdown-timer').textContent = 'Coletando...';
+                }
                 try {
-                    await fetchAPI('/api/plans/collect', { method: 'POST' });
-                    triggerMoneyAnimation();
-                    setTimeout(() => {
-                        fetchDashboardData();
-                    }, 1500);
+                    const result = await fetchAPI('/api/plans/collect', { method: 'POST' });
+                    showToast(result.message, 'success');
+                    fetchDashboardData();
                 } catch (error) {
                     showToast(error.message, 'error');
-                    if (collectBtn) { collectBtn.disabled = false; }
+                    if (collectBtn) { 
+                        collectBtn.disabled = false; 
+                        collectBtn.querySelector('.countdown-timer').textContent = 'Tente Novamente';
+                    }
                 }
             };
             
@@ -492,24 +352,30 @@
 
             const showToast = (message, type = 'success') => {
                 const toast = document.createElement('div');
-                toast.style.backgroundColor = type === 'error' ? 'var(--error-color)' : 'var(--success-color)';
-                toast.className = `toast`;
+                toast.className = `toast ${type}`;
                 toast.textContent = message;
                 elements.toastContainer.appendChild(toast);
                 setTimeout(() => toast.remove(), 3400);
             };
 
+            // --- LÓGICA DO NOVO MODAL ---
             const showWelcomeModal = () => {
-                if (!sessionStorage.getItem('welcomeModalShown')) {
-                    elements.welcomeModal.classList.add('show');
-                    sessionStorage.setItem('welcomeModalShown', 'true');
-                }
+                elements.welcomeModal.classList.add('show');
             };
 
-            elements.closeWelcomeBtn.addEventListener('click', () => {
+            const hideWelcomeModal = () => {
                 elements.welcomeModal.classList.remove('show');
+            };
+
+            elements.closeWelcomeBtn.addEventListener('click', hideWelcomeModal);
+            elements.welcomeModal.addEventListener('click', (event) => {
+                // Fecha o modal se o clique for no fundo escuro
+                if (event.target === elements.welcomeModal) {
+                    hideWelcomeModal();
+                }
             });
             
+            // Inicia o processo de busca de dados e mostra o modal
             fetchDashboardData();
             showWelcomeModal();
         });
