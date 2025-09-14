@@ -10,6 +10,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- NOVO: Iconify para ícones de bandeira -->
+    <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
 
     <style>
         /* CSS Reset e Configurações Globais */
@@ -91,8 +93,31 @@
         .info-text { color: var(--text-light); margin-bottom: 1.5rem; font-size: 0.9rem; }
         #login-form { width: 100%; display: flex; flex-direction: column; gap: 0.8rem; }
         .input-group { position: relative; }
-        .input-group i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); font-size: 1.1rem; color: #aaa; }
+        .input-group i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); font-size: 1.1rem; color: #aaa; z-index: 1; }
         
+        /* NOVO: Estilos para o prefixo do telefone e ícone de bandeira */
+        .input-group .phone-prefix-display {
+            position: absolute;
+            left: 45px; /* Ajustado para ficar após o ícone do telefone */
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.9rem;
+            color: var(--text-dark);
+            font-weight: 500;
+            pointer-events: none; /* Não interage com cliques */
+            z-index: 2; /* Garante que está acima do input */
+            white-space: nowrap; /* Impede quebra de linha */
+            display: flex; /* Para alinhar bandeira e texto */
+            align-items: center;
+            gap: 5px; /* Espaço entre bandeira e +258 */
+        }
+        /* NOVO: Estilo para o ícone Iconify da bandeira */
+        .input-group .phone-prefix-display iconify-icon {
+            width: 1.2rem; /* Define a largura para o ícone Iconify */
+            height: 1.2rem; /* Define a altura para o ícone Iconify */
+            vertical-align: middle; /* Alinha verticalmente com o texto */
+        }
+
         .input-field {
             width: 100%; padding: 0.8rem 0.8rem 0.8rem 2.5rem; background-color: var(--input-bg);
             border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-dark);
@@ -103,6 +128,11 @@
         input[type=number]::-webkit-inner-spin-button, 
         input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         input[type=number] { -moz-appearance: textfield; }
+
+        /* NOVO: Padding específico para o campo de telefone no login */
+        #phone.input-field {
+            padding-left: 110px; /* Ajustado para acomodar ícone do telefone, ícone da bandeira e "+258" */
+        }
 
         .submit-btn {
             width: 100%; padding: 0.9rem; background: linear-gradient(90deg, var(--secondary-blue), var(--primary-blue));
@@ -166,65 +196,6 @@
         }
         /* FIM: Estilos para a barra de feedback no topo */
 
-        /* Estilos para o aviso de segurança */
-        #security-notice {
-            background-color: #fff3cd; /* Cor amarela clara */
-            color: #856404; /* Texto marrom escuro */
-            border: 1px solid #ffeeba; /* Borda amarela */
-            border-radius: 10px;
-            padding: 1rem;
-            margin-bottom: 1.5rem;
-            display: flex; /* ATUALIZADO: para ser sempre flex */
-            align-items: flex-start;
-            gap: 10px;
-            text-align: left;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        }
-        #security-notice .notice-icon {
-            font-size: 1.5rem;
-            color: var(--warning-color);
-            flex-shrink: 0;
-        }
-        #security-notice .notice-content {
-            flex-grow: 1;
-        }
-        #security-notice .notice-content p {
-            font-size: 0.85rem;
-            line-height: 1.4;
-            color: #856404;
-            margin-bottom: 0.5rem;
-        }
-        #security-notice .contact-links {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 10px;
-        }
-        #security-notice .contact-links a {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            text-decoration: none;
-            font-weight: 600;
-            padding: 5px 10px;
-            border-radius: 5px;
-            font-size: 0.8rem;
-            transition: background-color 0.2s;
-        }
-        #security-notice .contact-links .whatsapp-link {
-            background-color: var(--whatsapp-color);
-            color: #fff;
-        }
-        #security-notice .contact-links .telegram-link {
-            background-color: var(--telegram-color);
-            color: #fff;
-        }
-        #security-notice .contact-links .whatsapp-link:hover { background-color: #1ed760; }
-        #security-notice .contact-links .telegram-link:hover { background-color: #007bb6; }
-
-        /* REMOVIDO: Estilos para close-notice-btn */
-        /* FIM: Estilos para o aviso de segurança */
-
     </style>
 </head>
 <body>
@@ -244,29 +215,12 @@
         <h2 class="brand-logo">Chi<span>vo</span></h2>
         <p class="info-text">Bem-vindo de volta! Acesse sua conta para continuar sua jornada.</p>
 
-        <!-- NOVO: Aviso de Segurança sobre PIN Redefinido -->
-        <div id="security-notice"> <!-- ATUALIZADO: removido style="display: none;" -->
-            <i class='bx bx-shield-exclamation notice-icon'></i>
-            <div class="notice-content">
-                <p><strong>Atenção:</strong> Por motivos de segurança, todos os PINs dos usuários foram redefinidos.</p>
-                <p>Você não conseguirá fazer login com seu PIN antigo. Para obter seu novo PIN e continuar usando a plataforma, por favor, entre em contato com o administrador através dos seguintes canais:</p>
-                <div class="contact-links">
-                    <a href="https://wa.me/258867969698" target="_blank" rel="noopener noreferrer" class="whatsapp-link">
-                        <i class='bx bxl-whatsapp'></i> WhatsApp
-                    </a>
-                    <a href="https://t.me/Hchivomoz" target="_blank" rel="noopener noreferrer" class="telegram-link">
-                        <i class='bx bxl-telegram'></i> Telegram
-                    </a>
-                </div>
-            </div>
-            <!-- REMOVIDO: <button class="close-notice-btn" id="close-security-notice"><i class='bx bx-x'></i></button> -->
-        </div>
-        <!-- FIM: Aviso de Segurança -->
-
         <form id="login-form">
             <div class="input-group">
                 <i class='bx bx-phone'></i>
-                <input type="tel" id="phone" class="input-field" placeholder="Número de Telefone" required>
+                <!-- NOVO: Adicionado span com ícone de bandeira e prefixo +258 -->
+                <span class="phone-prefix-display"><iconify-icon icon="circle-flags:mz"></iconify-icon> +258</span>
+                <input type="tel" id="phone" class="input-field" placeholder="8X XXX XXXX" required maxlength="9">
             </div>
             <div class="input-group">
                 <i class='bx bx-key'></i>
@@ -294,8 +248,6 @@
         const spinner = document.getElementById('spinner');
         const tickerContent = document.getElementById('ticker-content');
         const feedbackBarContainer = document.getElementById('feedback-bar-container');
-        const securityNotice = document.getElementById('security-notice'); // NOVO ELEMENTO
-        // REMOVIDO: const closeSecurityNoticeBtn = document.getElementById('close-security-notice');
 
         function setLoading(isLoading) {
             submitButton.disabled = isLoading;
@@ -340,8 +292,22 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             generateTickerNotifications();
-            // REMOVIDO: Lógica de localStorage e botão de fechar para o aviso de segurança
-            // securityNotice.style.display = 'flex'; já será padrão no CSS ou não será manipulado pelo JS
+
+            // NOVO: Lógica para o campo de telefone - Identica a de registro
+            phoneInput.addEventListener('input', () => {
+                let currentValue = phoneInput.value.replace(/\D/g, ''); // Remove tudo que não for dígito
+                if (currentValue.length > 9) {
+                    currentValue = currentValue.substring(0, 9);
+                }
+                phoneInput.value = currentValue;
+            });
+
+            phoneInput.addEventListener('keydown', (e) => {
+                if (e.key === ' ') {
+                    e.preventDefault();
+                }
+            });
+            // FIM NOVO: Lógica para o campo de telefone
         });
 
         loginForm.addEventListener('submit', async (event) => {
@@ -349,14 +315,23 @@
             feedbackBarContainer.innerHTML = ''; 
             setLoading(true);
 
-            const phone = phoneInput.value;
+            const rawPhone = phoneInput.value.trim(); // Pega o valor como o usuário digitou (só dígitos)
             const pin = pinInput.value;
             
+            // NOVO: Validação do formato do telefone - Identica a de registro
+            const fullPhoneNumber = `+258${rawPhone}`;
+            if (!/^\+258\d{9}$/.test(fullPhoneNumber)) {
+                showFeedbackBar('Por favor, insira um número de telefone válido de Moçambique (9 dígitos após +258).', 'error');
+                setLoading(false);
+                return;
+            }
+
             try {
+                // Envia o número completo para o backend
                 const response = await fetch(`${API_URL}/api/users/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ phone, pin }),
+                    body: JSON.stringify({ phone: fullPhoneNumber, pin }),
                 });
                 
                 const data = await response.json();
@@ -366,7 +341,6 @@
                 }
                 
                 localStorage.setItem('chivo-token', data.token);
-                // REMOVIDO: Lógica para ocultar o aviso de segurança após login
                 window.location.href = 'dashboard.html';
 
             } catch (error) {

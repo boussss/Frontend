@@ -32,12 +32,66 @@
             box-shadow: 0 4px 20px rgba(0, 82, 255, 0.08); margin-bottom: 1.2rem;
         }
 
-        .invite-card h2 { font-size: 1.3rem; text-align: center; margin-bottom: 0.8rem; }
-        .invite-benefits { list-style: none; margin-bottom: 1.2rem; font-size: 0.9rem; }
-        .invite-benefits li { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.4rem; }
-        .invite-benefits i { font-size: 1.3rem; color: var(--success-color); }
-        
-        .invite-link-group { display: flex; flex-direction: column; gap: 0.8rem; }
+        .invite-card h2 { font-size: 1.3rem; text-align: center; margin-bottom: 0.8rem; line-height: 1.4; }
+        /* NOVO: Estilo para destaque de campanha */
+        .invite-card .campaign-highlight {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--primary-blue);
+            margin-bottom: 1.2rem;
+            text-align: center;
+            line-height: 1.4;
+        }
+        .invite-card .campaign-highlight strong {
+            color: var(--accent-yellow);
+        }
+        .invite-card .campaign-info {
+            font-size: 0.9rem;
+            margin-bottom: 1.2rem;
+            text-align: left;
+            line-height: 1.5;
+        }
+        .invite-card .campaign-info strong {
+            color: var(--text-dark);
+            font-weight: 600;
+        }
+        .invite-card .campaign-info ul {
+            list-style: none;
+            padding-left: 0;
+            margin-top: 0.8rem;
+        }
+        .invite-card .campaign-info ul li {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.6rem;
+            margin-bottom: 0.6rem;
+        }
+        .invite-card .campaign-info ul li i {
+            font-size: 1.3rem;
+            color: var(--success-color);
+            flex-shrink: 0;
+            margin-top: 2px; /* Pequeno ajuste para alinhamento visual */
+        }
+        .invite-card .campaign-info ul li span {
+            flex-grow: 1;
+        }
+        .invite-card .campaign-info .example-text {
+            font-style: italic;
+            color: var(--text-light);
+            margin-top: 1rem;
+            margin-bottom: 1rem;
+        }
+        .invite-card .campaign-info .campaign-duration {
+            text-align: center;
+            font-weight: 600;
+            color: var(--error-color); /* Destacar duração */
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px dashed var(--border-color);
+        }
+
+
+        .invite-link-group { display: flex; flex-direction: column; gap: 0.8rem; margin-top: 1.5rem; }
         .invite-link-group input {
             width: 100%; padding: 0.7rem; border: 1px solid var(--border-color);
             border-radius: 8px; background-color: #f8f9fa; text-align: center; font-size: 0.9rem;
@@ -131,11 +185,27 @@
         </header>
 
         <div class="card invite-card">
-            <h2>Convide e Ganhe</h2>
-            <ul class="invite-benefits">
-                <li><i class='bx bxs-badge-check'></i> <span>Ganhe <strong>30%</strong> do valor do plano ativado.</span></li>
-                <li><i class='bx bxs-badge-check'></i> <span>Receba <strong>15%</strong> dos lucros diários de cada convidado ativo.</span></li>
-            </ul>
+            <h2>📢 🚀 NOVA CAMPANHA DE CONVITES – Bônus Extra Chivo! 🚀</h2>
+            <p class="campaign-highlight">Atenção investidores, a Chivo lançou uma super oportunidade para quem quer aumentar os seus ganhos de verdade!</p>
+            
+            <div class="campaign-info">
+                <p>👉 Funciona assim:</p>
+                <ul>
+                    <li><i class='bx bxs-badge-check'></i> <span>Por cada <strong>10 novos investidores ativos</strong> que você trouxer (em qualquer plano):</span></li>
+                    <li><i class='bx bxs-check'></i> <span>Ganha os 30% imediatos na ativação do plano (normal)</span></li>
+                    <li><i class='bx bxs-check'></i> <span>Ganha os 15% de lucros diários (normal)</span></li>
+                    <li><i class='bx bxs-dollar-circle'></i> <span>E MAIS: Recebe <strong>1.000 MT</strong> de prêmio direto na sua carteira! 🎁💸</span></li>
+                </ul>
+
+                <p class="example-text">📌 Exemplo:</p>
+                <p class="example-text">Se você trouxer 10 investidores → 1.000 MT de prêmio extra.</p>
+                <p class="example-text">Se trouxer 50 investidores → 5.000 MT de prêmios extras!</p>
+                <p class="example-text">E isso soma com as comissões normais que você já recebe!</p>
+
+                <p style="text-align: center; margin-top: 1.5rem; font-weight: 600;">🔥 Ou seja, quem trabalhar mais nessa campanha pode transformar convites em ganhos massivos e imediatos!</p>
+                <p class="campaign-duration">⏳ Campanha válida até dia 20.</p>
+            </div>
+
             <div class="invite-link-group">
                 <input type="text" id="invite-link-input" value="Carregando seu link..." readonly>
                 <div class="invite-actions">

@@ -43,6 +43,56 @@
 
         .card { background-color: var(--card-bg); padding: 1.2rem; border-radius: 10px; box-shadow: 0 4px 20px rgba(0, 82, 255, 0.08); margin-bottom: 1.2rem; }
         
+        /* NOVO: Estilos para o card de incentivo de convite */
+        .invite-incentive-card {
+            background: linear-gradient(135deg, var(--primary-blue), var(--secondary-blue));
+            color: #fff;
+            padding: 1.5rem;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 1.2rem;
+            box-shadow: 0 6px 20px rgba(0, 82, 255, 0.25);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .invite-incentive-card .incentive-icon {
+            font-size: 3rem;
+            margin-bottom: 0.8rem;
+            color: var(--accent-yellow); /* Ícone em amarelo para destaque */
+        }
+        .invite-incentive-card .incentive-text {
+            font-size: 1.1rem;
+            font-weight: 500;
+            margin-bottom: 1.2rem;
+            line-height: 1.4;
+        }
+        .invite-incentive-card .incentive-text .highlight-amount {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--accent-yellow); /* Valor em amarelo para destaque */
+        }
+        .invite-incentive-card .invite-now-btn {
+            background-color: var(--accent-yellow);
+            color: var(--text-dark);
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .invite-incentive-card .invite-now-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(255, 193, 7, 0.4);
+        }
+        /* FIM NOVO: Estilos para o card de incentivo de convite */
+
         .balances-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
         .balance-item h3 { font-size: 0.7rem; color: var(--text-light); margin-bottom: 0.25rem; }
         .balance-item p { font-size: 1.3rem; font-weight: 600; color: var(--text-dark); }
@@ -169,7 +219,19 @@
         <header class="header"><div class="greeting"><h2 id="user-greeting">Olá!</h2><p>Bem-vindo de volta</p></div><a href="profile.html" class="profile-pic-container"><div class="profile-icon"><i class='bx bxs-user-circle'></i></div><img src="" alt="Foto de Perfil" id="profile-pic-header" class="profile-pic"></a></header>
         <div id="dashboard-content">
             <div id="skeleton-loader"><div class="skeleton skeleton-banner"></div><div class="card"><div class="balances-grid"><div class="balance-item"><div class="skeleton skeleton-text"></div><div class="skeleton skeleton-balance"></div></div><div class="balance-item"><div class="skeleton skeleton-text"></div><div class="skeleton skeleton-balance"></div></div></div></div><div class="skeleton skeleton-title"></div><div class="card"><div class="stats-grid"><div class="skeleton skeleton-stat-item"></div><div class="skeleton skeleton-stat-item"></div><div class="skeleton skeleton-stat-item"></div><div class="skeleton skeleton-stat-item"></div></div></div><div class="card"><div class="skeleton-actions"><div class="skeleton skeleton-action-item"></div><div class="skeleton skeleton-action-item"></div><div class="skeleton skeleton-action-item"></div><div class="skeleton skeleton-action-item"></div></div></div><div class="skeleton skeleton-title"></div><div class="card skeleton-plan-card"></div></div>
-            <div id="real-content" style="display: none;"><div class="banner-carousel-container" id="banner-container" style="display: none;"><div class="banner-carousel" id="banner-carousel"></div></div><div class="card balances-grid"><div class="balance-item"><h3>Carteira</h3><p id="wallet-balance"></p></div><div class="balance-item"><h3>Bônus</h3><p id="bonus-balance" class="bonus"></p></div></div><h3 class="section-title">Minhas Estatísticas</h3><div class="card stats-grid"><div class="stat-item"><div class="stat-info"><p class="stat-value" id="today-profit">--</p><p class="stat-label">Lucro Hoje</p></div><i class='bx bx-sun stat-icon'></i></div><div class="stat-item"><div class="stat-info"><p class="stat-value" id="yesterday-profit">--</p><p class="stat-label">Lucro Ontem</p></div><i class='bx bx-wind stat-icon'></i></div><div class="stat-item"><div class="stat-info"><p class="stat-value" id="month-profit">--</p><p class="stat-label">Lucro Mês</p></div><i class='bx bx-calendar stat-icon'></i></div><div class="stat-item"><div class="stat-info"><p class="stat-value" id="referral-profit">--</p><p class="stat-label">Ganhos c/ Convidados</p></div><i class='bx bx-group stat-icon'></i></div></div><div class="card actions-grid"><a href="wallet.html" class="action-btn" data-action="deposit"><div class="action-icon"><i class='bx bx-down-arrow-alt'></i></div><span>Depositar</span></a><a href="wallet.html" class="action-btn" data-action="withdraw"><div class="action-icon"><i class='bx bx-up-arrow-alt'></i></div><span>Sacar</span></a><a href="invite.html" class="action-btn" data-action="invite"><div class="action-icon"><i class='bx bx-user-plus'></i></div><span>Convidar</span></a><a href="lottery.html" class="action-btn" data-action="lottery"><div class="action-icon" style="background-color: var(--primary-blue);"><i class='bx bx-gift'></i></div><span>Sorteio</span></a><a href="history.html" class="action-btn" data-action="history"><div class="action-icon"><i class='bx bx-history'></i></div><span>Histórico</span></a></div><h3 class="section-title">Meu Plano Ativo</h3><div id="active-plan-container"></div></div>
+            <div id="real-content" style="display: none;"><div class="banner-carousel-container" id="banner-container" style="display: none;"><div class="banner-carousel" id="banner-carousel"></div></div>
+                
+                <!-- NOVO: Card de Incentivo de Convite -->
+                <div class="invite-incentive-card">
+                    <i class='bx bx-gift incentive-icon'></i>
+                    <p class="incentive-text">Ganhe até <span class="highlight-amount">1000 MT</span> por dia convidando amigos!</p>
+                    <button class="invite-now-btn" onclick="window.location.href='invite.html'">
+                        <i class='bx bx-user-plus'></i> Convidar Agora
+                    </button>
+                </div>
+                <!-- FIM NOVO: Card de Incentivo de Convite -->
+
+                <div class="card balances-grid"><div class="balance-item"><h3>Carteira</h3><p id="wallet-balance"></p></div><div class="balance-item"><h3>Bônus</h3><p id="bonus-balance" class="bonus"></p></div></div><h3 class="section-title">Minhas Estatísticas</h3><div class="card stats-grid"><div class="stat-item"><div class="stat-info"><p class="stat-value" id="today-profit">--</p><p class="stat-label">Lucro Hoje</p></div><i class='bx bx-sun stat-icon'></i></div><div class="stat-item"><div class="stat-info"><p class="stat-value" id="yesterday-profit">--</p><p class="stat-label">Lucro Ontem</p></div><i class='bx bx-wind stat-icon'></i></div><div class="stat-item"><div class="stat-info"><p class="stat-value" id="month-profit">--</p><p class="stat-label">Lucro Mês</p></div><i class='bx bx-calendar stat-icon'></i></div><div class="stat-item"><div class="stat-info"><p class="stat-value" id="referral-profit">--</p><p class="stat-label">Ganhos c/ Convidados</p></div><i class='bx bx-group stat-icon'></i></div></div><div class="card actions-grid"><a href="wallet.html" class="action-btn" data-action="deposit"><div class="action-icon"><i class='bx bx-down-arrow-alt'></i></div><span>Depositar</span></a><a href="wallet.html" class="action-btn" data-action="withdraw"><div class="action-icon"><i class='bx bx-up-arrow-alt'></i></div><span>Sacar</span></a><a href="invite.html" class="action-btn" data-action="invite"><div class="action-icon"><i class='bx bx-user-plus'></i></div><span>Convidar</span></a><a href="lottery.html" class="action-btn" data-action="lottery"><div class="action-icon" style="background-color: var(--primary-blue);"><i class='bx bx-gift'></i></div><span>Sorteio</span></a><a href="history.html" class="action-btn" data-action="history"><div class="action-icon"><i class='bx bx-history'></i></div><span>Histórico</span></a></div><h3 class="section-title">Meu Plano Ativo</h3><div id="active-plan-container"></div></div>
         </div>
     </div>
 
