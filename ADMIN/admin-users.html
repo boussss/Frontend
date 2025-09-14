@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes"> <!-- ALTERADO: user-scalable=yes para acessibilidade -->
+    <title>Gerenciar Usuários - Admin Chivo</title>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        :root {
+            --bg-dark: #121826; --primary-blue: #0052FF; --card-bg: #1A2233;
+            --text-light: #F4F7FC; --text-muted: #8A93A2; --border-color: #333d52;
+            --accent-green: #28a745; --accent-red: #dc3545; --accent-yellow: #FFC107;
+        }
+        body { background-color: var(--bg-dark); color: var(--text-light); }
+        .main-container { padding: 2rem 1.5rem; max-width: 1200px; margin: auto; }
+        
+        .header { display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; }
+        .back-button { background: none; border: none; font-size: 2rem; color: var(--text-light); cursor: pointer; }
+        .header h1 { font-size: 1.8rem; }
+
+        .search-bar {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            background-color: var(--card-bg);
+            padding: 1rem;
+            border-radius: 12px;
+        }
+        .search-input {
+            flex-grow: 1;
+            background-color: var(--bg-dark);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.8rem 1rem;
+            color: var(--text-light);
+            font-size: 1rem;
+        }
+        .search-btn {
+            background-color: var(--primary-blue);
+            color: #fff;
+            border: none;
+            padding: 0 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        #clear-search-btn { display: none; background-color: var(--text-muted); }
+
+        .users-table-container { overflow-x: auto; }
+        .users-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .users-table th, .users-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .users-table th {
+            background-color: var(--bg-dark);
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+        .users-table td {
+            font-size: 0.9rem;
+        }
+        .users-table tr:last-child td { border-bottom: none; }
+        
+        .user-name { font-weight: 600; }
+        .user-id { color: var(--text-muted); font-size: 0.8rem; }
+        .status-tag {
+            padding: 0.3rem 0.6rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #fff;
+        }
+        .status-active { background-color: var(--accent-green); }
+        .status-blocked { background-color: var(--accent-red); }
+        
+        .actions-cell button {
+            background: none;
+            border: none;
+            font-size: 1.3rem;
+            cursor: pointer;
+            margin-right: 0.5rem;
+            padding: 0.5rem;
+            border-radius: 6px;
+            transition: background-color 0.2s;
+        }
+        .actions-cell button:hover { background-color: var(--bg-dark); }
+        .block-btn { color: var(--accent-red); }
+        .unblock-btn { color: var(--accent-green); }
+        .details-btn { color: var(--primary-blue); }
+        
+        #loading-message, #empty-message { text-align: center; color: var(--text-muted); padding: 2rem; }
+
+        /* NOVO: Estilos para a barra de feedback no topo */
+        #feedback-bar-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding-top: 20px; /* Um pouco de padding */
+            pointer-events: none; /* Não bloquear cliques abaixo */
+        }
+
+        .feedback-bar {
+            background-color: var(--accent-red); /* Padrão para erro */
+            color: #fff;
+            padding: 0.8rem 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transform: translateY(-150%); /* Escondido por padrão */
+            opacity: 0;
+            transition: transform 0.4s ease-out, opacity 0.4s ease-out;
+            pointer-events: auto; /* Reativar eventos para a barra em si */
+            max-width: 90%; /* Limitar largura */
+            text-align: center;
+        }
+
+        .feedback-bar.show {
+            transform: translateY(0); /* Mostra a barra */
+            opacity: 1;
+        }
+
+        .feedback-bar.success {
+            background-color: var(--accent-green);
+        }
+
+        .feedback-bar i {
+            font-size: 1.3rem;
+        }
+        /* FIM: Estilos para a barra de feedback no topo */
+    </style>
+</head>
+<body>
+
+    <!-- NOVO: Container para a barra de feedback -->
+    <div id="feedback-bar-container"></div>
+
+    <div class="main-container">
+        <header class="header">
+            <button class="back-button" onclick="window.location.href='admin-dashboard.html'"><i class='bx bx-arrow-back'></i></button>
+            <h1>Gerenciar Usuários</h1>
+        </header>
+
+        <div class="search-bar">
+            <input type="text" id="search-input" class="search-input" placeholder="Pesquisar por ID de 5 dígitos ou Número de Telefone..."> <!-- ATUALIZADO placeholder -->
+            <button id="search-btn" class="search-btn"><i class='bx bx-search'></i></button>
+            <button id="clear-search-btn" class="search-btn">Limpar</button>
+        </div>
+
+        <p id="loading-message">Carregando usuários...</p>
+        <div class="users-table-container">
+            <table class="users-table" style="display: none;">
+                <thead>
+                    <tr>
+                        <th>Usuário</th>
+                        <th>Telefone</th>
+                        <th>Saldo (MT)</th>
+                        <th>Bônus (MT)</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="users-tbody">
+                    <!-- Linhas da tabela serão inseridas aqui -->
+                </tbody>
+            </table>
+        </div>
+        <p id="empty-message" style="display: none;">Nenhum usuário encontrado.</p>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const API_URL = "https://daksk.onrender.com";
+            const TOKEN = localStorage.getItem('chivo-admin-token');
+            if (!TOKEN) {
+                window.location.href = 'admin-login.html';
+                return;
+            }
+
+            const elements = {
+                tbody: document.getElementById('users-tbody'),
+                table: document.querySelector('.users-table'),
+                loadingMsg: document.getElementById('loading-message'),
+                emptyMsg: document.getElementById('empty-message'),
+                searchInput: document.getElementById('search-input'),
+                searchBtn: document.getElementById('search-btn'),
+                clearSearchBtn: document.getElementById('clear-search-btn'),
+                feedbackBarContainer: document.getElementById('feedback-bar-container')
+            };
+
+            let allUsers = [];
+
+            const fetchAPI = async (endpoint, options = {}) => {
+                options.headers = { ...options.headers, 'Authorization': `Bearer ${TOKEN}` };
+                if (options.body && !(options.body instanceof FormData)) {
+                    options.headers['Content-Type'] = 'application/json';
+                } else if (options.body instanceof FormData) {
+                    delete options.headers['Content-Type'];
+                }
+                
+                const response = await fetch(`${API_URL}${endpoint}`, options);
+                
+                if (response.status === 401) {
+                    localStorage.removeItem('chivo-admin-token');
+                    window.location.href = 'admin-login.html';
+                    throw new Error('Sessão expirada. Faça login novamente.');
+                }
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.message || `Erro na API: ${response.statusText}`);
+                }
+                return data;
+            };
+            
+            const formatCurrency = (value = 0) => new Intl.NumberFormat('pt-MZ', { style: 'currency', currency: 'MZN' }).format(value);
+
+            function showFeedbackBar(message, type = 'error') {
+                elements.feedbackBarContainer.innerHTML = ''; 
+                let iconClass = type === 'success' ? 'bx bx-check-circle' : 'bx bx-x-circle';
+
+                const feedbackBar = document.createElement('div');
+                feedbackBar.className = `feedback-bar ${type}`;
+                feedbackBar.innerHTML = `<i class='${iconClass}'></i> <span></span>`;
+                
+                feedbackBar.querySelector('span').textContent = message;
+                elements.feedbackBarContainer.appendChild(feedbackBar);
+
+                setTimeout(() => { feedbackBar.classList.add('show'); }, 50); 
+                setTimeout(() => {
+                    feedbackBar.classList.remove('show');
+                    feedbackBar.addEventListener('transitionend', () => feedbackBar.remove(), { once: true });
+                }, 4000);
+            }
+
+            const renderUsers = (users) => {
+                elements.loadingMsg.style.display = 'none';
+                if (!users || users.length === 0) {
+                    elements.emptyMsg.style.display = 'block';
+                    elements.table.style.display = 'none';
+                    elements.tbody.innerHTML = '';
+                    return;
+                }
+                elements.emptyMsg.style.display = 'none';
+                elements.table.style.display = '';
+                elements.tbody.innerHTML = '';
+
+                users.forEach(user => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>
+                            <div class="user-name">${user.name}</div>
+                            <div class="user-id">ID: ${user.userId}</div>
+                        </td>
+                        <td>${user.phone}</td>
+                        <td>${formatCurrency(user.walletBalance)}</td>
+                        <td>${formatCurrency(user.bonusBalance)}</td>
+                        <td>
+                            <span class="status-tag ${user.isBlocked ? 'status-blocked' : 'status-active'}">
+                                ${user.isBlocked ? 'Bloqueado' : 'Ativo'}
+                            </span>
+                        </td>
+                        <td class="actions-cell">
+                            ${user.isBlocked 
+                                ? `<button class="unblock-btn" data-id="${user._id}" title="Desbloquear"><i class='bx bx-check-circle'></i></button>`
+                                : `<button class="block-btn" data-id="${user._id}" title="Bloquear"><i class='bx bx-block'></i></button>`
+                            }
+                            <button class="details-btn" data-id="${user._id}" title="Ver Detalhes"><i class='bx bx-show'></i></button>
+                        </td>
+                    `;
+                    elements.tbody.appendChild(tr);
+                });
+            };
+
+            const loadUsers = async () => {
+                elements.loadingMsg.style.display = 'block';
+                elements.table.style.display = 'none';
+                elements.emptyMsg.style.display = 'none';
+                elements.clearSearchBtn.style.display = 'none';
+
+                try {
+                    const users = await fetchAPI('/api/admin/users');
+                    allUsers = users;
+                    renderUsers(allUsers);
+                } catch (error) {
+                    showFeedbackBar(error.message, 'error');
+                    elements.loadingMsg.textContent = `Erro ao carregar usuários: ${error.message}`;
+                }
+            };
+
+            const handleBlockToggle = async (userId, button) => {
+                button.disabled = true;
+                try {
+                    const result = await fetchAPI(`/api/admin/users/${userId}/block`, { method: 'PUT', body: JSON.stringify({}) });
+                    showFeedbackBar(result.message, 'success');
+                    await loadUsers();
+                } catch (error) {
+                    showFeedbackBar(error.message, 'error');
+                    button.disabled = false;
+                }
+            };
+
+            const handleSearch = async () => {
+                const query = elements.searchInput.value.trim();
+                if (!query) {
+                    renderUsers(allUsers);
+                    elements.clearSearchBtn.style.display = 'none';
+                    return;
+                }
+                
+                try {
+                    // Agora o backend /api/admin/users/search?query=... lida com a diferenciação
+                    const user = await fetchAPI(`/api/admin/users/search?query=${encodeURIComponent(query)}`);
+                    renderUsers([user]); // Renderiza a tabela com apenas um usuário
+                    elements.clearSearchBtn.style.display = 'inline-block';
+                } catch (error) {
+                    showFeedbackBar(error.message, 'error');
+                    renderUsers([]); // Mostra a mensagem de "nenhum usuário encontrado"
+                    elements.clearSearchBtn.style.display = 'inline-block';
+                }
+            };
+
+            // Event Listeners
+            elements.searchBtn.addEventListener('click', handleSearch);
+            elements.searchInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') handleSearch();
+            });
+
+            elements.clearSearchBtn.addEventListener('click', () => {
+                elements.searchInput.value = '';
+                elements.clearSearchBtn.style.display = 'none';
+                renderUsers(allUsers);
+            });
+
+            elements.tbody.addEventListener('click', async (e) => {
+                const blockBtn = e.target.closest('.block-btn');
+                const unblockBtn = e.target.closest('.unblock-btn');
+                const detailsBtn = e.target.closest('.details-btn');
+
+                if (blockBtn) {
+                    handleBlockToggle(blockBtn.dataset.id, blockBtn);
+                } else if (unblockBtn) {
+                    handleBlockToggle(unblockBtn.dataset.id, unblockBtn);
+                } else if (detailsBtn) {
+                    window.location.href = `admin-user-details.html?id=${detailsBtn.dataset.id}`;
+                }
+            });
+
+            loadUsers();
+        });
+    </script>
+</body>
+</html>

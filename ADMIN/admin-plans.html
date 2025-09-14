@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciar Planos - Admin Chivo</title>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        :root {
+            --bg-dark: #121826; --primary-blue: #0052FF; --card-bg: #1A2233;
+            --text-light: #F4F7FC; --text-muted: #8A93A2; --border-color: #333d52;
+            --accent-green: #28a745; --accent-red: #dc3545; --accent-yellow: #FFC107;
+        }
+        body { background-color: var(--bg-dark); color: var(--text-light); }
+        .main-container { padding: 2rem 1.5rem; max-width: 1200px; margin: auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+        .header-left { display: flex; align-items: center; gap: 1rem; }
+        .back-button { background: none; border: none; font-size: 2rem; color: var(--text-light); cursor: pointer; }
+        .header h1 { font-size: 1.8rem; }
+        .create-plan-btn {
+            background-color: var(--primary-blue); color: #fff; border: none; padding: 0.8rem 1.5rem;
+            border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;
+        }
+
+        .plans-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; }
+        .plan-card {
+            background-color: var(--card-bg); border-radius: 12px;
+            border: 1px solid var(--border-color); overflow: hidden;
+        }
+        .plan-card img { width: 100%; height: 150px; object-fit: cover; background-color: var(--bg-dark); }
+        .plan-card-content { padding: 1.5rem; }
+        .plan-card-content h3 { font-size: 1.3rem; margin-bottom: 1rem; }
+        .plan-detail { display: flex; justify-content: space-between; color: var(--text-muted); margin-bottom: 0.5rem; font-size: 0.9rem;}
+        .plan-detail span { color: var(--text-light); font-weight: 500; }
+        .plan-card-actions { display: flex; gap: 1rem; margin-top: 1.5rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem; }
+        .action-btn { flex: 1; padding: 0.6rem; border-radius: 6px; border: none; font-weight: 600; cursor: pointer; }
+        .edit-btn { background-color: var(--accent-yellow); color: var(--bg-dark); }
+        .delete-btn { background-color: var(--accent-red); color: #fff; }
+
+        /* Modal */
+        .modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7);
+            backdrop-filter: blur(5px); display: none; justify-content: center; align-items: center; z-index: 100;
+        }
+        .modal.show { display: flex; }
+        .modal-content {
+            background-color: var(--card-bg); width: 90%; max-width: 600px;
+            padding: 2rem; border-radius: 12px; max-height: 90vh; overflow-y: auto;
+        }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+        #modal-title { font-size: 1.5rem; }
+        .close-btn { background:none; border:none; font-size: 2rem; color: var(--text-light); cursor: pointer; }
+        
+        #plan-form .form-grid { display: grid; grid-template-columns: 1fr; gap: 1.25rem; }
+        @media (min-width: 600px) { #plan-form .form-grid { grid-template-columns: 1fr 1fr; } }
+        .form-group { display: flex; flex-direction: column; gap: 0.5rem; }
+        .form-group label { color: var(--text-muted); }
+        .form-group input, .form-group select {
+            background-color: var(--bg-dark); border: 1px solid var(--border-color);
+            border-radius: 8px; padding: 0.8rem; color: var(--text-light); font-size: 1rem;
+        }
+        .form-group input[type="file"] { padding: 0.5rem; }
+        .modal-actions { margin-top: 2rem; display: flex; justify-content: flex-end; }
+        #save-plan-btn {
+            background-color: var(--accent-green); color: #fff; border: none; padding: 0.8rem 2rem;
+            border-radius: 8px; font-weight: 600; cursor: pointer;
+        }
+
+        #empty-message { text-align: center; color: var(--text-muted); padding: 2rem; }
+        #toast-container { position: fixed; top: 20px; right: 20px; z-index: 200; }
+        .toast { padding: 0.8rem 1.5rem; border-radius: 8px; color: #fff; margin-bottom: 0.5rem; }
+        .toast.success { background-color: var(--accent-green); }
+        .toast.error { background-color: var(--accent-red); }
+    </style>
+</head>
+<body>
+
+    <div class="main-container">
+        <header class="header">
+            <div class="header-left">
+                <button class="back-button" onclick="window.location.href='admin-dashboard.html'"><i class='bx bx-arrow-back'></i></button>
+                <h1>Gerenciar Planos</h1>
+            </div>
+            <button id="create-plan-btn" class="create-plan-btn"><i class='bx bx-plus'></i> Criar Novo Plano</button>
+        </header>
+
+        <div id="plans-container" class="plans-grid">
+            <!-- Skeleton Loaders -->
+        </div>
+        <p id="empty-message" style="display: none;">Nenhum plano encontrado. Crie o primeiro!</p>
+    </div>
+
+    <!-- Modal para Criar/Editar Plano -->
+    <div id="plan-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-title">Criar Novo Plano</h2>
+                <button class="close-btn">&times;</button>
+            </div>
+            <form id="plan-form">
+                <input type="hidden" id="plan-id">
+                <div class="form-grid">
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label for="name">Nome do Plano</label>
+                        <input type="text" id="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="minAmount">Preço (Mínimo)</label>
+                        <input type="number" id="minAmount" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="maxAmount">Preço (Máximo)</label>
+                        <input type="number" id="maxAmount" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="dailyYieldType">Tipo de Rendimento</label>
+                        <select id="dailyYieldType" required>
+                            <option value="fixed">Fixo (Valor)</option>
+                            <option value="percentage">Percentual (%)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="dailyYieldValue">Valor do Rendimento</label>
+                        <input type="number" id="dailyYieldValue" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="durationDays">Duração (dias)</label>
+                        <input type="number" id="durationDays" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="hashRate">Taxa de Hash</label>
+                        <input type="text" id="hashRate">
+                    </div>
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label for="image">Imagem do Plano</label>
+                        <input type="file" id="image" accept="image/*">
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" id="save-plan-btn">Criar Plano</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const API_URL = "https://daksk.onrender.com";
+            const TOKEN = localStorage.getItem('chivo-admin-token');
+            if (!TOKEN) {
+                window.location.href = 'admin-login.html';
+                return;
+            }
+
+            const elements = {
+                container: document.getElementById('plans-container'),
+                emptyMessage: document.getElementById('empty-message'),
+                createBtn: document.getElementById('create-plan-btn'),
+                modal: document.getElementById('plan-modal'),
+                modalTitle: document.getElementById('modal-title'),
+                closeBtn: document.querySelector('.modal .close-btn'),
+                form: document.getElementById('plan-form'),
+                saveBtn: document.getElementById('save-plan-btn'),
+                planIdInput: document.getElementById('plan-id')
+            };
+            
+            let allPlans = [];
+
+            const fetchAPI = async (endpoint, options = {}) => {
+                const headers = { 'Authorization': `Bearer ${TOKEN}` };
+                if (!(options.body instanceof FormData)) {
+                    headers['Content-Type'] = 'application/json';
+                }
+                options.headers = { ...headers, ...options.headers };
+
+                const response = await fetch(`${API_URL}${endpoint}`, options);
+                if (response.status === 401) {
+                    localStorage.removeItem('chivo-admin-token');
+                    window.location.href = 'admin-login.html';
+                }
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.message || 'Erro na API.');
+                return data;
+            };
+
+            const formatCurrency = (value = 0) => new Intl.NumberFormat('pt-MZ', { style: 'currency', currency: 'MZN' }).format(value);
+
+            const renderPlans = (plans) => {
+                elements.container.innerHTML = '';
+                if (plans.length === 0) {
+                    elements.emptyMessage.style.display = 'block';
+                    return;
+                }
+                elements.emptyMessage.style.display = 'none';
+
+                plans.forEach(plan => {
+                    const card = document.createElement('div');
+                    card.className = 'plan-card';
+                    card.innerHTML = `
+                        <img src="${plan.imageUrl || 'https://via.placeholder.com/400x200.png?text=Sem+Imagem'}" alt="${plan.name}">
+                        <div class="plan-card-content">
+                            <h3>${plan.name}</h3>
+                            <div class="plan-detail">Preço: <span>${formatCurrency(plan.minAmount)}</span></div>
+                            <div class="plan-detail">Rendimento Diário: <span>${plan.dailyYieldType === 'fixed' ? formatCurrency(plan.dailyYieldValue) : `${plan.dailyYieldValue}%`}</span></div>
+                            <div class="plan-detail">Duração: <span>${plan.durationDays} dias</span></div>
+                            <div class="plan-card-actions">
+                                <button class="action-btn edit-btn" data-id="${plan._id}">Editar</button>
+                                <button class="action-btn delete-btn" data-id="${plan._id}">Deletar</button>
+                            </div>
+                        </div>
+                    `;
+                    elements.container.appendChild(card);
+                });
+            };
+
+            const loadPlans = async () => {
+                try {
+                    // *** AQUI ESTÁ A CORREÇÃO ***
+                    // Usando a nova rota de admin em vez da rota de usuário
+                    const plans = await fetchAPI('/api/admin/plans'); 
+                    allPlans = plans.sort((a,b) => a.minAmount - b.minAmount);
+                    renderPlans(allPlans);
+                } catch (error) {
+                    showToast(error.message, 'error');
+                }
+            };
+
+            const openModal = (plan = null) => {
+                elements.form.reset();
+                if (plan) { // Editando
+                    elements.modalTitle.textContent = 'Editar Plano';
+                    elements.saveBtn.textContent = 'Salvar Alterações';
+                    elements.planIdInput.value = plan._id;
+                    document.getElementById('name').value = plan.name;
+                    document.getElementById('minAmount').value = plan.minAmount;
+                    document.getElementById('maxAmount').value = plan.maxAmount;
+                    document.getElementById('dailyYieldType').value = plan.dailyYieldType;
+                    document.getElementById('dailyYieldValue').value = plan.dailyYieldValue;
+                    document.getElementById('durationDays').value = plan.durationDays;
+                    document.getElementById('hashRate').value = plan.hashRate || '';
+                } else { // Criando
+                    elements.modalTitle.textContent = 'Criar Novo Plano';
+                    elements.saveBtn.textContent = 'Criar Plano';
+                    elements.planIdInput.value = '';
+                }
+                elements.modal.classList.add('show');
+            };
+
+            const handleFormSubmit = async (e) => {
+                e.preventDefault();
+                const planId = elements.planIdInput.value;
+                const isEditing = !!planId;
+
+                const formData = new FormData();
+                formData.append('name', document.getElementById('name').value);
+                formData.append('minAmount', document.getElementById('minAmount').value);
+                formData.append('maxAmount', document.getElementById('maxAmount').value);
+                formData.append('dailyYieldType', document.getElementById('dailyYieldType').value);
+                formData.append('dailyYieldValue', document.getElementById('dailyYieldValue').value);
+                formData.append('durationDays', document.getElementById('durationDays').value);
+                formData.append('hashRate', document.getElementById('hashRate').value);
+                
+                const imageFile = document.getElementById('image').files[0];
+                if (imageFile) {
+                    formData.append('image', imageFile);
+                }
+
+                try {
+                    const endpoint = isEditing ? `/api/admin/plans/${planId}` : '/api/admin/plans';
+                    const method = isEditing ? 'PUT' : 'POST';
+                    
+                    const result = await fetchAPI(endpoint, { method, body: formData });
+                    showToast(`Plano ${isEditing ? 'atualizado' : 'criado'} com sucesso!`, 'success');
+                    elements.modal.classList.remove('show');
+                    loadPlans();
+                } catch (error) {
+                    showToast(error.message, 'error');
+                }
+            };
+            
+            const handleDeletePlan = async (planId) => {
+                if (!confirm('Tem certeza que deseja deletar este plano? Esta ação não pode ser desfeita.')) {
+                    return;
+                }
+                try {
+                    const result = await fetchAPI(`/api/admin/plans/${planId}`, { method: 'DELETE' });
+                    showToast(result.message, 'success');
+                    loadPlans();
+                } catch (error) {
+                    showToast(error.message, 'error');
+                }
+            };
+
+            // Event Listeners
+            elements.createBtn.addEventListener('click', () => openModal());
+            elements.closeBtn.addEventListener('click', () => elements.modal.classList.remove('show'));
+            elements.form.addEventListener('submit', handleFormSubmit);
+            elements.container.addEventListener('click', (e) => {
+                if (e.target.classList.contains('edit-btn')) {
+                    const planId = e.target.dataset.id;
+                    const planToEdit = allPlans.find(p => p._id === planId);
+                    if (planToEdit) openModal(planToEdit);
+                }
+                if (e.target.classList.contains('delete-btn')) {
+                    handleDeletePlan(e.target.dataset.id);
+                }
+            });
+
+            const showToast = (message, type = 'success') => {
+                const toastContainer = document.getElementById('toast-container');
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                toast.textContent = message;
+                toastContainer.appendChild(toast);
+                setTimeout(() => toast.remove(), 4000);
+            };
+
+            loadPlans();
+        });
+    </script>
+</body>
+</html>

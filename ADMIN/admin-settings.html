@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes"> <!-- ALTERADO: user-scalable=yes para acessibilidade -->
+    <title>Configurações - Admin Chivo</title>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        :root {
+            --bg-dark: #121826; --primary-blue: #0052FF; --card-bg: #1A2233;
+            --text-light: #F4F7FC; --text-muted: #8A93A2; --border-color: #333d52;
+            --accent-green: #28a745; --accent-red: #dc3545;
+        }
+        body { background-color: var(--bg-dark); color: var(--text-light); }
+        .main-container { padding: 2rem 1.5rem; max-width: 800px; margin: auto; }
+        .header { display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; }
+        .back-button {
+            background: none; border: none; font-size: 2rem;
+            color: var(--text-light); cursor: pointer;
+        }
+        .header h1 { font-size: 1.8rem; }
+        .card {
+            background-color: var(--card-bg); padding: 2rem;
+            border-radius: 12px; border: 1px solid var(--border-color);
+        }
+        .section-title {
+            font-size: 1.3rem; margin-bottom: 1.5rem; padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .form-grid { display: grid; grid-template-columns: 1fr; gap: 1.5rem; }
+        @media (min-width: 600px) { .form-grid { grid-template-columns: 1fr 1fr; } }
+        .form-group { display: flex; flex-direction: column; gap: 0.5rem; }
+        .form-group label { color: var(--text-muted); font-weight: 500; }
+        .form-group input {
+            background-color: var(--bg-dark); border: 1px solid var(--border-color);
+            border-radius: 8px; padding: 0.8rem 1rem; color: var(--text-light);
+            font-size: 1rem;
+        }
+        .deposit-method-item {
+            background-color: var(--bg-dark); padding: 1.5rem; border-radius: 8px;
+            margin-bottom: 1rem; border: 1px solid var(--border-color);
+            display: grid; grid-template-columns: 1fr auto; gap: 1rem;
+        }
+        .method-inputs { display: flex; flex-direction: column; gap: 1rem; }
+        .method-actions { display: flex; flex-direction: column; justify-content: space-between; align-items: center; }
+        .remove-method-btn {
+            background: none; border: none; color: var(--accent-red);
+            font-size: 1.5rem; cursor: pointer;
+        }
+        .status-toggle { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; }
+        /* Estilo para o switch checkbox (um pouco mais complexo para um visual de toggle) */
+        .status-toggle input[type="checkbox"] {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            width: 38px;
+            height: 20px;
+            background-color: var(--text-muted);
+            border-radius: 10px;
+            position: relative;
+            cursor: pointer;
+            outline: none;
+            transition: background-color 0.3s;
+        }
+        .status-toggle input[type="checkbox"]::before {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 16px;
+            height: 16px;
+            background-color: #fff;
+            border-radius: 50%;
+            transition: transform 0.3s;
+        }
+        .status-toggle input[type="checkbox"]:checked {
+            background-color: var(--accent-green);
+        }
+        .status-toggle input[type="checkbox"]:checked::before {
+            transform: translateX(18px);
+        }
+
+        .add-method-btn {
+            display: block; width: 100%; padding: 0.8rem; margin-top: 1rem;
+            background: none; border: 1px dashed var(--primary-blue);
+            color: var(--primary-blue); border-radius: 8px; cursor: pointer; font-weight: 600;
+        }
+        .save-btn {
+            display: flex; justify-content: center; align-items: center;
+            width: 100%; padding: 1rem; margin-top: 2rem; background-color: var(--accent-green);
+            border: none; border-radius: 8px; color: #fff; font-size: 1.1rem;
+            font-weight: 600; cursor: pointer;
+        }
+        .save-btn:disabled { background-color: #555; }
+        .spinner { width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.3); border-top-color:#fff; border-radius:50%; animation: spin 1s linear infinite; margin-left: 10px;}
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* NOVO: Estilos para a barra de feedback no topo */
+        #feedback-bar-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding-top: 20px;
+            pointer-events: none;
+        }
+        .feedback-bar {
+            background-color: var(--accent-red); color: #fff; padding: 0.8rem 1.5rem;
+            border-radius: 10px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            display: flex; align-items: center; gap: 10px; font-size: 0.9rem;
+            font-weight: 500; transform: translateY(-150%); opacity: 0;
+            transition: transform 0.4s ease-out, opacity 0.4s ease-out;
+            pointer-events: auto; max-width: 90%; text-align: center;
+        }
+        .feedback-bar.show { transform: translateY(0); opacity: 1; }
+        .feedback-bar.success { background-color: var(--accent-green); }
+        .feedback-bar i { font-size: 1.3rem; }
+        /* FIM: Estilos para a barra de feedback no topo */
+    </style>
+</head>
+<body>
+
+    <!-- NOVO: Container para a barra de feedback -->
+    <div id="feedback-bar-container"></div>
+
+    <div class="main-container">
+        <header class="header">
+            <button class="back-button" onclick="window.location.href='admin-dashboard.html'"><i class='bx bx-arrow-back'></i></button>
+            <h1>Configurações</h1>
+        </header>
+
+        <form id="settings-form" class="card">
+            <h2 class="section-title">Limites e Taxas</h2>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="depositMin">Depósito Mínimo (MT)</label>
+                    <input type="number" id="depositMin" min="0" placeholder="Ex: 50">
+                </div>
+                <div class="form-group">
+                    <label for="depositMax">Depósito Máximo (MT)</label>
+                    <input type="number" id="depositMax" min="0" placeholder="Ex: 25000">
+                </div>
+                <div class="form-group">
+                    <label for="withdrawalMin">Saque Mínimo (MT)</label>
+                    <input type="number" id="withdrawalMin" min="0" placeholder="Ex: 100">
+                </div>
+                <div class="form-group">
+                    <label for="withdrawalMax">Saque Máximo (MT)</label>
+                    <input type="number" id="withdrawalMax" min="0" placeholder="Ex: 25000">
+                </div>
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label for="withdrawalFee">Taxa de Saque (%)</label>
+                    <input type="number" id="withdrawalFee" min="0" max="100" placeholder="Ex: 3">
+                </div>
+            </div>
+
+            <h2 class="section-title" style="margin-top: 2.5rem;">Bônus & Comissões</h2>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="welcome-bonus">Bônus de Boas-vindas (MT)</label>
+                    <input type="number" id="welcome-bonus" min="0" placeholder="Ex: 50">
+                </div>
+                <div class="form-group">
+                    <label for="referral-commission">Comissão por Convite (%)</label>
+                    <input type="number" id="referral-commission" min="0" max="100" placeholder="Ex: 15">
+                </div>
+                <div class="form-group">
+                    <label for="daily-commission">Comissão Diária (%)</label>
+                    <input type="number" id="daily-commission" min="0" max="100" placeholder="Ex: 5">
+                </div>
+            </div>
+
+            <h2 class="section-title" style="margin-top: 2.5rem;">Métodos de Depósito</h2>
+            <div id="deposit-methods-container"></div>
+            <button type="button" id="add-method-btn" class="add-method-btn">
+                <i class='bx bx-plus'></i> Adicionar Novo Método
+            </button>
+
+            <button type="submit" id="save-btn" class="save-btn">
+                <span>Salvar Alterações</span>
+                <div class="spinner" style="display: none;"></div>
+            </button>
+        </form>
+    </div>
+
+    <!-- REMOVIDO: <div id="toast-container"></div> -->
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const API_URL = "https://daksk.onrender.com";
+            const TOKEN = localStorage.getItem('chivo-admin-token');
+            if (!TOKEN) {
+                window.location.href = 'admin-login.html';
+                return;
+            }
+
+            const elements = {
+                form: document.getElementById('settings-form'),
+                depositMinInput: document.getElementById('depositMin'),
+                depositMaxInput: document.getElementById('depositMax'),
+                withdrawalMinInput: document.getElementById('withdrawalMin'),
+                withdrawalMaxInput: document.getElementById('withdrawalMax'),
+                withdrawalFeeInput: document.getElementById('withdrawalFee'),
+                welcomeBonusInput: document.getElementById('welcome-bonus'),
+                referralCommissionInput: document.getElementById('referral-commission'),
+                dailyCommissionInput: document.getElementById('daily-commission'),
+                methodsContainer: document.getElementById('deposit-methods-container'),
+                addMethodBtn: document.getElementById('add-method-btn'),
+                saveBtn: document.getElementById('save-btn'),
+                feedbackBarContainer: document.getElementById('feedback-bar-container')
+            };
+
+            // Obter os sub-elementos do botão APÓS o objeto elements ser definido
+            const saveBtnText = elements.saveBtn.querySelector('span');
+            const saveBtnSpinner = elements.saveBtn.querySelector('.spinner');
+
+            const fetchAPI = async (endpoint, options = {}) => {
+                const headers = { ...options.headers, 'Authorization': `Bearer ${TOKEN}` };
+                
+                // CORREÇÃO PARA O Content-Type
+                if (options.body && !(options.body instanceof FormData)) {
+                    headers['Content-Type'] = 'application/json';
+                }
+                
+                options.headers = headers; // Atribuir os cabeçalhos potencialmente atualizados
+                
+                const response = await fetch(`${API_URL}${endpoint}`, options);
+                
+                if (response.status === 401) {
+                    localStorage.removeItem('chivo-admin-token');
+                    window.location.href = 'admin-login.html';
+                    throw new Error('Sessão expirada. Faça login novamente.');
+                }
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.message || `Erro na API: ${response.statusText}`);
+                }
+                return data;
+            };
+
+            const createMethodElement = (method = {}) => {
+                const methodDiv = document.createElement('div');
+                methodDiv.className = 'deposit-method-item';
+                const name = method.name || '';
+                const holderName = method.holderName || '';
+                const number = method.number || '';
+                const isActive = method.isActive === undefined ? true : method.isActive; // Padrão é true se não definido
+                methodDiv.innerHTML = `
+                    <div class="method-inputs">
+                        <input type="text" class="method-name" placeholder="Nome da Rede (Ex: M-Pesa)" value="${name}" required>
+                        <input type="text" class="method-holder" placeholder="Nome do Titular" value="${holderName}" required>
+                        <input type="text" class="method-number" placeholder="Número" value="${number}" required>
+                    </div>
+                    <div class="method-actions">
+                        <label class="status-toggle">
+                            <input type="checkbox" class="method-status" ${isActive ? 'checked' : ''}>
+                            Ativo
+                        </label>
+                        <button type="button" class="remove-method-btn" title="Remover Método"><i class='bx bxs-trash'></i></button>
+                    </div>
+                `;
+                methodDiv.querySelector('.remove-method-btn').addEventListener('click', () => {
+                    methodDiv.remove();
+                });
+                return methodDiv;
+            };
+
+            const renderSettings = (settings) => {
+                elements.depositMinInput.value = settings.depositMin ?? '';
+                elements.depositMaxInput.value = settings.depositMax ?? '';
+                elements.withdrawalMinInput.value = settings.withdrawalMin ?? '';
+                elements.withdrawalMaxInput.value = settings.withdrawalMax ?? '';
+                elements.withdrawalFeeInput.value = settings.withdrawalFee ?? '';
+                elements.welcomeBonusInput.value = settings.welcomeBonus ?? '';
+                elements.referralCommissionInput.value = settings.referralCommissionRate ?? '';
+                elements.dailyCommissionInput.value = settings.dailyCommissionRate ?? '';
+                elements.methodsContainer.innerHTML = '';
+                if (settings.depositMethods && settings.depositMethods.length > 0) {
+                    settings.depositMethods.forEach(method => {
+                        elements.methodsContainer.appendChild(createMethodElement(method));
+                    });
+                }
+            };
+            
+            const loadSettings = async () => {
+                try {
+                    const settings = await fetchAPI('/api/admin/settings');
+                    renderSettings(settings);
+                } catch (error) {
+                    showFeedbackBar(error.message, 'error');
+                }
+            };
+
+            const handleFormSubmit = async (event) => {
+                event.preventDefault();
+                setLoading(true);
+                try {
+                    const depositMethods = [];
+                    const methodElements = elements.methodsContainer.querySelectorAll('.deposit-method-item');
+                    let allMethodsValid = true;
+
+                    methodElements.forEach(el => {
+                        const name = el.querySelector('.method-name').value.trim();
+                        const holderName = el.querySelector('.method-holder').value.trim();
+                        const number = el.querySelector('.method-number').value.trim();
+                        const isActive = el.querySelector('.method-status').checked;
+
+                        // Validação frontend para métodos de depósito
+                        if (!name || !holderName || !number) {
+                           showFeedbackBar('Todos os campos de nome, titular e número dos métodos de depósito são obrigatórios.', 'error');
+                           allMethodsValid = false;
+                           return; // Sai deste forEach, mas o loop principal ainda precisa verificar a flag
+                        }
+                        depositMethods.push({ name, holderName, number, isActive });
+                    });
+
+                    if (!allMethodsValid) {
+                        setLoading(false);
+                        return; // Para o submit se houver métodos inválidos
+                    }
+
+                    const settingsData = {
+                        depositMin: Number(elements.depositMinInput.value),
+                        depositMax: Number(elements.depositMaxInput.value),
+                        withdrawalMin: Number(elements.withdrawalMinInput.value),
+                        withdrawalMax: Number(elements.withdrawalMaxInput.value),
+                        withdrawalFee: Number(elements.withdrawalFeeInput.value),
+                        welcomeBonus: Number(elements.welcomeBonusInput.value),
+                        referralCommissionRate: Number(elements.referralCommissionInput.value),
+                        dailyCommissionRate: Number(elements.dailyCommissionInput.value),
+                        depositMethods
+                    };
+                    
+                    // Validação adicional frontend para os limites e taxas
+                    if (settingsData.depositMin > settingsData.depositMax) {
+                        showFeedbackBar('O depósito mínimo não pode ser maior que o depósito máximo.', 'error');
+                        setLoading(false); return;
+                    }
+                    if (settingsData.withdrawalMin > settingsData.withdrawalMax) {
+                        showFeedbackBar('O saque mínimo não pode ser maior que o saque máximo.', 'error');
+                        setLoading(false); return;
+                    }
+                    if (settingsData.withdrawalFee < 0 || settingsData.withdrawalFee > 100) {
+                        showFeedbackBar('A taxa de saque deve ser um valor entre 0 e 100 (%).', 'error');
+                        setLoading(false); return;
+                    }
+                    if (settingsData.referralCommissionRate < 0 || settingsData.referralCommissionRate > 100) {
+                        showFeedbackBar('A comissão por convite deve ser um valor entre 0 e 100 (%).', 'error');
+                        setLoading(false); return;
+                    }
+                    if (settingsData.dailyCommissionRate < 0 || settingsData.dailyCommissionRate > 100) {
+                        showFeedbackBar('A comissão diária deve ser um valor entre 0 e 100 (%).', 'error');
+                        setLoading(false); return;
+                    }
+
+                    await fetchAPI('/api/admin/settings', {
+                        method: 'PUT',
+                        body: JSON.stringify(settingsData)
+                    });
+                    showFeedbackBar('Configurações salvas com sucesso!', 'success');
+                } catch (error) {
+                    showFeedbackBar(error.message, 'error');
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            const setLoading = (isLoading) => {
+                elements.saveBtn.disabled = isLoading;
+                saveBtnText.style.display = isLoading ? 'none' : 'block';
+                saveBtnSpinner.style.display = isLoading ? 'inline-block' : 'none';
+            };
+
+            function showFeedbackBar(message, type = 'error') {
+                elements.feedbackBarContainer.innerHTML = ''; 
+                let iconClass = type === 'success' ? 'bx bx-check-circle' : 'bx bx-x-circle';
+
+                const feedbackBar = document.createElement('div');
+                feedbackBar.className = `feedback-bar ${type}`;
+                feedbackBar.innerHTML = `<i class='${iconClass}'></i> <span></span>`;
+                feedbackBar.querySelector('span').textContent = message; // Proteção contra XSS
+                elements.feedbackBarContainer.appendChild(feedbackBar);
+
+                setTimeout(() => { feedbackBar.classList.add('show'); }, 50); 
+                setTimeout(() => {
+                    feedbackBar.classList.remove('show');
+                    feedbackBar.addEventListener('transitionend', () => feedbackBar.remove(), { once: true });
+                }, 4000);
+            }
+
+            elements.form.addEventListener('submit', handleFormSubmit);
+            elements.addMethodBtn.addEventListener('click', () => {
+                elements.methodsContainer.appendChild(createMethodElement());
+            });
+
+            loadSettings();
+        });
+    </script>
+</body>
+</html>
