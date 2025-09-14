@@ -95,7 +95,7 @@
         .input-group { position: relative; }
         .input-group i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); font-size: 1.1rem; color: #aaa; z-index: 1; }
         
-        /* NOVO: Estilos para o prefixo do telefone e ícone de bandeira */
+        /* Estilos para o prefixo do telefone e ícone de bandeira */
         .input-group .phone-prefix-display {
             position: absolute;
             left: 45px; /* Ajustado para ficar após o ícone do telefone */
@@ -111,7 +111,7 @@
             align-items: center;
             gap: 5px; /* Espaço entre bandeira e +258 */
         }
-        /* NOVO: Estilo para o ícone Iconify da bandeira */
+        /* Estilo para o ícone Iconify da bandeira */
         .input-group .phone-prefix-display iconify-icon {
             width: 1.2rem; /* Define a largura para o ícone Iconify */
             height: 1.2rem; /* Define a altura para o ícone Iconify */
@@ -129,7 +129,7 @@
         input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         input[type=number] { -moz-appearance: textfield; }
 
-        /* NOVO: Padding específico para o campo de telefone no login */
+        /* Padding específico para o campo de telefone no login */
         #phone.input-field {
             padding-left: 110px; /* Ajustado para acomodar ícone do telefone, ícone da bandeira e "+258" */
         }
@@ -293,7 +293,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             generateTickerNotifications();
 
-            // NOVO: Lógica para o campo de telefone - Identica a de registro
+            // Lógica para o campo de telefone: permite apenas 9 dígitos numéricos
             phoneInput.addEventListener('input', () => {
                 let currentValue = phoneInput.value.replace(/\D/g, ''); // Remove tudo que não for dígito
                 if (currentValue.length > 9) {
@@ -304,10 +304,9 @@
 
             phoneInput.addEventListener('keydown', (e) => {
                 if (e.key === ' ') {
-                    e.preventDefault();
+                    e.preventDefault(); // Impede a digitação de espaços
                 }
             });
-            // FIM NOVO: Lógica para o campo de telefone
         });
 
         loginForm.addEventListener('submit', async (event) => {
@@ -315,23 +314,22 @@
             feedbackBarContainer.innerHTML = ''; 
             setLoading(true);
 
-            const rawPhone = phoneInput.value.trim(); // Pega o valor como o usuário digitou (só dígitos)
+            const phone = phoneInput.value.trim(); // Pega apenas os 9 dígitos digitados pelo usuário
             const pin = pinInput.value;
             
-            // NOVO: Validação do formato do telefone - Identica a de registro
-            const fullPhoneNumber = `+258${rawPhone}`;
-            if (!/^\+258\d{9}$/.test(fullPhoneNumber)) {
-                showFeedbackBar('Por favor, insira um número de telefone válido de Moçambique (9 dígitos após +258).', 'error');
+            // Validação: Garante que o telefone tem exatamente 9 dígitos
+            if (!/^\d{9}$/.test(phone)) {
+                showFeedbackBar('Por favor, insira um número de telefone válido de Moçambique (9 dígitos).', 'error');
                 setLoading(false);
                 return;
             }
 
             try {
-                // Envia o número completo para o backend
+                // Envia APENAS os 9 dígitos para o backend
                 const response = await fetch(`${API_URL}/api/users/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ phone: fullPhoneNumber, pin }),
+                    body: JSON.stringify({ phone, pin }), // <--- ATUALIZADO: envia 'phone' (9 dígitos)
                 });
                 
                 const data = await response.json();

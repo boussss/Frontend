@@ -143,7 +143,7 @@
             align-items: center;
             gap: 5px; /* Espaço entre bandeira e +258 */
         }
-        /* NOVO: Estilo para o ícone Iconify da bandeira */
+        /* Estilo para o ícone Iconify da bandeira */
         .input-group .phone-prefix-display iconify-icon {
             width: 1.2rem; /* Define a largura para o ícone Iconify */
             height: 1.2rem; /* Define a altura para o ícone Iconify */
@@ -263,7 +263,7 @@
             </div>
              <div class="input-group">
                 <i class='bx bx-phone'></i>
-                <!-- ALTERADO: Usando iconify-icon para a bandeira de Moçambique -->
+                <!-- NOVO: Adicionado span com ícone de bandeira e prefixo +258 -->
                 <span class="phone-prefix-display"><iconify-icon icon="circle-flags:mz"></iconify-icon> +258</span>
                 <input type="tel" id="phone" class="input-field" placeholder="8X XXX XXXX" required maxlength="9">
             </div>
@@ -365,10 +365,9 @@
             fillReferrerIdFromUrl();
             generateTickerNotifications();
 
-            // Lógica para o campo de telefone
+            // Lógica para o campo de telefone: permite apenas 9 dígitos numéricos
             phoneInput.addEventListener('input', () => {
                 let currentValue = phoneInput.value.replace(/\D/g, ''); // Remove tudo que não for dígito
-                // Limita a 9 dígitos
                 if (currentValue.length > 9) {
                     currentValue = currentValue.substring(0, 9);
                 }
@@ -376,9 +375,8 @@
             });
 
             phoneInput.addEventListener('keydown', (e) => {
-                // Impede a barra de espaço
                 if (e.key === ' ') {
-                    e.preventDefault();
+                    e.preventDefault(); // Impede a digitação de espaços
                 }
             });
         });
@@ -390,7 +388,7 @@
 
             const name = nameInput.value.trim();
             const username = usernameInput.value.trim();
-            const rawPhone = phoneInput.value.trim(); // Pega o valor como o usuário digitou (só dígitos)
+            const phone = phoneInput.value.trim(); // Pega apenas os 9 dígitos digitados pelo usuário
             const pin = pinInput.value;
 
             if (pin.length < 4 || pin.length > 6 || !/^\d+$/.test(pin)) {
@@ -399,16 +397,15 @@
                 return;
             }
 
-            // Validação do formato do telefone (agora espera 9 dígitos)
-            const fullPhoneNumber = `+258${rawPhone}`;
-            if (!/^\+258\d{9}$/.test(fullPhoneNumber)) {
-                showFeedbackBar('Por favor, insira um número de telefone válido de Moçambique (9 dígitos após +258).', 'error');
+            // Validação: Garante que o telefone tem exatamente 9 dígitos
+            if (!/^\d{9}$/.test(phone)) {
+                showFeedbackBar('Por favor, insira um número de telefone válido de Moçambique (9 dígitos).', 'error');
                 setLoading(false);
                 return;
             }
             
             try {
-                const requestBody = { name, username, phone: fullPhoneNumber, pin }; // Envia o número completo
+                const requestBody = { name, username, phone, pin }; // <--- ATUALIZADO: envia 'phone' (9 dígitos)
                 if (invitedByIdInput.value.trim()) {
                     requestBody.invitedById = invitedByIdInput.value.trim();
                 }
