@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes"> <!-- ALTERADO: user-scalable=yes para acessibilidade -->
     <title>Configurações - Admin Chivo</title>
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -51,6 +51,38 @@
             font-size: 1.5rem; cursor: pointer;
         }
         .status-toggle { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; }
+        /* Estilo para o switch checkbox (um pouco mais complexo para um visual de toggle) */
+        .status-toggle input[type="checkbox"] {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            width: 38px;
+            height: 20px;
+            background-color: var(--text-muted);
+            border-radius: 10px;
+            position: relative;
+            cursor: pointer;
+            outline: none;
+            transition: background-color 0.3s;
+        }
+        .status-toggle input[type="checkbox"]::before {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 16px;
+            height: 16px;
+            background-color: #fff;
+            border-radius: 50%;
+            transition: transform 0.3s;
+        }
+        .status-toggle input[type="checkbox"]:checked {
+            background-color: var(--accent-green);
+        }
+        .status-toggle input[type="checkbox"]:checked::before {
+            transform: translateX(18px);
+        }
+
         .add-method-btn {
             display: block; width: 100%; padding: 0.8rem; margin-top: 1rem;
             background: none; border: 1px dashed var(--primary-blue);
@@ -63,16 +95,40 @@
             font-weight: 600; cursor: pointer;
         }
         .save-btn:disabled { background-color: #555; }
-        .spinner { width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.3); border-top-color:#fff; border-radius:50%; animation: spin 1s linear infinite; }
+        .spinner { width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.3); border-top-color:#fff; border-radius:50%; animation: spin 1s linear infinite; margin-left: 10px;}
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        #toast-container { position: fixed; top: 20px; right: 20px; z-index: 200; }
-        .toast { padding: 0.8rem 1.5rem; border-radius: 8px; color: #fff; margin-bottom: 0.5rem; }
-        .toast.success { background-color: var(--accent-green); }
-        .toast.error { background-color: var(--accent-red); }
+        /* NOVO: Estilos para a barra de feedback no topo */
+        #feedback-bar-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding-top: 20px;
+            pointer-events: none;
+        }
+        .feedback-bar {
+            background-color: var(--accent-red); color: #fff; padding: 0.8rem 1.5rem;
+            border-radius: 10px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            display: flex; align-items: center; gap: 10px; font-size: 0.9rem;
+            font-weight: 500; transform: translateY(-150%); opacity: 0;
+            transition: transform 0.4s ease-out, opacity 0.4s ease-out;
+            pointer-events: auto; max-width: 90%; text-align: center;
+        }
+        .feedback-bar.show { transform: translateY(0); opacity: 1; }
+        .feedback-bar.success { background-color: var(--accent-green); }
+        .feedback-bar i { font-size: 1.3rem; }
+        /* FIM: Estilos para a barra de feedback no topo */
     </style>
 </head>
 <body>
+
+    <!-- NOVO: Container para a barra de feedback -->
+    <div id="feedback-bar-container"></div>
 
     <div class="main-container">
         <header class="header">
@@ -85,23 +141,23 @@
             <div class="form-grid">
                 <div class="form-group">
                     <label for="depositMin">Depósito Mínimo (MT)</label>
-                    <input type="number" id="depositMin" placeholder="Ex: 50">
+                    <input type="number" id="depositMin" min="0" placeholder="Ex: 50">
                 </div>
                 <div class="form-group">
                     <label for="depositMax">Depósito Máximo (MT)</label>
-                    <input type="number" id="depositMax" placeholder="Ex: 25000">
+                    <input type="number" id="depositMax" min="0" placeholder="Ex: 25000">
                 </div>
                 <div class="form-group">
                     <label for="withdrawalMin">Saque Mínimo (MT)</label>
-                    <input type="number" id="withdrawalMin" placeholder="Ex: 100">
+                    <input type="number" id="withdrawalMin" min="0" placeholder="Ex: 100">
                 </div>
                 <div class="form-group">
                     <label for="withdrawalMax">Saque Máximo (MT)</label>
-                    <input type="number" id="withdrawalMax" placeholder="Ex: 25000">
+                    <input type="number" id="withdrawalMax" min="0" placeholder="Ex: 25000">
                 </div>
                 <div class="form-group" style="grid-column: 1 / -1;">
                     <label for="withdrawalFee">Taxa de Saque (%)</label>
-                    <input type="number" id="withdrawalFee" placeholder="Ex: 3">
+                    <input type="number" id="withdrawalFee" min="0" max="100" placeholder="Ex: 3">
                 </div>
             </div>
 
@@ -109,15 +165,15 @@
             <div class="form-grid">
                 <div class="form-group">
                     <label for="welcome-bonus">Bônus de Boas-vindas (MT)</label>
-                    <input type="number" id="welcome-bonus" placeholder="Ex: 50">
+                    <input type="number" id="welcome-bonus" min="0" placeholder="Ex: 50">
                 </div>
                 <div class="form-group">
                     <label for="referral-commission">Comissão por Convite (%)</label>
-                    <input type="number" id="referral-commission" placeholder="Ex: 15">
+                    <input type="number" id="referral-commission" min="0" max="100" placeholder="Ex: 15">
                 </div>
                 <div class="form-group">
                     <label for="daily-commission">Comissão Diária (%)</label>
-                    <input type="number" id="daily-commission" placeholder="Ex: 5">
+                    <input type="number" id="daily-commission" min="0" max="100" placeholder="Ex: 5">
                 </div>
             </div>
 
@@ -128,13 +184,13 @@
             </button>
 
             <button type="submit" id="save-btn" class="save-btn">
-                <span id="button-text">Salvar Alterações</span>
-                <div class="spinner" id="spinner" style="display: none;"></div>
+                <span>Salvar Alterações</span>
+                <div class="spinner" style="display: none;"></div>
             </button>
         </form>
     </div>
 
-    <div id="toast-container"></div>
+    <!-- REMOVIDO: <div id="toast-container"></div> -->
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -158,19 +214,35 @@
                 methodsContainer: document.getElementById('deposit-methods-container'),
                 addMethodBtn: document.getElementById('add-method-btn'),
                 saveBtn: document.getElementById('save-btn'),
-                buttonText: document.getElementById('button-text'),
-                spinner: document.getElementById('spinner')
+                feedbackBarContainer: document.getElementById('feedback-bar-container')
             };
 
+            // Obter os sub-elementos do botão APÓS o objeto elements ser definido
+            const saveBtnText = elements.saveBtn.querySelector('span');
+            const saveBtnSpinner = elements.saveBtn.querySelector('.spinner');
+
             const fetchAPI = async (endpoint, options = {}) => {
-                options.headers = { ...options.headers, 'Authorization': `Bearer ${TOKEN}`, 'Content-Type': 'application/json' };
+                const headers = { ...options.headers, 'Authorization': `Bearer ${TOKEN}` };
+                
+                // CORREÇÃO PARA O Content-Type
+                if (options.body && !(options.body instanceof FormData)) {
+                    headers['Content-Type'] = 'application/json';
+                }
+                
+                options.headers = headers; // Atribuir os cabeçalhos potencialmente atualizados
+                
                 const response = await fetch(`${API_URL}${endpoint}`, options);
+                
                 if (response.status === 401) {
                     localStorage.removeItem('chivo-admin-token');
                     window.location.href = 'admin-login.html';
+                    throw new Error('Sessão expirada. Faça login novamente.');
                 }
-                if (!response.ok) throw new Error((await response.json()).message || 'Erro na API.');
-                return response.json();
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.message || `Erro na API: ${response.statusText}`);
+                }
+                return data;
             };
 
             const createMethodElement = (method = {}) => {
@@ -179,19 +251,19 @@
                 const name = method.name || '';
                 const holderName = method.holderName || '';
                 const number = method.number || '';
-                const isActive = method.isActive === undefined ? true : method.isActive;
+                const isActive = method.isActive === undefined ? true : method.isActive; // Padrão é true se não definido
                 methodDiv.innerHTML = `
                     <div class="method-inputs">
-                        <input type="text" class="method-name" placeholder="Nome da Rede (Ex: M-Pesa)" value="${name}">
-                        <input type="text" class="method-holder" placeholder="Nome do Titular" value="${holderName}">
-                        <input type="text" class="method-number" placeholder="Número" value="${number}">
+                        <input type="text" class="method-name" placeholder="Nome da Rede (Ex: M-Pesa)" value="${name}" required>
+                        <input type="text" class="method-holder" placeholder="Nome do Titular" value="${holderName}" required>
+                        <input type="text" class="method-number" placeholder="Número" value="${number}" required>
                     </div>
                     <div class="method-actions">
                         <label class="status-toggle">
                             <input type="checkbox" class="method-status" ${isActive ? 'checked' : ''}>
                             Ativo
                         </label>
-                        <button type="button" class="remove-method-btn"><i class='bx bxs-trash'></i></button>
+                        <button type="button" class="remove-method-btn" title="Remover Método"><i class='bx bxs-trash'></i></button>
                     </div>
                 `;
                 methodDiv.querySelector('.remove-method-btn').addEventListener('click', () => {
@@ -201,14 +273,14 @@
             };
 
             const renderSettings = (settings) => {
-                elements.depositMinInput.value = settings.depositMin || '';
-                elements.depositMaxInput.value = settings.depositMax || '';
-                elements.withdrawalMinInput.value = settings.withdrawalMin || '';
-                elements.withdrawalMaxInput.value = settings.withdrawalMax || '';
-                elements.withdrawalFeeInput.value = settings.withdrawalFee || '';
-                elements.welcomeBonusInput.value = settings.welcomeBonus || '';
-                elements.referralCommissionInput.value = settings.referralCommissionRate || '';
-                elements.dailyCommissionInput.value = settings.dailyCommissionRate || '';
+                elements.depositMinInput.value = settings.depositMin ?? '';
+                elements.depositMaxInput.value = settings.depositMax ?? '';
+                elements.withdrawalMinInput.value = settings.withdrawalMin ?? '';
+                elements.withdrawalMaxInput.value = settings.withdrawalMax ?? '';
+                elements.withdrawalFeeInput.value = settings.withdrawalFee ?? '';
+                elements.welcomeBonusInput.value = settings.welcomeBonus ?? '';
+                elements.referralCommissionInput.value = settings.referralCommissionRate ?? '';
+                elements.dailyCommissionInput.value = settings.dailyCommissionRate ?? '';
                 elements.methodsContainer.innerHTML = '';
                 if (settings.depositMethods && settings.depositMethods.length > 0) {
                     settings.depositMethods.forEach(method => {
@@ -222,7 +294,7 @@
                     const settings = await fetchAPI('/api/admin/settings');
                     renderSettings(settings);
                 } catch (error) {
-                    showToast(error.message, 'error');
+                    showFeedbackBar(error.message, 'error');
                 }
             };
 
@@ -232,15 +304,27 @@
                 try {
                     const depositMethods = [];
                     const methodElements = elements.methodsContainer.querySelectorAll('.deposit-method-item');
+                    let allMethodsValid = true;
+
                     methodElements.forEach(el => {
-                        const name = el.querySelector('.method-name').value;
-                        const holderName = el.querySelector('.method-holder').value;
-                        const number = el.querySelector('.method-number').value;
+                        const name = el.querySelector('.method-name').value.trim();
+                        const holderName = el.querySelector('.method-holder').value.trim();
+                        const number = el.querySelector('.method-number').value.trim();
                         const isActive = el.querySelector('.method-status').checked;
-                        if(name && holderName && number) {
-                           depositMethods.push({ name, holderName, number, isActive });
+
+                        // Validação frontend para métodos de depósito
+                        if (!name || !holderName || !number) {
+                           showFeedbackBar('Todos os campos de nome, titular e número dos métodos de depósito são obrigatórios.', 'error');
+                           allMethodsValid = false;
+                           return; // Sai deste forEach, mas o loop principal ainda precisa verificar a flag
                         }
+                        depositMethods.push({ name, holderName, number, isActive });
                     });
+
+                    if (!allMethodsValid) {
+                        setLoading(false);
+                        return; // Para o submit se houver métodos inválidos
+                    }
 
                     const settingsData = {
                         depositMin: Number(elements.depositMinInput.value),
@@ -253,14 +337,36 @@
                         dailyCommissionRate: Number(elements.dailyCommissionInput.value),
                         depositMethods
                     };
+                    
+                    // Validação adicional frontend para os limites e taxas
+                    if (settingsData.depositMin > settingsData.depositMax) {
+                        showFeedbackBar('O depósito mínimo não pode ser maior que o depósito máximo.', 'error');
+                        setLoading(false); return;
+                    }
+                    if (settingsData.withdrawalMin > settingsData.withdrawalMax) {
+                        showFeedbackBar('O saque mínimo não pode ser maior que o saque máximo.', 'error');
+                        setLoading(false); return;
+                    }
+                    if (settingsData.withdrawalFee < 0 || settingsData.withdrawalFee > 100) {
+                        showFeedbackBar('A taxa de saque deve ser um valor entre 0 e 100 (%).', 'error');
+                        setLoading(false); return;
+                    }
+                    if (settingsData.referralCommissionRate < 0 || settingsData.referralCommissionRate > 100) {
+                        showFeedbackBar('A comissão por convite deve ser um valor entre 0 e 100 (%).', 'error');
+                        setLoading(false); return;
+                    }
+                    if (settingsData.dailyCommissionRate < 0 || settingsData.dailyCommissionRate > 100) {
+                        showFeedbackBar('A comissão diária deve ser um valor entre 0 e 100 (%).', 'error');
+                        setLoading(false); return;
+                    }
 
                     await fetchAPI('/api/admin/settings', {
                         method: 'PUT',
                         body: JSON.stringify(settingsData)
                     });
-                    showToast('Configurações salvas com sucesso!', 'success');
+                    showFeedbackBar('Configurações salvas com sucesso!', 'success');
                 } catch (error) {
-                    showToast(error.message, 'error');
+                    showFeedbackBar(error.message, 'error');
                 } finally {
                     setLoading(false);
                 }
@@ -268,18 +374,26 @@
 
             const setLoading = (isLoading) => {
                 elements.saveBtn.disabled = isLoading;
-                elements.buttonText.style.display = isLoading ? 'none' : 'block';
-                elements.spinner.style.display = isLoading ? 'block' : 'none';
+                saveBtnText.style.display = isLoading ? 'none' : 'block';
+                saveBtnSpinner.style.display = isLoading ? 'inline-block' : 'none';
             };
 
-            const showToast = (message, type = 'success') => {
-                const toastContainer = document.getElementById('toast-container');
-                const toast = document.createElement('div');
-                toast.className = `toast ${type}`;
-                toast.textContent = message;
-                toastContainer.appendChild(toast);
-                setTimeout(() => toast.remove(), 4000);
-            };
+            function showFeedbackBar(message, type = 'error') {
+                elements.feedbackBarContainer.innerHTML = ''; 
+                let iconClass = type === 'success' ? 'bx bx-check-circle' : 'bx bx-x-circle';
+
+                const feedbackBar = document.createElement('div');
+                feedbackBar.className = `feedback-bar ${type}`;
+                feedbackBar.innerHTML = `<i class='${iconClass}'></i> <span></span>`;
+                feedbackBar.querySelector('span').textContent = message; // Proteção contra XSS
+                elements.feedbackBarContainer.appendChild(feedbackBar);
+
+                setTimeout(() => { feedbackBar.classList.add('show'); }, 50); 
+                setTimeout(() => {
+                    feedbackBar.classList.remove('show');
+                    feedbackBar.addEventListener('transitionend', () => feedbackBar.remove(), { once: true });
+                }, 4000);
+            }
 
             elements.form.addEventListener('submit', handleFormSubmit);
             elements.addMethodBtn.addEventListener('click', () => {

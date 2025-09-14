@@ -1,0 +1,639 @@
+--- START OF FILE admin-user-details.html ---
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Detalhes do Usuário - Admin Chivo</title>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        :root {
+            --bg-dark: #121826; --primary-blue: #0052FF; --card-bg: #1A2233;
+            --text-light: #F4F7FC; --text-muted: #8A93A2; --border-color: #333d52;
+            --accent-green: #28a745; --accent-red: #dc3545; --accent-yellow: #FFC107;
+        }
+        body { background-color: var(--bg-dark); color: var(--text-light); }
+        .main-container { padding: 2rem 1.5rem; max-width: 900px; margin: auto; }
+        
+        .header { display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; }
+        .back-button { background: none; border: none; font-size: 2rem; color: var(--text-light); cursor: pointer; }
+        .header h1 { font-size: 1.8rem; }
+
+        .section-title {
+            font-size: 1.3rem; margin-top: 2rem; margin-bottom: 1rem;
+            padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);
+        }
+
+        .card {
+            background-color: var(--card-bg); padding: 1.5rem;
+            border-radius: 12px; border: 1px solid var(--border-color);
+            margin-bottom: 1.5rem;
+        }
+
+        /* Perfil do Usuário */
+        .user-profile-header {
+            display: flex; flex-direction: column; align-items: center; text-align: center;
+            gap: 1rem; margin-bottom: 1.5rem;
+        }
+        .profile-pic-container { position: relative; width: 80px; height: 80px; }
+        .profile-pic { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 3px solid var(--primary-blue); }
+        .profile-icon {
+            width: 100%; height: 100%; border-radius: 50%; display: flex; justify-content: center;
+            align-items: center; background-color: #eee; color: var(--text-muted); font-size: 3.5rem;
+            border: 3px solid var(--primary-blue);
+        }
+        .user-profile-header h2 { font-size: 1.5rem; margin-top: 0.5rem; }
+        .user-profile-header p { color: var(--text-muted); font-size: 0.9rem; }
+        .user-status-tag {
+            padding: 0.4rem 0.8rem; border-radius: 15px; font-weight: 600; font-size: 0.8rem;
+            color: #fff; margin-top: 0.5rem; display: inline-block;
+        }
+        .status-active { background-color: var(--accent-green); }
+        .status-blocked { background-color: var(--accent-red); }
+
+        .detail-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0.8rem 0; border-bottom: 1px solid var(--border-color);
+            font-size: 0.95rem;
+        }
+        .detail-item:last-child { border-bottom: none; }
+        .detail-item .label { color: var(--text-muted); }
+        .detail-item .value { font-weight: 500; }
+        .detail-item .value.balance { font-size: 1.1rem; font-weight: 600; color: var(--accent-yellow); }
+
+        .actions-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; margin-top: 1.5rem; }
+        @media (min-width: 600px) { .actions-grid { grid-template-columns: 1fr 1fr; } }
+        .action-btn {
+            background-color: var(--primary-blue); color: #fff; border: none;
+            padding: 0.8rem; border-radius: 8px; font-weight: 600; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+        }
+        .block-btn { background-color: var(--accent-red); }
+        .unblock-btn { background-color: var(--accent-green); }
+        .reset-pin-btn { background-color: var(--accent-yellow); color: var(--bg-dark); }
+        .adjust-balance-btn { background-color: var(--primary-blue); }
+        .action-btn:disabled { background-color: var(--text-muted); cursor: not-allowed; }
+
+        /* Plano Ativo */
+        .plan-card { display: flex; align-items: center; gap: 1.5rem; }
+        .plan-card img { width: 80px; height: 80px; object-fit: cover; border-radius: 8px; background-color: var(--bg-dark); }
+        .plan-info h3 { font-size: 1.1rem; margin-bottom: 0.3rem; }
+        .plan-info p { font-size: 0.85rem; color: var(--text-muted); }
+        .plan-info strong { color: var(--text-light); }
+
+        /* Transações e Referências (Listas) */
+        .list-item {
+            background-color: var(--bg-dark); padding: 1rem; border-radius: 8px;
+            margin-bottom: 0.8rem; border-left: 4px solid var(--border-color);
+        }
+        .list-item:last-child { margin-bottom: 0; }
+        .item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+        .item-header h4 { font-size: 0.95rem; font-weight: 600; }
+        .item-header .amount { font-size: 1rem; font-weight: 700; }
+        .amount.positive { color: var(--accent-green); }
+        .amount.negative { color: var(--accent-red); }
+        .item-details { font-size: 0.8rem; color: var(--text-muted); }
+
+        .list-empty-message { text-align: center; color: var(--text-muted); padding: 1rem 0; font-size: 0.9rem; }
+
+        /* Modal */
+        .modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.7); backdrop-filter: blur(5px);
+            display: none; justify-content: center; align-items: center; z-index: 1000;
+        }
+        .modal.show { display: flex; }
+        .modal-content {
+            background-color: var(--card-bg); width: 90%; max-width: 450px;
+            padding: 2rem; border-radius: 12px;
+        }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+        .modal-header h2 { font-size: 1.5rem; }
+        .modal-header .close-btn { background: none; border: none; font-size: 2rem; color: var(--text-light); cursor: pointer; }
+        
+        .form-group { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.5rem; }
+        .form-group label { color: var(--text-muted); font-weight: 500; }
+        .form-group input {
+            background-color: var(--bg-dark); border: 1px solid var(--border-color);
+            border-radius: 8px; padding: 0.8rem 1rem; color: var(--text-light);
+            font-size: 1rem;
+        }
+        .modal-actions { margin-top: 1.5rem; }
+        .modal-submit-btn {
+            background-color: var(--primary-blue); color: #fff; border: none;
+            padding: 0.8rem; border-radius: 8px; font-weight: 600; cursor: pointer;
+            width: 100%; display: flex; justify-content: center; align-items: center;
+        }
+        .modal-submit-btn:disabled { background-color: var(--text-muted); cursor: not-allowed; }
+        .spinner { width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.3); border-top-color:#fff; border-radius:50%; animation: spin 1s linear infinite; margin-left: 10px;}
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* NOVO: Estilos para a barra de feedback no topo */
+        #feedback-bar-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding-top: 20px;
+            pointer-events: none;
+        }
+        .feedback-bar {
+            background-color: var(--accent-red); color: #fff; padding: 0.8rem 1.5rem;
+            border-radius: 10px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            display: flex; align-items: center; gap: 10px; font-size: 0.9rem;
+            font-weight: 500; transform: translateY(-150%); opacity: 0;
+            transition: transform 0.4s ease-out, opacity 0.4s ease-out;
+            pointer-events: auto; max-width: 90%; text-align: center;
+        }
+        .feedback-bar.show { transform: translateY(0); opacity: 1; }
+        .feedback-bar.success { background-color: var(--accent-green); }
+        .feedback-bar i { font-size: 1.3rem; }
+        /* FIM: Estilos para a barra de feedback no topo */
+
+    </style>
+</head>
+<body>
+
+    <!-- NOVO: Container para a barra de feedback -->
+    <div id="feedback-bar-container"></div>
+
+    <div class="main-container">
+        <header class="header">
+            <button class="back-button" onclick="window.location.href='admin-users.html'"><i class='bx bx-arrow-back'></i></button>
+            <h1>Detalhes do Usuário</h1>
+        </header>
+
+        <p id="loading-message" style="text-align: center; color: var(--text-muted);">Carregando detalhes do usuário...</p>
+        <div id="user-details-content" style="display: none;">
+            <div class="card">
+                <div class="user-profile-header">
+                    <div class="profile-pic-container">
+                        <img src="" alt="Foto de Perfil" id="profile-pic-display" class="profile-pic" style="display: none;">
+                        <div class="profile-icon" id="profile-icon-placeholder"><i class='bx bxs-user-circle'></i></div>
+                    </div>
+                    <h2 id="user-name-display"></h2>
+                    <p>@<span id="user-username-display"></span> | ID: <span id="user-id-display"></span></p>
+                    <span id="user-status-tag" class="user-status-tag"></span>
+                </div>
+                <div class="user-details-list">
+                    <div class="detail-item"><span class="label">Telefone</span><span class="value" id="user-phone-display"></span></div>
+                    <div class="detail-item"><span class="label">Saldo da Carteira</span><span class="value balance" id="user-wallet-balance-display"></span></div>
+                    <div class="detail-item"><span class="label">Saldo de Bônus</span><span class="value balance" id="user-bonus-balance-display"></span></div>
+                    <div class="detail-item"><span class="label">Já Depositou?</span><span class="value" id="user-has-deposited-display"></span></div>
+                    <div class="detail-item"><span class="label">Já Ativou Plano?</span><span class="value" id="user-has-activated-plan-display"></span></div>
+                    <div class="detail-item"><span class="label">Cadastrado em</span><span class="value" id="user-created-at-display"></span></div>
+                </div>
+                <div class="actions-grid">
+                    <button class="action-btn block-btn" id="block-unblock-btn"><i class='bx bx-block'></i> Bloquear</button>
+                    <button class="action-btn reset-pin-btn" id="reset-pin-btn"><i class='bx bx-key'></i> Redefinir PIN</button>
+                    <button class="action-btn adjust-balance-btn" id="adjust-balance-btn" style="grid-column: 1 / -1;"><i class='bx bx-coin'></i> Ajustar Saldo</button>
+                </div>
+            </div>
+
+            <h2 class="section-title">Plano Ativo</h2>
+            <div class="card" id="active-plan-card">
+                <p class="list-empty-message">Nenhum plano ativo para este usuário.</p>
+            </div>
+
+            <h2 class="section-title">Transações</h2>
+            <div class="card">
+                <div id="transactions-list">
+                    <p class="list-empty-message">Nenhuma transação encontrada.</p>
+                </div>
+            </div>
+
+            <h2 class="section-title">Convidados (<span id="referral-count-display">0</span>)</h2>
+            <div class="card">
+                <div id="referrals-list">
+                    <p class="list-empty-message">Nenhum convidado por este usuário.</p>
+                </div>
+                <div class="detail-item" style="border-top: 1px solid var(--border-color); margin-top: 1rem; padding-top: 1rem;">
+                    <span class="label">Total Ganho de Convidados</span>
+                    <span class="value balance" id="total-own-referral-earnings-display"></span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">Total Gerado para o Padrinho</span>
+                    <span class="value balance" id="total-earnings-for-referrer-display"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Ajustar Saldo -->
+    <div id="adjust-balance-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Ajustar Saldo</h2>
+                <button class="close-btn">&times;</button>
+            </div>
+            <form id="adjust-balance-form">
+                <div class="form-group">
+                    <label for="new-wallet-balance">Novo Saldo da Carteira (MT)</label>
+                    <input type="number" id="new-wallet-balance" step="0.01" placeholder="Ex: 1500.50">
+                </div>
+                <div class="form-group">
+                    <label for="new-bonus-balance">Novo Saldo de Bônus (MT)</label>
+                    <input type="number" id="new-bonus-balance" step="0.01" placeholder="Ex: 500">
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="modal-submit-btn" id="adjust-balance-submit-btn">
+                        <span>Salvar Ajuste</span>
+                        <div class="spinner" style="display: none;"></div>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para Redefinir PIN -->
+    <div id="reset-pin-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Redefinir PIN do Usuário</h2>
+                <button class="close-btn">&times;</button>
+            </div>
+            <form id="reset-pin-form">
+                <p style="color: var(--text-muted); margin-bottom: 1rem;">O novo PIN será fornecido a você para que possa comunicar ao usuário.</p>
+                <div class="form-group">
+                    <label for="new-pin">Novo PIN (4 a 6 dígitos)</label>
+                    <input type="password" id="new-pin" minlength="4" maxlength="6" pattern="\d{4,6}" placeholder="Ex: 123456" required>
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="modal-submit-btn" id="reset-pin-submit-btn">
+                        <span>Redefinir PIN</span>
+                        <div class="spinner" style="display: none;"></div>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const API_URL = "https://daksk.onrender.com";
+            const TOKEN = localStorage.getItem('chivo-admin-token');
+            if (!TOKEN) {
+                window.location.href = 'admin-login.html';
+                return;
+            }
+
+            const userId = new URLSearchParams(window.location.search).get('id');
+            if (!userId) {
+                document.getElementById('loading-message').textContent = 'ID do usuário não fornecido na URL.';
+                return;
+            }
+
+            const elements = {
+                loadingMessage: document.getElementById('loading-message'),
+                userDetailsContent: document.getElementById('user-details-content'),
+                profilePicDisplay: document.getElementById('profile-pic-display'),
+                profileIconPlaceholder: document.getElementById('profile-icon-placeholder'),
+                userNameDisplay: document.getElementById('user-name-display'),
+                userUsernameDisplay: document.getElementById('user-username-display'),
+                userIdDisplay: document.getElementById('user-id-display'),
+                userStatusTag: document.getElementById('user-status-tag'),
+                userPhoneDisplay: document.getElementById('user-phone-display'),
+                userWalletBalanceDisplay: document.getElementById('user-wallet-balance-display'),
+                userBonusBalanceDisplay: document.getElementById('user-bonus-balance-display'),
+                userHasDepositedDisplay: document.getElementById('user-has-deposited-display'),
+                userHasActivatedPlanDisplay: document.getElementById('user-has-activated-plan-display'),
+                userCreatedAtDisplay: document.getElementById('user-created-at-display'),
+                blockUnblockBtn: document.getElementById('block-unblock-btn'),
+                resetPinBtn: document.getElementById('reset-pin-btn'),
+                adjustBalanceBtn: document.getElementById('adjust-balance-btn'),
+                activePlanCard: document.getElementById('active-plan-card'),
+                transactionsList: document.getElementById('transactions-list'),
+                referralCountDisplay: document.getElementById('referral-count-display'),
+                referralsList: document.getElementById('referrals-list'),
+                totalOwnReferralEarningsDisplay: document.getElementById('total-own-referral-earnings-display'),
+                totalEarningsForReferrerDisplay: document.getElementById('total-earnings-for-referrer-display'),
+                feedbackBarContainer: document.getElementById('feedback-bar-container'), // NOVO ELEMENTO
+                
+                // Modais
+                adjustBalanceModal: document.getElementById('adjust-balance-modal'),
+                adjustBalanceForm: document.getElementById('adjust-balance-form'),
+                newWalletBalanceInput: document.getElementById('new-wallet-balance'),
+                newBonusBalanceInput: document.getElementById('new-bonus-balance'),
+                adjustBalanceSubmitBtn: document.getElementById('adjust-balance-submit-btn'),
+
+                resetPinModal: document.getElementById('reset-pin-modal'),
+                resetPinForm: document.getElementById('reset-pin-form'),
+                newPinInput: document.getElementById('new-pin'),
+                resetPinSubmitBtn: document.getElementById('reset-pin-submit-btn'),
+            };
+
+            let currentUserData = null; // Para armazenar os dados do usuário carregado
+
+            // Obter os sub-elementos dos botões APÓS o objeto elements ser definido
+            const adjustBalanceSubmitBtnText = elements.adjustBalanceSubmitBtn.querySelector('span');
+            const adjustBalanceSubmitBtnSpinner = elements.adjustBalanceSubmitBtn.querySelector('.spinner');
+            const resetPinSubmitBtnText = elements.resetPinSubmitBtn.querySelector('span');
+            const resetPinSubmitBtnSpinner = elements.resetPinSubmitBtn.querySelector('.spinner');
+
+
+            const fetchAPI = async (endpoint, options = {}) => {
+                options.headers = { ...options.headers, 'Authorization': `Bearer ${TOKEN}` };
+                // Lógica corrigida para Content-Type:
+                if (options.body && !(options.body instanceof FormData)) {
+                    options.headers['Content-Type'] = 'application/json';
+                } else if (options.body instanceof FormData) {
+                    delete options.headers['Content-Type']; // Remover Content-Type se for FormData
+                }
+                
+                const response = await fetch(`${API_URL}${endpoint}`, options);
+                
+                if (response.status === 401) {
+                    localStorage.removeItem('chivo-admin-token');
+                    window.location.href = 'admin-login.html';
+                    throw new Error('Sessão expirada. Faça login novamente.');
+                }
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.message || `Erro na API: ${response.statusText}`);
+                }
+                return data;
+            };
+            
+            const formatCurrency = (value = 0) => new Intl.NumberFormat('pt-MZ', { style: 'currency', currency: 'MZN' }).format(value);
+            const formatDate = (dateString) => new Date(dateString).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+            // Função para exibir a barra de feedback
+            function showFeedbackBar(message, type = 'error') {
+                elements.feedbackBarContainer.innerHTML = ''; 
+                let iconClass = type === 'success' ? 'bx bx-check-circle' : 'bx bx-x-circle';
+
+                const feedbackBar = document.createElement('div');
+                feedbackBar.className = `feedback-bar ${type}`;
+                feedbackBar.innerHTML = `<i class='${iconClass}'></i> <span></span>`;
+                feedbackBar.querySelector('span').textContent = message; // Proteção contra XSS
+                elements.feedbackBarContainer.appendChild(feedbackBar);
+
+                setTimeout(() => { feedbackBar.classList.add('show'); }, 50); 
+                setTimeout(() => {
+                    feedbackBar.classList.remove('show');
+                    feedbackBar.addEventListener('transitionend', () => feedbackBar.remove(), { once: true });
+                }, 4000);
+            }
+
+            const loadUserDetails = async () => {
+                elements.loadingMessage.style.display = 'block';
+                elements.userDetailsContent.style.display = 'none';
+
+                try {
+                    const data = await fetchAPI(`/api/admin/users/${userId}/details`);
+                    currentUserData = data.user; // Armazena os dados completos do usuário
+                    renderUserDetails(data);
+                    elements.loadingMessage.style.display = 'none';
+                    elements.userDetailsContent.style.display = 'block';
+                } catch (error) {
+                    showFeedbackBar(error.message, 'error');
+                    elements.loadingMessage.textContent = `Erro ao carregar detalhes do usuário: ${error.message}`;
+                }
+            };
+
+            const renderUserDetails = (data) => {
+                const user = data.user;
+
+                // Perfil
+                if (user.profilePicture) {
+                    elements.profilePicDisplay.src = user.profilePicture;
+                    elements.profilePicDisplay.style.display = 'block';
+                    elements.profileIconPlaceholder.style.display = 'none';
+                } else {
+                    elements.profilePicDisplay.style.display = 'none';
+                    elements.profileIconPlaceholder.style.display = 'block';
+                }
+                elements.userNameDisplay.textContent = user.name;
+                elements.userUsernameDisplay.textContent = user.username;
+                elements.userIdDisplay.textContent = user.userId;
+                elements.userStatusTag.textContent = user.isBlocked ? 'Bloqueado' : 'Ativo';
+                elements.userStatusTag.className = `user-status-tag ${user.isBlocked ? 'status-blocked' : 'status-active'}`;
+                elements.userPhoneDisplay.textContent = user.phone;
+                elements.userWalletBalanceDisplay.textContent = formatCurrency(user.walletBalance);
+                elements.userBonusBalanceDisplay.textContent = formatCurrency(user.bonusBalance);
+                elements.userHasDepositedDisplay.textContent = user.hasDeposited ? 'Sim' : 'Não';
+                elements.userHasActivatedPlanDisplay.textContent = user.hasActivatedPlan ? 'Sim' : 'Não';
+                elements.userCreatedAtDisplay.textContent = formatDate(user.createdAt);
+
+                // Botões de Ação
+                elements.blockUnblockBtn.textContent = user.isBlocked ? 'Desbloquear Usuário' : 'Bloquear Usuário';
+                elements.blockUnblockBtn.className = `action-btn ${user.isBlocked ? 'unblock-btn' : 'block-btn'}`;
+
+                // Plano Ativo
+                elements.activePlanCard.innerHTML = '';
+                if (user.activePlanInstance) {
+                    const plan = user.activePlanInstance.plan;
+                    const startDate = new Date(user.activePlanInstance.startDate);
+                    const endDate = new Date(user.activePlanInstance.endDate);
+                    elements.activePlanCard.innerHTML = `
+                        <div class="plan-card">
+                            <img src="${plan.imageUrl || 'https://via.placeholder.com/80x80.png?text=Plano'}" alt="Imagem do Plano">
+                            <div class="plan-info">
+                                <h3>${plan.name}</h3>
+                                <p>Investimento: <strong>${formatCurrency(user.activePlanInstance.investedAmount)}</strong></p>
+                                <p>Lucro Diário: <strong>${formatCurrency(user.activePlanInstance.dailyProfit)}</strong></p>
+                                <p>Duração: <strong>${plan.durationDays} dias</strong></p>
+                                <p>Ativo de: <strong>${startDate.toLocaleDateString('pt-BR')}</strong> até <strong>${endDate.toLocaleDateString('pt-BR')}</strong></p>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    elements.activePlanCard.innerHTML = '<p class="list-empty-message">Nenhum plano ativo para este usuário.</p>';
+                }
+
+                // Transações
+                elements.transactionsList.innerHTML = '';
+                if (data.transactions && data.transactions.length > 0) {
+                    data.transactions.forEach(transaction => {
+                        const amountClass = (transaction.type === 'deposit' || transaction.type === 'collection' || transaction.type === 'commission' || transaction.type === 'welcome_bonus' || transaction.type === 'lottery_win') && transaction.status === 'approved' ? 'positive' : 'negative';
+                        const prefix = (amountClass === 'positive') ? '+' : '';
+                        const formattedAmount = `${prefix}${formatCurrency(transaction.amount)}`;
+                        
+                        let statusText = '';
+                        let statusClass = '';
+                        if (transaction.status === 'pending') { statusText = 'Pendente'; statusClass = 'status-yellow'; }
+                        else if (transaction.status === 'approved') { statusText = 'Aprovado'; statusClass = 'status-green'; }
+                        else if (transaction.status === 'rejected') { statusText = 'Rejeitado'; statusClass = 'status-red'; }
+
+
+                        elements.transactionsList.innerHTML += `
+                            <div class="list-item">
+                                <div class="item-header">
+                                    <h4>${transaction.description}</h4>
+                                    <span class="amount ${amountClass}">${formattedAmount}</span>
+                                </div>
+                                <div class="item-details">
+                                    <p>Data: ${formatDate(transaction.createdAt)}</p>
+                                    <p>Status: <span style="color: ${statusClass === 'status-green' ? 'var(--accent-green)' : statusClass === 'status-red' ? 'var(--accent-red)' : 'var(--accent-yellow)'}">${statusText}</span></p>
+                                </div>
+                            </div>
+                        `;
+                    });
+                } else {
+                    elements.transactionsList.innerHTML = '<p class="list-empty-message">Nenhuma transação encontrada para este usuário.</p>';
+                }
+
+                // Convidados (Referrals)
+                elements.referralCountDisplay.textContent = data.referrals.count;
+                elements.referralsList.innerHTML = '';
+                if (data.referrals && data.referrals.list.length > 0) {
+                    data.referrals.list.forEach(referral => {
+                        elements.referralsList.innerHTML += `
+                            <div class="list-item">
+                                <div class="item-header">
+                                    <h4>@${referral.username} (ID: ${referral.userId})</h4>
+                                    <span class="amount positive">+${formatCurrency(referral.earningsForUser)}</span>
+                                </div>
+                                <div class="item-details">
+                                    <p>Cadastrado em: ${new Date(referral.joinDate).toLocaleDateString('pt-BR')}</p>
+                                    <p>Plano Ativo: ${referral.planName}</p>
+                                </div>
+                            </div>
+                        `;
+                    });
+                } else {
+                    elements.referralsList.innerHTML = '<p class="list-empty-message">Este usuário ainda não convidou ninguém.</p>';
+                }
+                elements.totalOwnReferralEarningsDisplay.textContent = formatCurrency(data.referrals.totalOwnReferralEarnings);
+                elements.totalEarningsForReferrerDisplay.textContent = formatCurrency(data.totalEarningsForReferrer);
+            };
+
+            // --- Gerenciamento de Eventos para Ações ---
+
+            // Bloquear/Desbloquear
+            elements.blockUnblockBtn.addEventListener('click', async () => {
+                elements.blockUnblockBtn.disabled = true;
+                const action = currentUserData.isBlocked ? 'desbloquear' : 'bloquear';
+                try {
+                    const result = await fetchAPI(`/api/admin/users/${userId}/block`, { method: 'PUT', body: JSON.stringify({}) });
+                    showFeedbackBar(result.message, 'success');
+                    await loadUserDetails(); // Recarrega os dados para atualizar o status
+                } catch (error) {
+                    showFeedbackBar(error.message, 'error');
+                } finally {
+                    elements.blockUnblockBtn.disabled = false;
+                }
+            });
+
+            // Abrir Modal de Ajustar Saldo
+            elements.adjustBalanceBtn.addEventListener('click', () => {
+                elements.newWalletBalanceInput.value = currentUserData.walletBalance;
+                elements.newBonusBalanceInput.value = currentUserData.bonusBalance;
+                elements.adjustBalanceModal.classList.add('show');
+            });
+
+            // Fechar Modal de Ajustar Saldo
+            elements.adjustBalanceModal.querySelector('.close-btn').addEventListener('click', () => {
+                elements.adjustBalanceModal.classList.remove('show');
+            });
+            elements.adjustBalanceModal.addEventListener('click', (e) => { // Clicar fora do modal fecha
+                if (e.target === elements.adjustBalanceModal) {
+                    elements.adjustBalanceModal.classList.remove('show');
+                }
+            });
+
+            // Enviar Ajuste de Saldo
+            elements.adjustBalanceForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const submitButton = elements.adjustBalanceSubmitBtn;
+                submitButton.disabled = true;
+                adjustBalanceSubmitBtnText.textContent = 'Salvando...';
+                adjustBalanceSubmitBtnSpinner.style.display = 'inline-block';
+
+                const newWalletBalance = parseFloat(elements.newWalletBalanceInput.value);
+                const newBonusBalance = parseFloat(elements.newBonusBalanceInput.value);
+                
+                // Validação no frontend (básica)
+                if (isNaN(newWalletBalance) || newWalletBalance < 0 || isNaN(newBonusBalance) || newBonusBalance < 0) {
+                    showFeedbackBar('Por favor, insira valores numéricos válidos e não negativos para os saldos.', 'error');
+                    submitButton.disabled = false;
+                    adjustBalanceSubmitBtnText.textContent = 'Salvar Ajuste';
+                    adjustBalanceSubmitBtnSpinner.style.display = 'none';
+                    return;
+                }
+
+                try {
+                    const result = await fetchAPI(`/api/admin/users/${userId}/balance`, {
+                        method: 'PUT',
+                        body: JSON.stringify({ walletBalance: newWalletBalance, bonusBalance: newBonusBalance })
+                    });
+                    showFeedbackBar(result.message, 'success');
+                    elements.adjustBalanceModal.classList.remove('show');
+                    await loadUserDetails(); // Recarrega os dados
+                } catch (error) {
+                    showFeedbackBar(error.message, 'error');
+                } finally {
+                    submitButton.disabled = false;
+                    adjustBalanceSubmitBtnText.textContent = 'Salvar Ajuste';
+                    adjustBalanceSubmitBtnSpinner.style.display = 'none';
+                }
+            });
+
+            // Abrir Modal de Redefinir PIN
+            elements.resetPinBtn.addEventListener('click', () => {
+                elements.newPinInput.value = ''; // Limpa o campo
+                elements.resetPinModal.classList.add('show');
+            });
+
+            // Fechar Modal de Redefinir PIN
+            elements.resetPinModal.querySelector('.close-btn').addEventListener('click', () => {
+                elements.resetPinModal.classList.remove('show');
+            });
+            elements.resetPinModal.addEventListener('click', (e) => { // Clicar fora do modal fecha
+                if (e.target === elements.resetPinModal) {
+                    elements.resetPinModal.classList.remove('show');
+                }
+            });
+
+            // Enviar Redefinição de PIN
+            elements.resetPinForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const submitButton = elements.resetPinSubmitBtn;
+                submitButton.disabled = true;
+                resetPinSubmitBtnText.textContent = 'Redefinindo...';
+                resetPinSubmitBtnSpinner.style.display = 'inline-block';
+
+                // CORREÇÃO AQUI: Garante que o PIN seja uma string e remove espaços em branco.
+                const newPin = String(elements.newPinInput.value).trim(); 
+
+                // Validação de PIN no frontend (duplicada do backend, mas boa para UX)
+                if (newPin.length < 4 || newPin.length > 6 || !/^\d+$/.test(newPin)) {
+                    showFeedbackBar('O novo PIN deve conter apenas números, entre 4 e 6 dígitos.', 'error');
+                    submitButton.disabled = false;
+                    resetPinSubmitBtnText.textContent = 'Redefinir PIN';
+                    resetPinSubmitBtnSpinner.style.display = 'none';
+                    return;
+                }
+
+                try {
+                    const result = await fetchAPI(`/api/admin/users/${userId}/reset-pin`, {
+                        method: 'PUT',
+                        body: JSON.stringify({ newPin })
+                    });
+                    showFeedbackBar(`PIN redefinido com sucesso! Novo PIN: ${newPin}`, 'success'); // Mensagem com o novo PIN
+                    elements.resetPinModal.classList.remove('show');
+                    // Não é necessário recarregar os dados do usuário, pois o PIN não é visível.
+                    // Apenas informa que foi redefinido.
+                } catch (error) {
+                    showFeedbackBar(error.message, 'error');
+                } finally {
+                    submitButton.disabled = false;
+                    resetPinSubmitBtnText.textContent = 'Redefinir PIN';
+                    resetPinSubmitBtnSpinner.style.display = 'none';
+                }
+            });
+
+
+            loadUserDetails(); // Carrega os detalhes do usuário ao iniciar a página
+        });
+    </script>
+</body>
+</html>

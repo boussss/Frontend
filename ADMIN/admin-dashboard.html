@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes"> <!-- ALTERADO: user-scalable=yes para acessibilidade -->
     <title>Dashboard - Admin Chivo</title>
     <!-- Boxicons CSS -->
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
@@ -147,14 +147,58 @@
         .skeleton-label { width: 100px; height: 0.9rem; border-radius: 4px; }
         .skeleton-icon { width: 64px; height: 64px; border-radius: 50%; }
 
-        /* Toast Notifications */
-        #toast-container { position: fixed; top: 20px; right: 20px; z-index: 200; display: flex; flex-direction: column; gap: 0.5rem; }
-        .toast { padding: 0.8rem 1.5rem; border-radius: 8px; color: #fff; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); opacity: 0; transform: translateX(20px); animation: slide-in-out 3.5s forwards; }
-        .toast.error { background-color: var(--accent-red); }
-        @keyframes slide-in-out { 0%, 100% { opacity: 0; transform: translateX(20px); } 15%, 85% { opacity: 1; transform: translateX(0); } }
+        /* NOVO: Estilos para a barra de feedback no topo */
+        #feedback-bar-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding-top: 20px; /* Um pouco de padding */
+            pointer-events: none; /* Não bloquear cliques abaixo */
+        }
+
+        .feedback-bar {
+            background-color: var(--accent-red); /* Padrão para erro */
+            color: #fff;
+            padding: 0.8rem 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transform: translateY(-150%); /* Escondido por padrão */
+            opacity: 0;
+            transition: transform 0.4s ease-out, opacity 0.4s ease-out;
+            pointer-events: auto; /* Reativar eventos para a barra em si */
+            max-width: 90%; /* Limitar largura */
+            text-align: center;
+        }
+
+        .feedback-bar.show {
+            transform: translateY(0); /* Mostra a barra */
+            opacity: 1;
+        }
+
+        .feedback-bar.success {
+            background-color: var(--accent-green);
+        }
+
+        .feedback-bar i {
+            font-size: 1.3rem;
+        }
+        /* FIM: Estilos para a barra de feedback no topo */
     </style>
 </head>
 <body>
+
+    <!-- NOVO: Container para a barra de feedback -->
+    <div id="feedback-bar-container"></div>
 
     <div class="main-container">
         <header class="header">
@@ -209,6 +253,10 @@
                     <i class='bx bxs-arrow-from-bottom'></i>
                     <span>Aprovar Saques</span>
                 </a>
+                <a href="admin-lottery-codes.html" class="action-card"> <!-- NOVO: Link para Gerenciar Códigos de Sorteio -->
+                    <i class='bx bx-gift'></i>
+                    <span>Gerenciar Sorteios</span>
+                </a>
                 <a href="admin-banners.html" class="action-card">
                     <i class='bx bxs-image'></i>
                     <span>Gerenciar Banners</span>
@@ -221,7 +269,7 @@
         </section>
     </div>
 
-    <div id="toast-container"></div>
+    <!-- REMOVIDO: <div id="toast-container"></div> -->
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -235,7 +283,8 @@
 
             const elements = {
                 statsContainer: document.getElementById('stats-grid-container'),
-                logoutBtn: document.getElementById('logout-btn')
+                logoutBtn: document.getElementById('logout-btn'),
+                feedbackBarContainer: document.getElementById('feedback-bar-container') // NOVO ELEMENTO
             };
 
             const fetchAPI = async (endpoint, options = {}) => {
@@ -247,12 +296,36 @@
                     window.location.href = 'admin-login.html'; 
                     throw new Error('Sessão expirada. Faça login novamente.');
                 }
+                const data = await response.json(); // Sempre tenta ler o JSON
                 if (!response.ok) { 
-                    const err = await response.json(); 
-                    throw new Error(err.message || 'Ocorreu um erro na API.');
+                    throw new Error(data.message || 'Ocorreu um erro na API.'); // Usa a mensagem da API
                 }
-                return response.json();
+                return data;
             };
+
+            // NOVO: Função para exibir a barra de feedback
+            function showFeedbackBar(message, type = 'error') { // 'error' ou 'success'
+                elements.feedbackBarContainer.innerHTML = ''; 
+                let iconClass = type === 'success' ? 'bx bx-check-circle' : 'bx bx-x-circle';
+
+                const feedbackBar = document.createElement('div');
+                feedbackBar.className = `feedback-bar ${type}`;
+                feedbackBar.innerHTML = `<i class='${iconClass}'></i> <span></span>`;
+                
+                // Usar textContent para segurança contra XSS
+                feedbackBar.querySelector('span').textContent = message;
+
+                elements.feedbackBarContainer.appendChild(feedbackBar);
+
+                setTimeout(() => {
+                    feedbackBar.classList.add('show');
+                }, 50); 
+
+                setTimeout(() => {
+                    feedbackBar.classList.remove('show');
+                    feedbackBar.addEventListener('transitionend', () => feedbackBar.remove(), { once: true });
+                }, 4000);
+            }
 
             const loadDashboardData = async () => {
                 try {
@@ -270,9 +343,8 @@
                     });
 
                 } catch (error) {
-                    showToast(error.message, 'error');
-                    // Opcional: mostrar uma mensagem de erro no lugar dos stats
-                    elements.statsContainer.innerHTML = `<p>Não foi possível carregar os dados.</p>`;
+                    showFeedbackBar(error.message, 'error'); // Usar a nova função
+                    elements.statsContainer.innerHTML = `<p style="color: var(--text-muted); text-align: center;">Não foi possível carregar os dados: ${error.message}</p>`; // Mostrar mensagem de erro aqui também
                 }
             };
             
@@ -305,16 +377,6 @@
             const handleLogout = () => {
                 localStorage.removeItem('chivo-admin-token');
                 window.location.href = 'admin-login.html';
-            };
-
-            const showToast = (message, type = 'error') => {
-                const toastContainer = document.getElementById('toast-container');
-                if (!toastContainer) return;
-                const toast = document.createElement('div');
-                toast.className = `toast ${type}`;
-                toast.textContent = message;
-                toastContainer.appendChild(toast);
-                setTimeout(() => toast.remove(), 3400);
             };
 
             // Adicionar Event Listeners

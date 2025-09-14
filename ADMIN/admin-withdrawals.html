@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes"> <!-- ALTERADO: user-scalable=yes para acessibilidade -->
     <title>Aprovar Saques - Admin Chivo</title>
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -49,6 +49,9 @@
         .info-item strong.amount { color: var(--accent-yellow); font-size: 1.3rem; }
         .info-item.balance-ok { color: var(--accent-green); }
         .info-item.balance-insufficient { color: var(--accent-red); font-weight: 600; }
+        .info-item.plan-status-ok { color: var(--accent-green); font-weight: 600; }
+        .info-item.plan-status-nok { color: var(--accent-red); font-weight: 600; }
+
 
         .withdrawal-actions {
             display: flex;
@@ -74,13 +77,58 @@
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
         .skeleton-line { height: 1em; margin-bottom: 0.8rem; }
 
-        #toast-container { position: fixed; top: 20px; right: 20px; z-index: 200; }
-        .toast { padding: 0.8rem 1.5rem; border-radius: 8px; color: #fff; margin-bottom: 0.5rem; }
-        .toast.success { background-color: var(--accent-green); }
-        .toast.error { background-color: var(--accent-red); }
+        /* NOVO: Estilos para a barra de feedback no topo */
+        #feedback-bar-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding-top: 20px; 
+            pointer-events: none;
+        }
+
+        .feedback-bar {
+            background-color: var(--accent-red);
+            color: #fff;
+            padding: 0.8rem 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transform: translateY(-150%);
+            opacity: 0;
+            transition: transform 0.4s ease-out, opacity 0.4s ease-out;
+            pointer-events: auto;
+            max-width: 90%;
+            text-align: center;
+        }
+
+        .feedback-bar.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .feedback-bar.success {
+            background-color: var(--accent-green);
+        }
+
+        .feedback-bar i {
+            font-size: 1.3rem;
+        }
+        /* FIM: Estilos para a barra de feedback no topo */
     </style>
 </head>
 <body>
+
+    <!-- NOVO: Container para a barra de feedback -->
+    <div id="feedback-bar-container"></div>
 
     <div class="main-container">
         <header class="header">
@@ -108,7 +156,7 @@
         <p id="empty-message" style="display: none;">Não há saques pendentes no momento.</p>
     </div>
 
-    <div id="toast-container"></div>
+    <!-- REMOVIDO: <div id="toast-container"></div> -->
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -122,21 +170,51 @@
             const elements = {
                 container: document.getElementById('withdrawals-container'),
                 skeleton: document.getElementById('skeleton-loader'),
-                emptyMessage: document.getElementById('empty-message')
+                emptyMessage: document.getElementById('empty-message'),
+                feedbackBarContainer: document.getElementById('feedback-bar-container') // NOVO ELEMENTO
             };
 
             const fetchAPI = async (endpoint, options = {}) => {
-                options.headers = { ...options.headers, 'Authorization': `Bearer ${TOKEN}`, 'Content-Type': 'application/json' };
+                options.headers = { ...options.headers, 'Authorization': `Bearer ${TOKEN}` };
+                 // A API de retirada espera JSON
+                if (options.body && options.body.toString() === '[object Object]') {
+                    options.headers['Content-Type'] = 'application/json';
+                }
+                
                 const response = await fetch(`${API_URL}${endpoint}`, options);
+                
                 if (response.status === 401) {
                     localStorage.removeItem('chivo-admin-token');
                     window.location.href = 'admin-login.html';
+                    throw new Error('Sessão expirada. Faça login novamente.');
                 }
-                if (!response.ok) throw new Error((await response.json()).message || 'Erro na API.');
-                return response.json();
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.message || `Erro na API: ${response.statusText}`);
+                }
+                return data;
             };
 
             const formatCurrency = (value = 0) => new Intl.NumberFormat('pt-MZ', { style: 'currency', currency: 'MZN' }).format(value);
+
+            // Função para exibir a barra de feedback
+            function showFeedbackBar(message, type = 'error') {
+                elements.feedbackBarContainer.innerHTML = ''; 
+                let iconClass = type === 'success' ? 'bx bx-check-circle' : 'bx bx-x-circle';
+
+                const feedbackBar = document.createElement('div');
+                feedbackBar.className = `feedback-bar ${type}`;
+                feedbackBar.innerHTML = `<i class='${iconClass}'></i> <span></span>`;
+                
+                feedbackBar.querySelector('span').textContent = message; // Proteção contra XSS
+                elements.feedbackBarContainer.appendChild(feedbackBar);
+
+                setTimeout(() => { feedbackBar.classList.add('show'); }, 50); 
+                setTimeout(() => {
+                    feedbackBar.classList.remove('show');
+                    feedbackBar.addEventListener('transitionend', () => feedbackBar.remove(), { once: true });
+                }, 4000);
+            }
 
             const renderWithdrawals = (withdrawals) => {
                 elements.container.innerHTML = '';
@@ -147,30 +225,49 @@
                 elements.emptyMessage.style.display = 'none';
 
                 withdrawals.forEach(withdrawal => {
-                    if (!withdrawal.user) return;
+                    if (!withdrawal.user) {
+                        console.warn('Requisição de saque sem dados de usuário associados:', withdrawal);
+                        return; // Ignora saques sem dados de usuário (possivelmente dados inconsistentes)
+                    }
 
                     const card = document.createElement('div');
                     card.className = 'withdrawal-card';
                     card.setAttribute('data-id', withdrawal._id);
 
-                    // --- CORREÇÃO IMPORTANTE AQUI ---
                     const totalDeducted = withdrawal.transactionDetails.totalDeducted || Math.abs(withdrawal.amount);
                     const hasSufficientBalance = withdrawal.user.walletBalance >= totalDeducted;
-                    // --- FIM DA CORREÇÃO ---
                     
                     const balanceClass = hasSufficientBalance ? 'balance-ok' : 'balance-insufficient';
                     const balanceText = hasSufficientBalance ? 'Saldo suficiente' : 'SALDO INSUFICIENTE!';
+                    
+                    // NOVO: Verificar se o usuário já ativou um plano
+                    const hasActivatedPlan = withdrawal.user.hasActivatedPlan;
+                    const planStatusClass = hasActivatedPlan ? 'plan-status-ok' : 'plan-status-nok';
+                    const planStatusText = hasActivatedPlan ? 'Sim' : 'NÃO!';
+
+
                     const withdrawalFee = withdrawal.transactionDetails.fee || 0;
+                    const destinationNumber = withdrawal.transactionDetails.destinationNumber || 'N/A';
+                    const holderName = withdrawal.transactionDetails.holderName || 'N/A'; // NOVO: Nome do titular
+                    const network = withdrawal.transactionDetails.network || 'N/A'; // NOVO: Rede de pagamento
 
                     card.innerHTML = `
                         <div class="user-info">
                             <div class="info-item">
-                                <h4>ID do Usuário</h4>
-                                <p>${withdrawal.user.userId}</p>
+                                <h4>Usuário</h4>
+                                <p>${withdrawal.user.name} (ID: <strong>${withdrawal.user.userId}</strong>)</p>
+                            </div>
+                            <div class="info-item">
+                                <h4>Telefone do Usuário</h4>
+                                <p>${withdrawal.user.phone}</p>
                             </div>
                             <div class="info-item ${balanceClass}">
-                                <h4>Saldo Atual</h4>
+                                <h4>Saldo Atual da Carteira</h4>
                                 <p>${formatCurrency(withdrawal.user.walletBalance)} (${balanceText})</p>
+                            </div>
+                            <div class="info-item ${planStatusClass}">
+                                <h4>Já ativou plano?</h4>
+                                <p>${planStatusText}</p>
                             </div>
                         </div>
                         <div class="withdrawal-details">
@@ -183,12 +280,24 @@
                                 <p>${formatCurrency(withdrawalFee)}</p>
                             </div>
                             <div class="info-item">
+                                <h4>Rede de Pagamento</h4>
+                                <p>${network}</p>
+                            </div>
+                            <div class="info-item">
                                 <h4>Número de Destino</h4>
-                                <p>${withdrawal.transactionDetails.destinationNumber || 'N/A'}</p>
+                                <p>${destinationNumber}</p>
+                            </div>
+                             <div class="info-item">
+                                <h4>Titular da Conta</h4>
+                                <p>${holderName}</p>
+                            </div>
+                             <div class="info-item">
+                                <h4>Data do Pedido</h4>
+                                <p>${new Date(withdrawal.createdAt).toLocaleString('pt-BR')}</p>
                             </div>
                         </div>
                         <div class="withdrawal-actions">
-                            <button class="action-btn approve-btn"><i class='bx bx-check'></i> Aprovar</button>
+                            <button class="action-btn approve-btn" ${!hasSufficientBalance || !hasActivatedPlan ? 'disabled' : ''}><i class='bx bx-check'></i> Aprovar</button>
                             <button class="action-btn reject-btn"><i class='bx bx-x'></i> Rejeitar</button>
                         </div>
                     `;
@@ -204,7 +313,8 @@
                     const withdrawals = await fetchAPI('/api/admin/withdrawals');
                     renderWithdrawals(withdrawals);
                 } catch (error) {
-                    showToast(error.message, 'error');
+                    showFeedbackBar(error.message, 'error');
+                    elements.skeleton.innerHTML = `<p style="color: var(--text-muted); text-align: center;">Erro ao carregar saques: ${error.message}</p>`;
                 } finally {
                     elements.skeleton.style.display = 'none';
                 }
@@ -212,13 +322,16 @@
 
             const handleAction = async (transactionId, action) => {
                 const card = document.querySelector(`.withdrawal-card[data-id="${transactionId}"]`);
-                if (!card) return;
+                if (!card) {
+                    showFeedbackBar('Erro: Cartão de transação não encontrado.', 'error');
+                    return;
+                }
 
                 card.querySelectorAll('.action-btn').forEach(btn => btn.disabled = true);
 
                 try {
-                    const result = await fetchAPI(`/api/admin/withdrawals/${transactionId}/${action}`, { method: 'POST' });
-                    showToast(result.message, 'success');
+                    const result = await fetchAPI(`/api/admin/withdrawals/${transactionId}/${action}`, { method: 'POST', body: JSON.stringify({}) });
+                    showFeedbackBar(result.message, 'success');
                     card.style.transition = 'opacity 0.5s ease';
                     card.style.opacity = '0';
                     setTimeout(() => {
@@ -229,7 +342,7 @@
                     }, 500);
 
                 } catch (error) {
-                    showToast(error.message, 'error');
+                    showFeedbackBar(error.message, 'error');
                     card.querySelectorAll('.action-btn').forEach(btn => btn.disabled = false);
                 }
             };
@@ -248,14 +361,6 @@
                     handleAction(transactionId, 'reject');
                 }
             });
-
-            const showToast = (message, type = 'success') => {
-                const toastContainer = document.getElementById('toast-container');
-                const toast = document.createElement('div');
-                toast.className = `toast ${type}`;
-                toast.textContent = message;
-                setTimeout(() => toast.remove(), 4000);
-            };
 
             loadPendingWithdrawals();
         });

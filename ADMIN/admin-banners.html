@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes"> <!-- ALTERADO: user-scalable=yes para acessibilidade -->
     <title>Gerenciar Banners - Admin Chivo</title>
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -47,7 +47,7 @@
             font-weight: 600; cursor: pointer;
         }
         .submit-btn:disabled { background-color: #555; }
-        .spinner { width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.3); border-top-color:#fff; border-radius:50%; animation: spin 1s linear infinite; }
+        .spinner { width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.3); border-top-color:#fff; border-radius:50%; animation: spin 1s linear infinite; margin-left: 10px;}
         @keyframes spin { to { transform: rotate(360deg); } }
 
         .banners-grid {
@@ -93,13 +93,38 @@
         }
         
         #empty-message { text-align: center; color: var(--text-muted); padding: 2rem; }
-        #toast-container { position: fixed; top: 20px; right: 20px; z-index: 200; }
-        .toast { padding: 0.8rem 1.5rem; border-radius: 8px; color: #fff; margin-bottom: 0.5rem; }
-        .toast.success { background-color: var(--accent-green); }
-        .toast.error { background-color: var(--accent-red); }
+        
+        /* NOVO: Estilos para a barra de feedback no topo */
+        #feedback-bar-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding-top: 20px;
+            pointer-events: none;
+        }
+        .feedback-bar {
+            background-color: var(--accent-red); color: #fff; padding: 0.8rem 1.5rem;
+            border-radius: 10px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            display: flex; align-items: center; gap: 10px; font-size: 0.9rem;
+            font-weight: 500; transform: translateY(-150%); opacity: 0;
+            transition: transform 0.4s ease-out, opacity 0.4s ease-out;
+            pointer-events: auto; max-width: 90%; text-align: center;
+        }
+        .feedback-bar.show { transform: translateY(0); opacity: 1; }
+        .feedback-bar.success { background-color: var(--accent-green); }
+        .feedback-bar i { font-size: 1.3rem; }
+        /* FIM: Estilos para a barra de feedback no topo */
     </style>
 </head>
 <body>
+
+    <!-- NOVO: Container para a barra de feedback -->
+    <div id="feedback-bar-container"></div>
 
     <div class="main-container">
         <header class="header">
@@ -119,8 +144,8 @@
                     <input type="url" id="linkUrl" placeholder="https://exemplo.com">
                 </div>
                 <button type="submit" id="submit-btn" class="submit-btn">
-                    <span id="button-text">Enviar Banner</span>
-                    <div class="spinner" id="spinner" style="display: none;"></div>
+                    <span>Enviar Banner</span>
+                    <div class="spinner" style="display: none;"></div>
                 </button>
             </form>
         </section>
@@ -135,7 +160,7 @@
 
     </div>
 
-    <div id="toast-container"></div>
+    <!-- REMOVIDO: <div id="toast-container"></div> -->
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -151,29 +176,61 @@
                 imageInput: document.getElementById('image'),
                 linkUrlInput: document.getElementById('linkUrl'),
                 submitBtn: document.getElementById('submit-btn'),
-                buttonText: document.getElementById('button-text'),
-                spinner: document.getElementById('spinner'),
                 container: document.getElementById('banners-container'),
                 emptyMessage: document.getElementById('empty-message'),
+                feedbackBarContainer: document.getElementById('feedback-bar-container'), // NOVO ELEMENTO
             };
 
-            const fetchAPI = async (endpoint, options = {}) => {
-                const headers = { 'Authorization': `Bearer ${TOKEN}` };
-                // Não definir Content-Type para FormData
-                if (!(options.body instanceof FormData)) {
-                    headers['Content-Type'] = 'application/json';
-                }
-                options.headers = { ...headers, ...options.headers };
+            // Obter os sub-elementos do botão APÓS o objeto elements ser definido
+            const submitBtnText = elements.submitBtn.querySelector('span');
+            const submitBtnSpinner = elements.submitBtn.querySelector('.spinner');
 
+            const fetchAPI = async (endpoint, options = {}) => {
+                const headers = { ...options.headers, 'Authorization': `Bearer ${TOKEN}` };
+                
+                // Lógica corrigida para Content-Type:
+                // NÃO definir Content-Type se for FormData; o navegador fará isso automaticamente.
+                // Se o corpo existir e NÃO for FormData, assumimos que é JSON.
+                if (options.body && !(options.body instanceof FormData)) {
+                    headers['Content-Type'] = 'application/json';
+                } else if (options.body instanceof FormData) {
+                    // Remover Content-Type se for FormData para evitar problemas
+                    delete headers['Content-Type'];
+                }
+                
+                options.headers = headers;
+                
                 const response = await fetch(`${API_URL}${endpoint}`, options);
+                
                 if (response.status === 401) {
                     localStorage.removeItem('chivo-admin-token');
                     window.location.href = 'admin-login.html';
+                    throw new Error('Sessão expirada. Faça login novamente.');
                 }
                 const data = await response.json();
-                if (!response.ok) throw new Error(data.message || 'Erro na API.');
+                if (!response.ok) {
+                    throw new Error(data.message || `Erro na API: ${response.statusText}`);
+                }
                 return data;
             };
+
+            // Função para exibir a barra de feedback
+            function showFeedbackBar(message, type = 'error') {
+                elements.feedbackBarContainer.innerHTML = ''; 
+                let iconClass = type === 'success' ? 'bx bx-check-circle' : 'bx bx-x-circle';
+
+                const feedbackBar = document.createElement('div');
+                feedbackBar.className = `feedback-bar ${type}`;
+                feedbackBar.innerHTML = `<i class='${iconClass}'></i> <span></span>`;
+                feedbackBar.querySelector('span').textContent = message; // Proteção contra XSS
+                elements.feedbackBarContainer.appendChild(feedbackBar);
+
+                setTimeout(() => { feedbackBar.classList.add('show'); }, 50); 
+                setTimeout(() => {
+                    feedbackBar.classList.remove('show');
+                    feedbackBar.addEventListener('transitionend', () => feedbackBar.remove(), { once: true });
+                }, 4000);
+            }
 
             const renderBanners = (banners) => {
                 elements.container.innerHTML = '';
@@ -187,7 +244,7 @@
                     const card = document.createElement('div');
                     card.className = 'banner-card';
                     card.innerHTML = `
-                        <img src="${banner.imageUrl}" alt="Banner">
+                        <img src="${banner.imageUrl}" alt="Banner promocional"> <!-- ALTERADO: Adicionado alt -->
                         <div class="banner-overlay">
                             <button class="delete-btn" data-id="${banner._id}" title="Deletar Banner">
                                 <i class='bx bxs-trash'></i>
@@ -200,11 +257,12 @@
 
             const loadBanners = async () => {
                 try {
-                    // Precisaremos de uma rota para buscar os banners no adminController
                     const banners = await fetchAPI('/api/admin/banners'); 
                     renderBanners(banners);
                 } catch (error) {
-                    showToast(error.message, 'error');
+                    showFeedbackBar(error.message, 'error');
+                    elements.emptyMessage.style.display = 'block';
+                    elements.emptyMessage.textContent = `Erro ao carregar banners: ${error.message}`; // Mostrar erro aqui também
                 }
             };
 
@@ -212,7 +270,7 @@
                 e.preventDefault();
                 const imageFile = elements.imageInput.files[0];
                 if (!imageFile) {
-                    showToast('Por favor, selecione um arquivo de imagem.', 'error');
+                    showFeedbackBar('Por favor, selecione um arquivo de imagem para o banner.', 'error');
                     return;
                 }
 
@@ -220,42 +278,44 @@
 
                 const formData = new FormData();
                 formData.append('image', imageFile);
-                formData.append('linkUrl', elements.linkUrlInput.value);
+                if (elements.linkUrlInput.value.trim()) {
+                    formData.append('linkUrl', elements.linkUrlInput.value.trim());
+                }
 
                 try {
                     const newBanner = await fetchAPI('/api/admin/banners', {
                         method: 'POST',
-                        body: formData,
+                        body: formData, // FormData é enviado diretamente
                     });
-                    showToast('Banner adicionado com sucesso!', 'success');
+                    showFeedbackBar(newBanner.message || 'Banner adicionado com sucesso!', 'success'); // Mensagem do backend
                     elements.form.reset();
-                    loadBanners(); // Recarrega a lista
+                    await loadBanners(); // Recarrega a lista
                 } catch (error) {
-                    showToast(error.message, 'error');
+                    showFeedbackBar(error.message, 'error');
                 } finally {
                     setLoading(false);
                 }
             };
 
             const handleDeleteBanner = async (bannerId, button) => {
-                if (!confirm('Tem certeza que deseja deletar este banner?')) {
+                if (!confirm('Tem certeza que deseja deletar este banner? Esta ação não pode ser desfeita.')) {
                     return;
                 }
                 button.disabled = true;
                 try {
                     const result = await fetchAPI(`/api/admin/banners/${bannerId}`, { method: 'DELETE' });
-                    showToast(result.message, 'success');
-                    loadBanners(); // Recarrega a lista
+                    showFeedbackBar(result.message, 'success');
+                    await loadBanners(); // Recarrega a lista
                 } catch (error) {
-                    showToast(error.message, 'error');
+                    showFeedbackBar(error.message, 'error');
                     button.disabled = false;
                 }
             };
 
             const setLoading = (isLoading) => {
                 elements.submitBtn.disabled = isLoading;
-                elements.buttonText.style.display = isLoading ? 'none' : 'block';
-                elements.spinner.style.display = isLoading ? 'block' : 'none';
+                submitBtnText.style.display = isLoading ? 'none' : 'block';
+                submitBtnSpinner.style.display = isLoading ? 'inline-block' : 'none';
             };
 
             elements.form.addEventListener('submit', handleFormSubmit);
@@ -266,15 +326,6 @@
                     handleDeleteBanner(deleteBtn.dataset.id, deleteBtn);
                 }
             });
-
-            const showToast = (message, type = 'success') => {
-                const toastContainer = document.getElementById('toast-container');
-                const toast = document.createElement('div');
-                toast.className = `toast ${type}`;
-                toast.textContent = message;
-                toastContainer.appendChild(toast);
-                setTimeout(() => toast.remove(), 4000);
-            };
 
             loadBanners();
         });

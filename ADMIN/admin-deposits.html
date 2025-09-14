@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes"> <!-- ALTERADO: user-scalable=yes para acessibilidade -->
     <title>Aprovar Depósitos - Admin Chivo</title>
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -95,13 +95,58 @@
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
         .skeleton-line { height: 1em; margin-bottom: 0.5rem; }
 
-        #toast-container { position: fixed; top: 20px; right: 20px; z-index: 200; }
-        .toast { padding: 0.8rem 1.5rem; border-radius: 8px; color: #fff; margin-bottom: 0.5rem; }
-        .toast.success { background-color: var(--accent-green); }
-        .toast.error { background-color: var(--accent-red); }
+        /* NOVO: Estilos para a barra de feedback no topo */
+        #feedback-bar-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding-top: 20px; 
+            pointer-events: none;
+        }
+
+        .feedback-bar {
+            background-color: var(--accent-red);
+            color: #fff;
+            padding: 0.8rem 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transform: translateY(-150%);
+            opacity: 0;
+            transition: transform 0.4s ease-out, opacity 0.4s ease-out;
+            pointer-events: auto;
+            max-width: 90%;
+            text-align: center;
+        }
+
+        .feedback-bar.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .feedback-bar.success {
+            background-color: var(--accent-green);
+        }
+
+        .feedback-bar i {
+            font-size: 1.3rem;
+        }
+        /* FIM: Estilos para a barra de feedback no topo */
     </style>
 </head>
 <body>
+
+    <!-- NOVO: Container para a barra de feedback -->
+    <div id="feedback-bar-container"></div>
 
     <div class="main-container">
         <header class="header">
@@ -129,7 +174,7 @@
         <p id="empty-message" style="display: none;">Não há depósitos pendentes no momento.</p>
     </div>
 
-    <div id="toast-container"></div>
+    <!-- REMOVIDO: <div id="toast-container"></div> -->
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -143,21 +188,52 @@
             const elements = {
                 container: document.getElementById('deposits-container'),
                 skeleton: document.getElementById('skeleton-loader'),
-                emptyMessage: document.getElementById('empty-message')
+                emptyMessage: document.getElementById('empty-message'),
+                feedbackBarContainer: document.getElementById('feedback-bar-container') // NOVO ELEMENTO
             };
 
             const fetchAPI = async (endpoint, options = {}) => {
-                options.headers = { ...options.headers, 'Authorization': `Bearer ${TOKEN}`, 'Content-Type': 'application/json' };
+                options.headers = { ...options.headers, 'Authorization': `Bearer ${TOKEN}` };
+                // A API de depósito pode receber FormData (para imagem) ou JSON (para texto).
+                // Evitar definir Content-Type se for FormData; o navegador fará isso.
+                if (!(options.body instanceof FormData) && options.body && options.body.toString() === '[object Object]') {
+                    options.headers['Content-Type'] = 'application/json';
+                }
+                
                 const response = await fetch(`${API_URL}${endpoint}`, options);
+                
                 if (response.status === 401) {
                     localStorage.removeItem('chivo-admin-token');
                     window.location.href = 'admin-login.html';
+                    throw new Error('Sessão expirada. Faça login novamente.');
                 }
-                if (!response.ok) throw new Error((await response.json()).message || 'Erro na API.');
-                return response.json();
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.message || `Erro na API: ${response.statusText}`);
+                }
+                return data;
             };
 
             const formatCurrency = (value = 0) => new Intl.NumberFormat('pt-MZ', { style: 'currency', currency: 'MZN' }).format(value);
+
+            // Função para exibir a barra de feedback
+            function showFeedbackBar(message, type = 'error') {
+                elements.feedbackBarContainer.innerHTML = ''; 
+                let iconClass = type === 'success' ? 'bx bx-check-circle' : 'bx bx-x-circle';
+
+                const feedbackBar = document.createElement('div');
+                feedbackBar.className = `feedback-bar ${type}`;
+                feedbackBar.innerHTML = `<i class='${iconClass}'></i> <span></span>`;
+                
+                feedbackBar.querySelector('span').textContent = message; // Proteção contra XSS
+                elements.feedbackBarContainer.appendChild(feedbackBar);
+
+                setTimeout(() => { feedbackBar.classList.add('show'); }, 50); 
+                setTimeout(() => {
+                    feedbackBar.classList.remove('show');
+                    feedbackBar.addEventListener('transitionend', () => feedbackBar.remove(), { once: true });
+                }, 4000);
+            }
 
             const renderDeposits = (deposits) => {
                 elements.container.innerHTML = '';
@@ -186,11 +262,20 @@
                         }
                     }
 
+                    // NOVO: Exibir nome e telefone do usuário
+                    const userName = deposit.user ? deposit.user.name : 'N/A';
+                    const userPhone = deposit.user ? deposit.user.phone : 'N/A';
+                    const userIdVal = deposit.user ? deposit.user.userId : 'N/A';
+
                     card.innerHTML = `
                         <div class="deposit-info">
                             <div class="info-item">
-                                <h4>ID do Usuário</h4>
-                                <p>${deposit.user ? deposit.user.userId : 'N/A'}</p>
+                                <h4>Usuário</h4>
+                                <p>${userName} (ID: <strong>${userIdVal}</strong>)</p>
+                            </div>
+                            <div class="info-item">
+                                <h4>Telefone</h4>
+                                <p>${userPhone}</p>
                             </div>
                             <div class="info-item">
                                 <h4>Valor do Depósito</h4>
@@ -221,7 +306,8 @@
                     const deposits = await fetchAPI('/api/admin/deposits');
                     renderDeposits(deposits);
                 } catch (error) {
-                    showToast(error.message, 'error');
+                    showFeedbackBar(error.message, 'error');
+                    elements.skeleton.innerHTML = `<p style="color: var(--text-muted); text-align: center;">Erro ao carregar depósitos: ${error.message}</p>`; // Mostrar erro no lugar do skeleton
                 } finally {
                     elements.skeleton.style.display = 'none';
                 }
@@ -229,13 +315,16 @@
 
             const handleAction = async (transactionId, action) => {
                 const card = document.querySelector(`.deposit-card[data-id="${transactionId}"]`);
-                if (!card) return;
+                if (!card) {
+                    showFeedbackBar('Erro: Cartão de transação não encontrado.', 'error');
+                    return;
+                }
 
                 card.querySelectorAll('.action-btn').forEach(btn => btn.disabled = true);
 
                 try {
-                    const result = await fetchAPI(`/api/admin/deposits/${transactionId}/${action}`, { method: 'POST' });
-                    showToast(result.message, 'success');
+                    const result = await fetchAPI(`/api/admin/deposits/${transactionId}/${action}`, { method: 'POST', body: JSON.stringify({}) }); // Envia um corpo vazio
+                    showFeedbackBar(result.message, 'success');
                     card.style.transition = 'opacity 0.5s ease';
                     card.style.opacity = '0';
                     setTimeout(() => {
@@ -246,7 +335,7 @@
                     }, 500);
 
                 } catch (error) {
-                    showToast(error.message, 'error');
+                    showFeedbackBar(error.message, 'error');
                     card.querySelectorAll('.action-btn').forEach(btn => btn.disabled = false);
                 }
             };
@@ -265,15 +354,6 @@
                     handleAction(transactionId, 'reject');
                 }
             });
-
-            const showToast = (message, type = 'success') => {
-                const toastContainer = document.getElementById('toast-container');
-                const toast = document.createElement('div');
-                toast.className = `toast ${type}`;
-                toast.textContent = message;
-                toastContainer.appendChild(toast);
-                setTimeout(() => toast.remove(), 4000);
-            };
 
             loadPendingDeposits();
         });

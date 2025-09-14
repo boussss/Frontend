@@ -1,8 +1,9 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes"> <!-- ALTERADO: user-scalable=yes para acessibilidade -->
     <title>Gerenciar Usuários - Admin Chivo</title>
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -101,13 +102,58 @@
         
         #loading-message, #empty-message { text-align: center; color: var(--text-muted); padding: 2rem; }
 
-        #toast-container { position: fixed; top: 20px; right: 20px; z-index: 200; }
-        .toast { padding: 0.8rem 1.5rem; border-radius: 8px; color: #fff; margin-bottom: 0.5rem; }
-        .toast.success { background-color: var(--accent-green); }
-        .toast.error { background-color: var(--accent-red); }
+        /* NOVO: Estilos para a barra de feedback no topo */
+        #feedback-bar-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding-top: 20px; /* Um pouco de padding */
+            pointer-events: none; /* Não bloquear cliques abaixo */
+        }
+
+        .feedback-bar {
+            background-color: var(--accent-red); /* Padrão para erro */
+            color: #fff;
+            padding: 0.8rem 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transform: translateY(-150%); /* Escondido por padrão */
+            opacity: 0;
+            transition: transform 0.4s ease-out, opacity 0.4s ease-out;
+            pointer-events: auto; /* Reativar eventos para a barra em si */
+            max-width: 90%; /* Limitar largura */
+            text-align: center;
+        }
+
+        .feedback-bar.show {
+            transform: translateY(0); /* Mostra a barra */
+            opacity: 1;
+        }
+
+        .feedback-bar.success {
+            background-color: var(--accent-green);
+        }
+
+        .feedback-bar i {
+            font-size: 1.3rem;
+        }
+        /* FIM: Estilos para a barra de feedback no topo */
     </style>
 </head>
 <body>
+
+    <!-- NOVO: Container para a barra de feedback -->
+    <div id="feedback-bar-container"></div>
 
     <div class="main-container">
         <header class="header">
@@ -116,7 +162,7 @@
         </header>
 
         <div class="search-bar">
-            <input type="text" id="search-input" class="search-input" placeholder="Pesquisar por ID de 5 dígitos...">
+            <input type="text" id="search-input" class="search-input" placeholder="Pesquisar por ID de 5 dígitos ou Número de Telefone..."> <!-- ATUALIZADO placeholder -->
             <button id="search-btn" class="search-btn"><i class='bx bx-search'></i></button>
             <button id="clear-search-btn" class="search-btn">Limpar</button>
         </div>
@@ -129,6 +175,7 @@
                         <th>Usuário</th>
                         <th>Telefone</th>
                         <th>Saldo (MT)</th>
+                        <th>Bônus (MT)</th>
                         <th>Status</th>
                         <th>Ações</th>
                     </tr>
@@ -140,8 +187,6 @@
         </div>
         <p id="empty-message" style="display: none;">Nenhum usuário encontrado.</p>
     </div>
-
-    <div id="toast-container"></div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -160,29 +205,59 @@
                 searchInput: document.getElementById('search-input'),
                 searchBtn: document.getElementById('search-btn'),
                 clearSearchBtn: document.getElementById('clear-search-btn'),
+                feedbackBarContainer: document.getElementById('feedback-bar-container')
             };
 
             let allUsers = [];
 
             const fetchAPI = async (endpoint, options = {}) => {
-                options.headers = { ...options.headers, 'Authorization': `Bearer ${TOKEN}`, 'Content-Type': 'application/json' };
+                options.headers = { ...options.headers, 'Authorization': `Bearer ${TOKEN}` };
+                if (options.body && !(options.body instanceof FormData)) {
+                    options.headers['Content-Type'] = 'application/json';
+                } else if (options.body instanceof FormData) {
+                    delete options.headers['Content-Type'];
+                }
+                
                 const response = await fetch(`${API_URL}${endpoint}`, options);
+                
                 if (response.status === 401) {
                     localStorage.removeItem('chivo-admin-token');
                     window.location.href = 'admin-login.html';
+                    throw new Error('Sessão expirada. Faça login novamente.');
                 }
                 const data = await response.json();
-                if (!response.ok) throw new Error(data.message || 'Erro na API.');
+                if (!response.ok) {
+                    throw new Error(data.message || `Erro na API: ${response.statusText}`);
+                }
                 return data;
             };
             
             const formatCurrency = (value = 0) => new Intl.NumberFormat('pt-MZ', { style: 'currency', currency: 'MZN' }).format(value);
 
+            function showFeedbackBar(message, type = 'error') {
+                elements.feedbackBarContainer.innerHTML = ''; 
+                let iconClass = type === 'success' ? 'bx bx-check-circle' : 'bx bx-x-circle';
+
+                const feedbackBar = document.createElement('div');
+                feedbackBar.className = `feedback-bar ${type}`;
+                feedbackBar.innerHTML = `<i class='${iconClass}'></i> <span></span>`;
+                
+                feedbackBar.querySelector('span').textContent = message;
+                elements.feedbackBarContainer.appendChild(feedbackBar);
+
+                setTimeout(() => { feedbackBar.classList.add('show'); }, 50); 
+                setTimeout(() => {
+                    feedbackBar.classList.remove('show');
+                    feedbackBar.addEventListener('transitionend', () => feedbackBar.remove(), { once: true });
+                }, 4000);
+            }
+
             const renderUsers = (users) => {
                 elements.loadingMsg.style.display = 'none';
-                if (users.length === 0) {
+                if (!users || users.length === 0) {
                     elements.emptyMsg.style.display = 'block';
                     elements.table.style.display = 'none';
+                    elements.tbody.innerHTML = '';
                     return;
                 }
                 elements.emptyMsg.style.display = 'none';
@@ -198,6 +273,7 @@
                         </td>
                         <td>${user.phone}</td>
                         <td>${formatCurrency(user.walletBalance)}</td>
+                        <td>${formatCurrency(user.bonusBalance)}</td>
                         <td>
                             <span class="status-tag ${user.isBlocked ? 'status-blocked' : 'status-active'}">
                                 ${user.isBlocked ? 'Bloqueado' : 'Ativo'}
@@ -216,23 +292,29 @@
             };
 
             const loadUsers = async () => {
+                elements.loadingMsg.style.display = 'block';
+                elements.table.style.display = 'none';
+                elements.emptyMsg.style.display = 'none';
+                elements.clearSearchBtn.style.display = 'none';
+
                 try {
                     const users = await fetchAPI('/api/admin/users');
                     allUsers = users;
                     renderUsers(allUsers);
                 } catch (error) {
-                    showToast(error.message, 'error');
+                    showFeedbackBar(error.message, 'error');
+                    elements.loadingMsg.textContent = `Erro ao carregar usuários: ${error.message}`;
                 }
             };
 
             const handleBlockToggle = async (userId, button) => {
                 button.disabled = true;
                 try {
-                    const result = await fetchAPI(`/api/admin/users/${userId}/block`, { method: 'PUT' });
-                    showToast(result.message, 'success');
-                    loadUsers(); // Recarrega a lista para refletir a mudança
+                    const result = await fetchAPI(`/api/admin/users/${userId}/block`, { method: 'PUT', body: JSON.stringify({}) });
+                    showFeedbackBar(result.message, 'success');
+                    await loadUsers();
                 } catch (error) {
-                    showToast(error.message, 'error');
+                    showFeedbackBar(error.message, 'error');
                     button.disabled = false;
                 }
             };
@@ -241,15 +323,19 @@
                 const query = elements.searchInput.value.trim();
                 if (!query) {
                     renderUsers(allUsers);
+                    elements.clearSearchBtn.style.display = 'none';
                     return;
                 }
+                
                 try {
-                    const user = await fetchAPI(`/api/admin/users/search?userId=${query}`);
+                    // Agora o backend /api/admin/users/search?query=... lida com a diferenciação
+                    const user = await fetchAPI(`/api/admin/users/search?query=${encodeURIComponent(query)}`);
                     renderUsers([user]); // Renderiza a tabela com apenas um usuário
                     elements.clearSearchBtn.style.display = 'inline-block';
                 } catch (error) {
-                    showToast(error.message, 'error');
+                    showFeedbackBar(error.message, 'error');
                     renderUsers([]); // Mostra a mensagem de "nenhum usuário encontrado"
+                    elements.clearSearchBtn.style.display = 'inline-block';
                 }
             };
 
@@ -265,32 +351,19 @@
                 renderUsers(allUsers);
             });
 
-            elements.tbody.addEventListener('click', (e) => {
+            elements.tbody.addEventListener('click', async (e) => {
                 const blockBtn = e.target.closest('.block-btn');
                 const unblockBtn = e.target.closest('.unblock-btn');
                 const detailsBtn = e.target.closest('.details-btn');
 
                 if (blockBtn) {
                     handleBlockToggle(blockBtn.dataset.id, blockBtn);
-                }
-                if (unblockBtn) {
+                } else if (unblockBtn) {
                     handleBlockToggle(unblockBtn.dataset.id, unblockBtn);
-                }
-                if (detailsBtn) {
-                    // Futuramente, redirecionará para a página de detalhes
-                    showToast(`Função "Ver Detalhes" para usuário ID ${detailsBtn.dataset.id} será implementada.`, 'success');
-                    // Exemplo: window.location.href = `admin-user-details.html?id=${detailsBtn.dataset.id}`;
+                } else if (detailsBtn) {
+                    window.location.href = `admin-user-details.html?id=${detailsBtn.dataset.id}`;
                 }
             });
-
-            const showToast = (message, type = 'success') => {
-                const toastContainer = document.getElementById('toast-container');
-                const toast = document.createElement('div');
-                toast.className = `toast ${type}`;
-                toast.textContent = message;
-                toastContainer.appendChild(toast);
-                setTimeout(() => toast.remove(), 4000);
-            };
 
             loadUsers();
         });
