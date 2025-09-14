@@ -41,6 +41,25 @@
         }
         .redeem-btn:disabled { background-color: var(--text-light); cursor: not-allowed; }
 
+        /* NOVO: Estilo para mensagem de plano inativo */
+        #inactive-plan-message {
+            background-color: #fff3cd; /* Cor de aviso */
+            color: #856404; /* Texto escuro para contraste */
+            border: 1px solid #ffeeba;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+            text-align: center;
+            font-size: 0.9rem;
+            display: none; /* Escondido por padrão */
+        }
+        #inactive-plan-message a {
+            color: var(--primary-blue);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+
         /* Histórico de Sorteios */
         .lottery-history-list { display: flex; flex-direction: column; gap: 1rem; }
         .lottery-item {
@@ -142,6 +161,10 @@
 
         <div class="card redeem-card">
             <h2>Resgatar Código de Sorteio</h2>
+            <!-- NOVO: Mensagem para usuário sem plano ativo -->
+            <div id="inactive-plan-message">
+                <p>Para resgatar códigos de sorteio, você precisa ter um <a href="plans.html">plano de investimento ativo</a>.</p>
+            </div>
             <form id="redeem-lottery-form">
                 <div class="redeem-input-group">
                     <input type="text" id="lottery-code-input" placeholder="Insira seu código" required maxlength="8">
@@ -194,6 +217,7 @@
                 feedbackBarContainer: document.getElementById('feedback-bar-container'),
                 winningAnimationModal: document.getElementById('winning-animation-modal'),
                 winningAmountDisplay: document.getElementById('winning-amount-display'),
+                inactivePlanMessage: document.getElementById('inactive-plan-message'), // NOVO ELEMENTO
             };
 
             const fetchAPI = async (endpoint, options = {}) => {
@@ -246,6 +270,26 @@
                 elements.redeemBtnSpinner.style.display = isLoading ? 'inline-block' : 'none';
             };
 
+            // NOVO: Função para verificar o status do plano do usuário
+            const checkUserPlanStatus = async () => {
+                try {
+                    const user = await fetchAPI('/api/users/me'); // Endpoint para obter dados do usuário
+                    if (!user.activePlanInstance) {
+                        elements.redeemLotteryForm.style.display = 'none'; // Esconde o formulário
+                        elements.inactivePlanMessage.style.display = 'block'; // Mostra a mensagem
+                    } else {
+                        elements.redeemLotteryForm.style.display = 'block'; // Mostra o formulário
+                        elements.inactivePlanMessage.style.display = 'none'; // Esconde a mensagem
+                    }
+                } catch (error) {
+                    showFeedbackBar('Erro ao verificar status do plano: ' + error.message, 'error');
+                    // Em caso de erro, por segurança, desabilitar o formulário
+                    elements.redeemLotteryForm.style.display = 'none';
+                    elements.inactivePlanMessage.style.display = 'block';
+                    elements.inactivePlanMessage.innerHTML = `<p style="color: var(--error-color);">Não foi possível verificar seu plano. ${error.message}</p>`;
+                }
+            };
+
             const loadLotteryHistory = async () => {
                 elements.lotteryHistoryContainer.innerHTML = '<p class="list-empty-message">Carregando histórico...</p>';
                 try {
@@ -293,6 +337,7 @@
                     elements.lotteryCodeInput.value = ''; // Limpa o input
                     showWinningAnimationModal(result.prize); // Mostra a animação de ganho
                     loadLotteryHistory(); // Atualiza o histórico
+                    checkUserPlanStatus(); // Re-verifica o status do plano, caso tenha sido desativado ou algo assim
                 } catch (error) {
                     showFeedbackBar(error.message, 'error');
                 } finally {
@@ -316,8 +361,10 @@
                 }
             });
 
+            // NOVO: Chamar a função de verificação do plano no carregamento
+            checkUserPlanStatus();
             loadLotteryHistory();
         });
     </script>
 </body>
-</html>```
+</html>
