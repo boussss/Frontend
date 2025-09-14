@@ -99,6 +99,8 @@
         .stat-card.users .icon { color: var(--primary-blue); background-color: rgba(0, 82, 255, 0.1); }
         .stat-card.deposits .icon { color: var(--accent-green); background-color: rgba(40, 167, 69, 0.1); }
         .stat-card.withdrawals .icon { color: var(--accent-yellow); background-color: rgba(255, 193, 7, 0.1); }
+        /* NOVO: Estilo para usuários com planos ativos */
+        .stat-card.active-plans .icon { color: var(--accent-green); background-color: rgba(40, 167, 69, 0.1); }
         
         .stat-card .info .value {
             font-size: 2.2rem;
@@ -231,6 +233,14 @@
                         <div class="label skeleton skeleton-label"></div>
                     </div>
                 </div>
+                <!-- NOVO: Skeleton para Usuários com Planos Ativos -->
+                <div class="stat-card active-plans">
+                    <div class="icon skeleton skeleton-icon"></div>
+                    <div class="info">
+                        <div class="value skeleton skeleton-value"></div>
+                        <div class="label skeleton skeleton-label"></div>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -330,16 +340,19 @@
             const loadDashboardData = async () => {
                 try {
                     // Fetch all data in parallel for better performance
-                    const [users, pendingDeposits, pendingWithdrawals] = await Promise.all([
-                        fetchAPI('/api/admin/users'),
+                    // ATUALIZADO: Adicionada a busca por usuários com planos ativos
+                    const [users, pendingDeposits, pendingWithdrawals, activePlanUsers] = await Promise.all([
+                        fetchAPI('/api/admin/users'), // Traz todos os usuários
                         fetchAPI('/api/admin/deposits'),
-                        fetchAPI('/api/admin/withdrawals')
+                        fetchAPI('/api/admin/withdrawals'),
+                        fetchAPI('/api/admin/users/active-plans-count') // NOVO: Endpoint para contar usuários com planos ativos
                     ]);
 
                     renderStats({
                         totalUsers: users.length,
                         pendingDeposits: pendingDeposits.length,
-                        pendingWithdrawals: pendingWithdrawals.length
+                        pendingWithdrawals: pendingWithdrawals.length,
+                        activePlanUsersCount: activePlanUsers.count // NOVO: Usar a contagem do novo endpoint
                     });
 
                 } catch (error) {
@@ -369,6 +382,14 @@
                         <div class="info">
                             <div class="value" id="pending-withdrawals-stat">${data.pendingWithdrawals}</div>
                             <div class="label">Saques Pendentes</div>
+                        </div>
+                    </div>
+                    <!-- NOVO: Card de Usuários com Planos Ativos -->
+                    <div class="stat-card active-plans">
+                        <div class="icon"><i class='bx bxs-rocket'></i></div>
+                        <div class="info">
+                            <div class="value" id="active-plan-users-stat">${data.activePlanUsersCount}</div>
+                            <div class="label">Planos Ativos</div>
                         </div>
                     </div>
                 `;

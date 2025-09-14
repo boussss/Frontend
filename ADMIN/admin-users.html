@@ -83,6 +83,10 @@
         }
         .status-active { background-color: var(--accent-green); }
         .status-blocked { background-color: var(--accent-red); }
+
+        /* NOVO: Estilos para o status do plano ativo */
+        .plan-status-active { background-color: var(--primary-blue); }
+        .plan-status-inactive { background-color: var(--text-muted); }
         
         .actions-cell button {
             background: none;
@@ -98,6 +102,7 @@
         .block-btn { color: var(--accent-red); }
         .unblock-btn { color: var(--accent-green); }
         .details-btn { color: var(--primary-blue); }
+        .delete-btn { color: var(--accent-red); } /* Estilo para o novo botão de apagar */
         
         #loading-message, #empty-message { text-align: center; color: var(--text-muted); padding: 2rem; }
 
@@ -161,7 +166,8 @@
         </header>
 
         <div class="search-bar">
-            <input type="text" id="search-input" class="search-input" placeholder="Pesquisar por ID de 5 dígitos ou Número de Telefone..."> <!-- ATUALIZADO placeholder -->
+            <!-- ATUALIZADO placeholder para indicar flexibilidade de pesquisa -->
+            <input type="text" id="search-input" class="search-input" placeholder="Pesquisar por ID (5 dígitos) ou Telefone (ex: 84XXXXXXX, +25884XXXXXXX, ou 84 123 4567)">
             <button id="search-btn" class="search-btn"><i class='bx bx-search'></i></button>
             <button id="clear-search-btn" class="search-btn">Limpar</button>
         </div>
@@ -175,6 +181,7 @@
                         <th>Telefone</th>
                         <th>Saldo (MT)</th>
                         <th>Bônus (MT)</th>
+                        <th>Plano Ativo</th> <!-- NOVO: Coluna para Plano Ativo -->
                         <th>Status</th>
                         <th>Ações</th>
                     </tr>
@@ -265,14 +272,25 @@
 
                 users.forEach(user => {
                     const tr = document.createElement('tr');
+                    
+                    // NOVO: Determinar o status do plano ativo
+                    const hasActivePlan = user.activePlanInstance !== null && user.activePlanInstance !== undefined; // Verifica se há uma instância de plano
+                    const planStatusText = hasActivePlan ? 'Sim' : 'Não';
+                    const planStatusClass = hasActivePlan ? 'plan-status-active' : 'plan-status-inactive';
+
                     tr.innerHTML = `
                         <td>
                             <div class="user-name">${user.name}</div>
                             <div class="user-id">ID: ${user.userId}</div>
                         </td>
-                        <td>${user.phone}</td>
+                        <td>${user.phone.startsWith('+258') ? user.phone : `+258${user.phone}`}</td> <!-- ATUALIZADO: Exibe o número com +258 se não tiver -->
                         <td>${formatCurrency(user.walletBalance)}</td>
                         <td>${formatCurrency(user.bonusBalance)}</td>
+                        <td>
+                            <span class="status-tag ${planStatusClass}">
+                                ${planStatusText}
+                            </span>
+                        </td>
                         <td>
                             <span class="status-tag ${user.isBlocked ? 'status-blocked' : 'status-active'}">
                                 ${user.isBlocked ? 'Bloqueado' : 'Ativo'}
@@ -284,6 +302,10 @@
                                 : `<button class="block-btn" data-id="${user._id}" title="Bloquear"><i class='bx bx-block'></i></button>`
                             }
                             <button class="details-btn" data-id="${user._id}" title="Ver Detalhes"><i class='bx bx-show'></i></button>
+                            ${!user.isBlocked // Botão de apagar só aparece se o usuário não estiver bloqueado
+                                ? `<button class="delete-btn" data-id="${user._id}" data-username="${user.username}" title="Apagar Usuário"><i class='bx bxs-trash'></i></button>`
+                                : ''
+                            }
                         </td>
                     `;
                     elements.tbody.appendChild(tr);
@@ -297,6 +319,7 @@
                 elements.clearSearchBtn.style.display = 'none';
 
                 try {
+                    // ATUALIZADO: Popula activePlanInstance para exibir o status na tabela
                     const users = await fetchAPI('/api/admin/users');
                     allUsers = users;
                     renderUsers(allUsers);
@@ -318,16 +341,31 @@
                 }
             };
 
+            const handleDeleteUser = async (userId, username, button) => {
+                if (!confirm(`ATENÇÃO: Você tem certeza que deseja APAGAR a conta do usuário ${username} (ID: ${userId})? Todos os dados (planos, transações, etc.) serão PERMANENTEMENTE DELETADOS e esta ação NÃO PODE SER DESFEITA.`)) {
+                    return;
+                }
+                button.disabled = true;
+                try {
+                    const result = await fetchAPI(`/api/admin/users/${userId}`, { method: 'DELETE' });
+                    showFeedbackBar(result.message, 'success');
+                    await loadUsers(); // Recarrega a lista
+                } catch (error) {
+                    showFeedbackBar(error.message, 'error');
+                    button.disabled = false;
+                }
+            };
+
             const handleSearch = async () => {
                 const query = elements.searchInput.value.trim();
                 if (!query) {
-                    renderUsers(allUsers);
+                    loadUsers(); // Carrega todos os usuários se a pesquisa estiver vazia
                     elements.clearSearchBtn.style.display = 'none';
                     return;
                 }
                 
                 try {
-                    // Agora o backend /api/admin/users/search?query=... lida com a diferenciação
+                    // O backend /api/admin/users/search?query=... já lida com a normalização e pesquisa flexível
                     const user = await fetchAPI(`/api/admin/users/search?query=${encodeURIComponent(query)}`);
                     renderUsers([user]); // Renderiza a tabela com apenas um usuário
                     elements.clearSearchBtn.style.display = 'inline-block';
@@ -347,13 +385,14 @@
             elements.clearSearchBtn.addEventListener('click', () => {
                 elements.searchInput.value = '';
                 elements.clearSearchBtn.style.display = 'none';
-                renderUsers(allUsers);
+                loadUsers(); // Recarrega todos os usuários
             });
 
             elements.tbody.addEventListener('click', async (e) => {
                 const blockBtn = e.target.closest('.block-btn');
                 const unblockBtn = e.target.closest('.unblock-btn');
                 const detailsBtn = e.target.closest('.details-btn');
+                const deleteBtn = e.target.closest('.delete-btn'); // NOVO
 
                 if (blockBtn) {
                     handleBlockToggle(blockBtn.dataset.id, blockBtn);
@@ -361,6 +400,8 @@
                     handleBlockToggle(unblockBtn.dataset.id, unblockBtn);
                 } else if (detailsBtn) {
                     window.location.href = `admin-user-details.html?id=${detailsBtn.dataset.id}`;
+                } else if (deleteBtn) { // NOVO
+                    handleDeleteUser(deleteBtn.dataset.id, deleteBtn.dataset.username, deleteBtn);
                 }
             });
 

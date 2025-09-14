@@ -6,6 +6,8 @@
     <title>Detalhes do Usuário - Admin Chivo</title>
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- NOVO: Iconify para ícones de bandeira para o modal de edição de telefone -->
+    <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
         :root {
@@ -61,6 +63,15 @@
         .detail-item .label { color: var(--text-muted); }
         .detail-item .value { font-weight: 500; }
         .detail-item .value.balance { font-size: 1.1rem; font-weight: 600; color: var(--accent-yellow); }
+        /* NOVO: Estilo para valor editável (telefone) */
+        .detail-item .value.editable {
+            cursor: pointer;
+            text-decoration: underline;
+            color: var(--primary-blue);
+        }
+        .detail-item .value.editable:hover {
+            color: var(--accent-yellow);
+        }
 
         .actions-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; margin-top: 1.5rem; }
         @media (min-width: 600px) { .actions-grid { grid-template-columns: 1fr 1fr; } }
@@ -73,6 +84,11 @@
         .unblock-btn { background-color: var(--accent-green); }
         .reset-pin-btn { background-color: var(--accent-yellow); color: var(--bg-dark); }
         .adjust-balance-btn { background-color: var(--primary-blue); }
+        /* NOVO: Botão de editar telefone */
+        .edit-phone-btn { background-color: var(--primary-blue); }
+        /* NOVO: Botão de apagar usuário */
+        .delete-user-btn { background-color: var(--accent-red); }
+
         .action-btn:disabled { background-color: var(--text-muted); cursor: not-allowed; }
 
         /* Plano Ativo */
@@ -119,6 +135,19 @@
             border-radius: 8px; padding: 0.8rem 1rem; color: var(--text-light);
             font-size: 1rem;
         }
+        /* ATUALIZADO: Estilo para o campo de telefone no modal */
+        .form-group .phone-input-wrapper {
+            position: relative; /* Manter se houver outros elementos sobrepostos */
+            display: flex;
+            align-items: center;
+        }
+        /* REMOVIDO: Estilos para phone-prefix-display dentro do modal, pois o prefixo será editável no input */
+        /* REMOVIDO: Estilos para iconify-icon dentro do modal */
+        .form-group .phone-input-wrapper input {
+            padding-left: 1rem; /* Volta ao padding normal, pois o prefixo está no próprio input */
+            flex-grow: 1;
+        }
+
         .modal-actions { margin-top: 1.5rem; }
         .modal-submit-btn {
             background-color: var(--primary-blue); color: #fff; border: none;
@@ -181,7 +210,11 @@
                     <span id="user-status-tag" class="user-status-tag"></span>
                 </div>
                 <div class="user-details-list">
-                    <div class="detail-item"><span class="label">Telefone</span><span class="value" id="user-phone-display"></span></div>
+                    <!-- Telefone editável -->
+                    <div class="detail-item">
+                        <span class="label">Telefone</span>
+                        <span class="value editable" id="user-phone-display"></span>
+                    </div>
                     <div class="detail-item"><span class="label">Saldo da Carteira</span><span class="value balance" id="user-wallet-balance-display"></span></div>
                     <div class="detail-item"><span class="label">Saldo de Bônus</span><span class="value balance" id="user-bonus-balance-display"></span></div>
                     <div class="detail-item"><span class="label">Já Depositou?</span><span class="value" id="user-has-deposited-display"></span></div>
@@ -191,7 +224,9 @@
                 <div class="actions-grid">
                     <button class="action-btn block-btn" id="block-unblock-btn"><i class='bx bx-block'></i> Bloquear</button>
                     <button class="action-btn reset-pin-btn" id="reset-pin-btn"><i class='bx bx-key'></i> Redefinir PIN</button>
-                    <button class="action-btn adjust-balance-btn" id="adjust-balance-btn" style="grid-column: 1 / -1;"><i class='bx bx-coin'></i> Ajustar Saldo</button>
+                    <button class="action-btn edit-phone-btn" id="edit-phone-btn"><i class='bx bx-phone'></i> Editar Telefone</button>
+                    <button class="action-btn adjust-balance-btn" id="adjust-balance-btn"><i class='bx bx-coin'></i> Ajustar Saldo</button>
+                    <button class="action-btn delete-user-btn" id="delete-user-btn" style="grid-column: 1 / -1;"><i class='bx bxs-trash'></i> Apagar Conta</button>
                 </div>
             </div>
 
@@ -273,20 +308,42 @@
         </div>
     </div>
 
+    <!-- NOVO: Modal para Editar Telefone -->
+    <div id="edit-phone-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Editar Telefone do Usuário</h2>
+                <button class="close-btn">&times;</button>
+            </div>
+            <form id="edit-phone-form">
+                <div class="form-group">
+                    <label for="edit-phone-input">Novo Número de Telefone (com ou sem prefixo +258)</label> <!-- ATUALIZADO: label mais clara -->
+                    <input type="tel" id="edit-phone-input" placeholder="+258 8X XXX XXXX ou 8X XXX XXXX" required maxlength="20"> <!-- ATUALIZADO: maxlength mais flexível -->
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="modal-submit-btn" id="edit-phone-submit-btn">
+                        <span>Salvar Telefone</span>
+                        <div class="spinner" style="display: none;"></div>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
+        // IIFE para encapsular o script e permitir 'return's antecipados legais.
+        (function() { 
             const API_URL = "https://daksk.onrender.com";
             const TOKEN = localStorage.getItem('chivo-admin-token');
             if (!TOKEN) {
                 window.location.href = 'admin-login.html';
-                return;
+                return; // Agora legal dentro da IIFE
             }
 
             const userId = new URLSearchParams(window.location.search).get('id');
             if (!userId) {
                 document.getElementById('loading-message').textContent = 'ID do usuário não fornecido na URL.';
-                return;
+                return; // Agora legal dentro da IIFE
             }
 
             const elements = {
@@ -307,13 +364,15 @@
                 blockUnblockBtn: document.getElementById('block-unblock-btn'),
                 resetPinBtn: document.getElementById('reset-pin-btn'),
                 adjustBalanceBtn: document.getElementById('adjust-balance-btn'),
+                editPhoneBtn: document.getElementById('edit-phone-btn'),
+                deleteUserBtn: document.getElementById('delete-user-btn'),
                 activePlanCard: document.getElementById('active-plan-card'),
                 transactionsList: document.getElementById('transactions-list'),
                 referralCountDisplay: document.getElementById('referral-count-display'),
                 referralsList: document.getElementById('referrals-list'),
                 totalOwnReferralEarningsDisplay: document.getElementById('total-own-referral-earnings-display'),
                 totalEarningsForReferrerDisplay: document.getElementById('total-earnings-for-referrer-display'),
-                feedbackBarContainer: document.getElementById('feedback-bar-container'), // NOVO ELEMENTO
+                feedbackBarContainer: document.getElementById('feedback-bar-container'),
                 
                 // Modais
                 adjustBalanceModal: document.getElementById('adjust-balance-modal'),
@@ -326,24 +385,29 @@
                 resetPinForm: document.getElementById('reset-pin-form'),
                 newPinInput: document.getElementById('new-pin'),
                 resetPinSubmitBtn: document.getElementById('reset-pin-submit-btn'),
+
+                editPhoneModal: document.getElementById('edit-phone-modal'),
+                editPhoneForm: document.getElementById('edit-phone-form'),
+                editPhoneInput: document.getElementById('edit-phone-input'),
+                editPhoneSubmitBtn: document.getElementById('edit-phone-submit-btn'),
             };
 
-            let currentUserData = null; // Para armazenar os dados do usuário carregado
+            let currentUserData = null;
 
-            // Obter os sub-elementos dos botões APÓS o objeto elements ser definido
             const adjustBalanceSubmitBtnText = elements.adjustBalanceSubmitBtn.querySelector('span');
             const adjustBalanceSubmitBtnSpinner = elements.adjustBalanceSubmitBtn.querySelector('.spinner');
             const resetPinSubmitBtnText = elements.resetPinSubmitBtn.querySelector('span');
             const resetPinSubmitBtnSpinner = elements.resetPinSubmitBtn.querySelector('.spinner');
+            const editPhoneSubmitBtnText = elements.editPhoneSubmitBtn.querySelector('span');
+            const editPhoneSubmitBtnSpinner = elements.editPhoneSubmitBtn.querySelector('.spinner');
 
 
             const fetchAPI = async (endpoint, options = {}) => {
                 options.headers = { ...options.headers, 'Authorization': `Bearer ${TOKEN}` };
-                // Lógica corrigida para Content-Type:
                 if (options.body && !(options.body instanceof FormData)) {
                     options.headers['Content-Type'] = 'application/json';
                 } else if (options.body instanceof FormData) {
-                    delete options.headers['Content-Type']; // Remover Content-Type se for FormData
+                    delete options.headers['Content-Type'];
                 }
                 
                 const response = await fetch(`${API_URL}${endpoint}`, options);
@@ -363,15 +427,21 @@
             const formatCurrency = (value = 0) => new Intl.NumberFormat('pt-MZ', { style: 'currency', currency: 'MZN' }).format(value);
             const formatDate = (dateString) => new Date(dateString).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
-            // Função para exibir a barra de feedback
             function showFeedbackBar(message, type = 'error') {
+                if (!elements.feedbackBarContainer) {
+                    console.error('Feedback bar container not found or not yet initialized.');
+                    return;
+                }
+
+                message = String(message || 'Ocorreu um erro desconhecido.'); 
                 elements.feedbackBarContainer.innerHTML = ''; 
                 let iconClass = type === 'success' ? 'bx bx-check-circle' : 'bx bx-x-circle';
 
                 const feedbackBar = document.createElement('div');
                 feedbackBar.className = `feedback-bar ${type}`;
                 feedbackBar.innerHTML = `<i class='${iconClass}'></i> <span></span>`;
-                feedbackBar.querySelector('span').textContent = message; // Proteção contra XSS
+                
+                feedbackBar.querySelector('span').textContent = message;
                 elements.feedbackBarContainer.appendChild(feedbackBar);
 
                 setTimeout(() => { feedbackBar.classList.add('show'); }, 50); 
@@ -387,7 +457,7 @@
 
                 try {
                     const data = await fetchAPI(`/api/admin/users/${userId}/details`);
-                    currentUserData = data.user; // Armazena os dados completos do usuário
+                    currentUserData = data.user;
                     renderUserDetails(data);
                     elements.loadingMessage.style.display = 'none';
                     elements.userDetailsContent.style.display = 'block';
@@ -400,7 +470,6 @@
             const renderUserDetails = (data) => {
                 const user = data.user;
 
-                // Perfil
                 if (user.profilePicture) {
                     elements.profilePicDisplay.src = user.profilePicture;
                     elements.profilePicDisplay.style.display = 'block';
@@ -414,18 +483,20 @@
                 elements.userIdDisplay.textContent = user.userId;
                 elements.userStatusTag.textContent = user.isBlocked ? 'Bloqueado' : 'Ativo';
                 elements.userStatusTag.className = `user-status-tag ${user.isBlocked ? 'status-blocked' : 'status-active'}`;
-                elements.userPhoneDisplay.textContent = user.phone;
+                // ATUALIZADO: Exibe o número de telefone exatamente como está no DB
+                elements.userPhoneDisplay.textContent = user.phone; 
+                // Adiciona um listener direto para o clique no telefone para abrir o modal de edição
+                elements.userPhoneDisplay.addEventListener('click', () => openEditPhoneModal(user.phone));
+
                 elements.userWalletBalanceDisplay.textContent = formatCurrency(user.walletBalance);
                 elements.userBonusBalanceDisplay.textContent = formatCurrency(user.bonusBalance);
                 elements.userHasDepositedDisplay.textContent = user.hasDeposited ? 'Sim' : 'Não';
                 elements.userHasActivatedPlanDisplay.textContent = user.hasActivatedPlan ? 'Sim' : 'Não';
                 elements.userCreatedAtDisplay.textContent = formatDate(user.createdAt);
 
-                // Botões de Ação
                 elements.blockUnblockBtn.textContent = user.isBlocked ? 'Desbloquear Usuário' : 'Bloquear Usuário';
                 elements.blockUnblockBtn.className = `action-btn ${user.isBlocked ? 'unblock-btn' : 'block-btn'}`;
 
-                // Plano Ativo
                 elements.activePlanCard.innerHTML = '';
                 if (user.activePlanInstance) {
                     const plan = user.activePlanInstance.plan;
@@ -447,7 +518,6 @@
                     elements.activePlanCard.innerHTML = '<p class="list-empty-message">Nenhum plano ativo para este usuário.</p>';
                 }
 
-                // Transações
                 elements.transactionsList.innerHTML = '';
                 if (data.transactions && data.transactions.length > 0) {
                     data.transactions.forEach(transaction => {
@@ -471,167 +541,270 @@
                                 <div class="item-details">
                                     <p>Data: ${formatDate(transaction.createdAt)}</p>
                                     <p>Status: <span style="color: ${statusClass === 'status-green' ? 'var(--accent-green)' : statusClass === 'status-red' ? 'var(--accent-red)' : 'var(--accent-yellow)'}">${statusText}</span></p>
-                                </div>
                             </div>
-                        `;
-                    });
-                } else {
-                    elements.transactionsList.innerHTML = '<p class="list-empty-message">Nenhuma transação encontrada para este usuário.</p>';
-                }
+                        </div>
+                    `;
+                });
+            } else {
+                elements.transactionsList.innerHTML = '<p class="list-empty-message">Nenhuma transação encontrada para este usuário.</p>';
+            }
 
-                // Convidados (Referrals)
-                elements.referralCountDisplay.textContent = data.referrals.count;
-                elements.referralsList.innerHTML = '';
-                if (data.referrals && data.referrals.list.length > 0) {
-                    data.referrals.list.forEach(referral => {
-                        elements.referralsList.innerHTML += `
-                            <div class="list-item">
-                                <div class="item-header">
-                                    <h4>@${referral.username} (ID: ${referral.userId})</h4>
-                                    <span class="amount positive">+${formatCurrency(referral.earningsForUser)}</span>
-                                </div>
-                                <div class="item-details">
-                                    <p>Cadastrado em: ${new Date(referral.joinDate).toLocaleDateString('pt-BR')}</p>
-                                    <p>Plano Ativo: ${referral.planName}</p>
-                                </div>
+            elements.referralCountDisplay.textContent = data.referrals.count;
+            elements.referralsList.innerHTML = '';
+            if (data.referrals && data.referrals.list.length > 0) {
+                data.referrals.list.forEach(referral => {
+                    elements.referralsList.innerHTML += `
+                        <div class="list-item">
+                            <div class="item-header">
+                                <h4>@${referral.username} (ID: ${referral.userId})</h4>
+                                <span class="amount positive">+${formatCurrency(referral.earningsForUser)}</span>
                             </div>
-                        `;
-                    });
-                } else {
-                    elements.referralsList.innerHTML = '<p class="list-empty-message">Este usuário ainda não convidou ninguém.</p>';
-                }
-                elements.totalOwnReferralEarningsDisplay.textContent = formatCurrency(data.referrals.totalOwnReferralEarnings);
-                elements.totalEarningsForReferrerDisplay.textContent = formatCurrency(data.totalEarningsForReferrer);
-            };
+                            <div class="item-details">
+                                <!-- ATUALIZADO: Usar toLocaleDateString para a data de cadastro -->
+                                <p>Cadastrado em: ${new Date(referral.joinDate).toLocaleDateString('pt-BR')}</p>
+                                <p>Plano Ativo: ${referral.planName}</p>
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                elements.referralsList.innerHTML = '<p class="list-empty-message">Este usuário ainda não convidou ninguém.</p>';
+            }
+            elements.totalOwnReferralEarningsDisplay.textContent = formatCurrency(data.referrals.totalOwnReferralEarnings);
+            elements.totalEarningsForReferrerDisplay.textContent = formatCurrency(data.totalEarningsForReferrer);
+        };
 
-            // --- Gerenciamento de Eventos para Ações ---
+        // --- Gerenciamento de Eventos para Ações ---
 
-            // Bloquear/Desbloquear
-            elements.blockUnblockBtn.addEventListener('click', async () => {
-                elements.blockUnblockBtn.disabled = true;
-                const action = currentUserData.isBlocked ? 'desbloquear' : 'bloquear';
-                try {
-                    const result = await fetchAPI(`/api/admin/users/${userId}/block`, { method: 'PUT', body: JSON.stringify({}) });
-                    showFeedbackBar(result.message, 'success');
-                    await loadUserDetails(); // Recarrega os dados para atualizar o status
-                } catch (error) {
-                    showFeedbackBar(error.message, 'error');
-                } finally {
-                    elements.blockUnblockBtn.disabled = false;
-                }
-            });
-
-            // Abrir Modal de Ajustar Saldo
-            elements.adjustBalanceBtn.addEventListener('click', () => {
-                elements.newWalletBalanceInput.value = currentUserData.walletBalance;
-                elements.newBonusBalanceInput.value = currentUserData.bonusBalance;
-                elements.adjustBalanceModal.classList.add('show');
-            });
-
-            // Fechar Modal de Ajustar Saldo
-            elements.adjustBalanceModal.querySelector('.close-btn').addEventListener('click', () => {
-                elements.adjustBalanceModal.classList.remove('show');
-            });
-            elements.adjustBalanceModal.addEventListener('click', (e) => { // Clicar fora do modal fecha
-                if (e.target === elements.adjustBalanceModal) {
-                    elements.adjustBalanceModal.classList.remove('show');
-                }
-            });
-
-            // Enviar Ajuste de Saldo
-            elements.adjustBalanceForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const submitButton = elements.adjustBalanceSubmitBtn;
-                submitButton.disabled = true;
-                adjustBalanceSubmitBtnText.textContent = 'Salvando...';
-                adjustBalanceSubmitBtnSpinner.style.display = 'inline-block';
-
-                const newWalletBalance = parseFloat(elements.newWalletBalanceInput.value);
-                const newBonusBalance = parseFloat(elements.newBonusBalanceInput.value);
-                
-                // Validação no frontend (básica)
-                if (isNaN(newWalletBalance) || newWalletBalance < 0 || isNaN(newBonusBalance) || newBonusBalance < 0) {
-                    showFeedbackBar('Por favor, insira valores numéricos válidos e não negativos para os saldos.', 'error');
-                    submitButton.disabled = false;
-                    adjustBalanceSubmitBtnText.textContent = 'Salvar Ajuste';
-                    adjustBalanceSubmitBtnSpinner.style.display = 'none';
-                    return;
-                }
-
-                try {
-                    const result = await fetchAPI(`/api/admin/users/${userId}/balance`, {
-                        method: 'PUT',
-                        body: JSON.stringify({ walletBalance: newWalletBalance, bonusBalance: newBonusBalance })
-                    });
-                    showFeedbackBar(result.message, 'success');
-                    elements.adjustBalanceModal.classList.remove('show');
-                    await loadUserDetails(); // Recarrega os dados
-                } catch (error) {
-                    showFeedbackBar(error.message, 'error');
-                } finally {
-                    submitButton.disabled = false;
-                    adjustBalanceSubmitBtnText.textContent = 'Salvar Ajuste';
-                    adjustBalanceSubmitBtnSpinner.style.display = 'none';
-                }
-            });
-
-            // Abrir Modal de Redefinir PIN
-            elements.resetPinBtn.addEventListener('click', () => {
-                elements.newPinInput.value = ''; // Limpa o campo
-                elements.resetPinModal.classList.add('show');
-            });
-
-            // Fechar Modal de Redefinir PIN
-            elements.resetPinModal.querySelector('.close-btn').addEventListener('click', () => {
-                elements.resetPinModal.classList.remove('show');
-            });
-            elements.resetPinModal.addEventListener('click', (e) => { // Clicar fora do modal fecha
-                if (e.target === elements.resetPinModal) {
-                    elements.resetPinModal.classList.remove('show');
-                }
-            });
-
-            // Enviar Redefinição de PIN
-            elements.resetPinForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const submitButton = elements.resetPinSubmitBtn;
-                submitButton.disabled = true;
-                resetPinSubmitBtnText.textContent = 'Redefinindo...';
-                resetPinSubmitBtnSpinner.style.display = 'inline-block';
-
-                // CORREÇÃO AQUI: Garante que o PIN seja uma string e remove espaços em branco.
-                const newPin = String(elements.newPinInput.value).trim(); 
-
-                // Validação de PIN no frontend (duplicada do backend, mas boa para UX)
-                if (newPin.length < 4 || newPin.length > 6 || !/^\d+$/.test(newPin)) {
-                    showFeedbackBar('O novo PIN deve conter apenas números, entre 4 e 6 dígitos.', 'error');
-                    submitButton.disabled = false;
-                    resetPinSubmitBtnText.textContent = 'Redefinir PIN';
-                    resetPinSubmitBtnSpinner.style.display = 'none';
-                    return;
-                }
-
-                try {
-                    const result = await fetchAPI(`/api/admin/users/${userId}/reset-pin`, {
-                        method: 'PUT',
-                        body: JSON.stringify({ newPin })
-                    });
-                    showFeedbackBar(`PIN redefinido com sucesso! Novo PIN: ${newPin}`, 'success'); // Mensagem com o novo PIN
-                    elements.resetPinModal.classList.remove('show');
-                    // Não é necessário recarregar os dados do usuário, pois o PIN não é visível.
-                    // Apenas informa que foi redefinido.
-                } catch (error) {
-                    showFeedbackBar(error.message, 'error');
-                } finally {
-                    submitButton.disabled = false;
-                    resetPinSubmitBtnText.textContent = 'Redefinir PIN';
-                    resetPinSubmitBtnSpinner.style.display = 'none';
-                }
-            });
-
-
-            loadUserDetails(); // Carrega os detalhes do usuário ao iniciar a página
+        // Bloquear/Desbloquear
+        elements.blockUnblockBtn.addEventListener('click', async () => {
+            elements.blockUnblockBtn.disabled = true;
+            const action = currentUserData.isBlocked ? 'desbloquear' : 'bloquear';
+            try {
+                const result = await fetchAPI(`/api/admin/users/${userId}/block`, { method: 'PUT', body: JSON.stringify({}) });
+                showFeedbackBar(result.message, 'success');
+                await loadUserDetails();
+            } catch (error) {
+                showFeedbackBar(error.message, 'error');
+            } finally {
+                elements.blockUnblockBtn.disabled = false;
+            }
         });
+
+        // Abrir Modal de Ajustar Saldo
+        elements.adjustBalanceBtn.addEventListener('click', () => {
+            elements.newWalletBalanceInput.value = currentUserData.walletBalance;
+            elements.newBonusBalanceInput.value = currentUserData.bonusBalance;
+            elements.adjustBalanceModal.classList.add('show');
+        });
+
+        // Fechar Modal de Ajustar Saldo
+        elements.adjustBalanceModal.querySelector('.close-btn').addEventListener('click', () => {
+            elements.adjustBalanceModal.classList.remove('show');
+        });
+        elements.adjustBalanceModal.addEventListener('click', (e) => {
+            if (e.target === elements.adjustBalanceModal) {
+                elements.adjustBalanceModal.classList.remove('show');
+            }
+        });
+
+        // Enviar Ajuste de Saldo
+        elements.adjustBalanceForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const submitButton = elements.adjustBalanceSubmitBtn;
+            submitButton.disabled = true;
+            adjustBalanceSubmitBtnText.textContent = 'Salvando...';
+            adjustBalanceSubmitBtnSpinner.style.display = 'inline-block';
+
+            const newWalletBalance = parseFloat(elements.newWalletBalanceInput.value);
+            const newBonusBalance = parseFloat(elements.newBonusBalanceInput.value);
+            
+            if (isNaN(newWalletBalance) || newWalletBalance < 0 || isNaN(newBonusBalance) || newBonusBalance < 0) {
+                showFeedbackBar('Por favor, insira valores numéricos válidos e não negativos para os saldos.', 'error');
+                submitButton.disabled = false;
+                adjustBalanceSubmitBtnText.textContent = 'Salvar Ajuste';
+                adjustBalanceSubmitBtnSpinner.style.display = 'none';
+                return;
+            }
+
+            try {
+                const result = await fetchAPI(`/api/admin/users/${userId}/balance`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ walletBalance: newWalletBalance, bonusBalance: newBonusBalance })
+                });
+                showFeedbackBar(result.message, 'success');
+                elements.adjustBalanceModal.classList.remove('show');
+                await loadUserDetails();
+            } catch (error) {
+                showFeedbackBar(error.message, 'error');
+            } finally {
+                submitButton.disabled = false;
+                adjustBalanceSubmitBtnText.textContent = 'Salvar Ajuste';
+                adjustBalanceSubmitBtnSpinner.style.display = 'none';
+            }
+        });
+
+        // Abrir Modal de Redefinir PIN
+        elements.resetPinBtn.addEventListener('click', () => {
+            elements.newPinInput.value = '';
+            elements.resetPinModal.classList.add('show');
+        });
+
+        // Fechar Modal de Redefinir PIN
+        elements.resetPinModal.querySelector('.close-btn').addEventListener('click', () => {
+            elements.resetPinModal.classList.remove('show');
+        });
+        elements.resetPinModal.addEventListener('click', (e) => {
+            if (e.target === elements.resetPinModal) {
+                elements.resetPinModal.classList.remove('show');
+            }
+        });
+
+        // Enviar Redefinição de PIN
+        elements.resetPinForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const submitButton = elements.resetPinSubmitBtn;
+            submitButton.disabled = true;
+            resetPinSubmitBtnText.textContent = 'Redefinindo...';
+            resetPinSubmitBtnSpinner.style.display = 'inline-block';
+
+            const newPin = String(elements.newPinInput.value).trim(); 
+
+            if (newPin.length < 4 || newPin.length > 6 || !/^\d+$/.test(newPin)) {
+                showFeedbackBar('O novo PIN deve conter apenas números, entre 4 e 6 dígitos.', 'error');
+                submitButton.disabled = false;
+                resetPinSubmitBtnText.textContent = 'Redefinir PIN';
+                resetPinSubmitBtnSpinner.style.display = 'none';
+                return;
+            }
+
+            try {
+                const result = await fetchAPI(`/api/admin/users/${userId}/reset-pin`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ newPin })
+                });
+                showFeedbackBar(`PIN redefinido com sucesso! Novo PIN: ${newPin}`, 'success');
+                elements.resetPinModal.classList.remove('show');
+            } catch (error) {
+                showFeedbackBar(error.message, 'error');
+            } finally {
+                submitButton.disabled = false;
+                resetPinSubmitBtnText.textContent = 'Redefinir PIN';
+                resetPinSubmitBtnSpinner.style.display = 'none';
+            }
+        });
+
+        // NOVO: Abrir Modal de Edição de Telefone
+        elements.editPhoneBtn.addEventListener('click', () => openEditPhoneModal(currentUserData.phone));
+        
+        function openEditPhoneModal(currentPhone) {
+            // Preenche com o número exatamente como veio do DB para edição flexível
+            elements.editPhoneInput.value = currentPhone; 
+            elements.editPhoneModal.classList.add('show');
+        }
+
+        // NOVO: Fechar Modal de Edição de Telefone
+        elements.editPhoneModal.querySelector('.close-btn').addEventListener('click', () => {
+            elements.editPhoneModal.classList.remove('show');
+        });
+        elements.editPhoneModal.addEventListener('click', (e) => {
+            if (e.target === elements.editPhoneModal) {
+                elements.editPhoneModal.classList.remove('show');
+            }
+        });
+
+        // NOVO: Lógica de input para o campo de telefone no modal (permissivo, mantém cursor)
+        elements.editPhoneInput.addEventListener('input', (event) => {
+            const input = event.target;
+            const originalValue = input.value;
+            const originalCursorPosition = input.selectionStart;
+
+            // Permite '+', dígitos e espaços
+            let cleanedValue = originalValue.replace(/[^+\d\s]/g, ''); 
+            
+            // Opcional: limitar o comprimento total do input para algo razoável, e.g., 15 caracteres para +258 8XXXXXXXX
+            if (cleanedValue.length > 15) { 
+                cleanedValue = cleanedValue.substring(0, 15);
+            }
+
+            // Atualiza o valor somente se houver uma mudança real após a limpeza
+            if (originalValue !== cleanedValue) {
+                input.value = cleanedValue;
+
+                // Restaura a posição do cursor.
+                // Isso é complexo porque caracteres podem ter sido removidos.
+                // A abordagem mais simples para inputs permissivos é tentar manter a posição original.
+                // Se a edição foi feita no meio, a posição será mantida razoavelmente.
+                // Para uma gestão de cursor perfeita, é necessário calcular as diferenças de caracteres.
+                // Para o seu caso de "apagar um a um", esta lógica já é suficiente.
+                input.setSelectionRange(originalCursorPosition, originalCursorPosition);
+            }
+        });
+        
+        // NOVO: Enviar Edição de Telefone
+        elements.editPhoneForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const submitButton = elements.editPhoneSubmitBtn;
+            submitButton.disabled = true;
+            editPhoneSubmitBtnText.textContent = 'Salvando...';
+            editPhoneSubmitBtnSpinner.style.display = 'inline-block';
+
+            const newPhoneInput = elements.editPhoneInput.value.trim(); // Pega o número como o admin digitou (com +258, espaços, etc.)
+
+            // Validação frontend mais flexível: apenas garante que há dígitos e um comprimento razoável
+            // O backend fará a validação estrita e normalização para +258XXXXXXXXX
+            if (newPhoneInput.length < 9 || newPhoneInput.replace(/\D/g, '').length < 9) { // Garante pelo menos 9 dígitos numéricos
+                showFeedbackBar('O número de telefone inserido é inválido. Por favor, inclua 9 dígitos numéricos.', 'error');
+                submitButton.disabled = false;
+                editPhoneSubmitBtnText.textContent = 'Salvar Telefone';
+                editPhoneSubmitBtnSpinner.style.display = 'none';
+                return;
+            }
+
+            try {
+                // Envia o número como o admin digitou. O backend é que fará a normalização para +258XXXXXXXXX
+                const result = await fetchAPI(`/api/admin/users/${userId}/phone`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ newPhone: newPhoneInput }) // ENVIADO COMO O ADMIN DIGITOU
+                });
+                showFeedbackBar(result.message, 'success');
+                elements.editPhoneModal.classList.remove('show');
+                await loadUserDetails(); // Recarrega os dados para atualizar a exibição
+            } catch (error) {
+                showFeedbackBar(error.message, 'error');
+            } finally {
+                submitButton.disabled = false;
+                editPhoneSubmitBtnText.textContent = 'Salvar Telefone';
+                editPhoneSubmitBtnSpinner.style.display = 'none';
+            }
+        });
+
+        // NOVO: Botão de Apagar Conta
+        elements.deleteUserBtn.addEventListener('click', async () => {
+            if (confirm('ATENÇÃO: Você tem certeza que deseja APAGAR esta conta de usuário? Todos os dados (planos, transações, etc.) serão PERMANENTEMENTE DELETADOS e esta ação NÃO PODE SER DESFEITA.')) {
+                elements.deleteUserBtn.disabled = true;
+                elements.deleteUserBtn.textContent = 'Apagando...';
+                try {
+                    const result = await fetchAPI(`/api/admin/users/${userId}`, { method: 'DELETE' });
+                    showFeedbackBar(result.message, 'success');
+                    setTimeout(() => {
+                        window.location.href = 'admin-users.html'; // Redireciona de volta para a lista de usuários
+                    }, 1500);
+                } catch (error) {
+                    showFeedbackBar(error.message, 'error');
+                    elements.deleteUserBtn.disabled = false;
+                    elements.deleteUserBtn.textContent = 'Apagar Conta';
+                }
+            }
+        });
+
+        // NOVO: Chamada inicial para carregar os detalhes do usuário
+        document.addEventListener('DOMContentLoaded', () => {
+            // Inicializa feedbackBarContainer aqui para garantir que o elemento existe
+            elements.feedbackBarContainer = document.getElementById('feedback-bar-container');
+            loadUserDetails();
+        });
+    })(); // Fim da IIFE
     </script>
 </body>
 </html>
