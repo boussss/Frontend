@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes"> <!-- ALTERADO: user-scalable=yes para acessibilidade -->
     <title>Meu Perfil - Chivo</title>
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -67,7 +67,7 @@
             background-color: var(--secondary-blue);
             color: #fff;
             border: none;
-            border-radius: 8px;
+            border-radius: 8_px;
             padding: 0.5rem 1rem;
             font-weight: 500;
             cursor: pointer;
@@ -149,7 +149,10 @@
             font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
+            display: flex; justify-content: center; align-items: center;
         }
+        .spinner { width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.3); border-top-color:#fff; border-radius:50%; animation: spin 1s linear infinite; margin-left: 10px;}
+        @keyframes spin { to { transform: rotate(360deg); } }
 
         .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background-color: var(--card-bg); box-shadow: 0 -2px 15px rgba(0,0,0,0.05); display: flex; justify-content: space-around; padding: 0.4rem 0; border-top-left-radius: 18px; border-top-right-radius: 18px; }
         .nav-link { display: flex; flex-direction: column; align-items: center; text-decoration: none; gap: 0.1rem; padding: 0.4rem; color: var(--text-light); flex-grow: 1; text-align: center; }
@@ -157,15 +160,38 @@
         .nav-link span { font-size: 0.6rem; }
         .nav-link.active { color: var(--primary-blue); }
         
-        #toast-container { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); z-index: 200; }
-        .toast { padding: 0.7rem 1.2rem; border-radius: 8px; color: #fff; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); opacity: 0; transform: translateY(20px); animation: slide-in-out 3.5s forwards; }
-        .toast.success { background-color: var(--success-color); }
-        .toast.error { background-color: var(--error-color); }
-        @keyframes slide-in-out { 0%, 100% { opacity: 0; transform: translateY(20px); } 15%, 85% { opacity: 1; transform: translateY(0); } }
+        /* NOVO: Estilos para a barra de feedback no topo */
+        #feedback-bar-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 2000; /* Mais alto que o modal */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding-top: 20px;
+            pointer-events: none;
+        }
+        .feedback-bar {
+            background-color: var(--error-color); color: #fff; padding: 0.8rem 1.5rem;
+            border-radius: 10px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            display: flex; align-items: center; gap: 10px; font-size: 0.9rem;
+            font-weight: 500; transform: translateY(-150%); opacity: 0;
+            transition: transform 0.4s ease-out, opacity 0.4s ease-out;
+            pointer-events: auto; max-width: 90%; text-align: center;
+        }
+        .feedback-bar.show { transform: translateY(0); opacity: 1; }
+        .feedback-bar.success { background-color: var(--success-color); }
+        .feedback-bar i { font-size: 1.3rem; }
+        /* FIM: Estilos para a barra de feedback no topo */
     </style>
 </head>
 <body>
 
+    <!-- NOVO: Container para a barra de feedback -->
+    <div id="feedback-bar-container"></div>
+    
     <div class="main-container">
         <header class="header">
             <a href="dashboard.html" class="back-button"><i class='bx bx-chevron-left'></i></a>
@@ -192,6 +218,11 @@
                     <span>Convidar Amigos</span>
                     <i class='bx bx-chevron-right'></i>
                 </a>
+                <a href="lottery.html" class="action-link-item"> <!-- NOVO LINK: Sorteio -->
+                    <i class='bx bx-gift'></i>
+                    <span>Resgatar Sorteio</span>
+                    <i class='bx bx-chevron-right'></i>
+                </a>
                 <a href="history.html" class="action-link-item">
                     <i class='bx bx-history'></i>
                     <span>Histórico de Planos</span>
@@ -199,7 +230,10 @@
                 </a>
             </div>
             
-            <button id="logout-btn" class="logout-btn">Sair</button>
+            <button id="logout-btn" class="logout-btn">
+                <span>Sair</span>
+                <div class="spinner" style="display: none;"></div>
+            </button>
         </div>
     </div>
 
@@ -210,7 +244,7 @@
         <a href="profile.html" class="nav-link active"><i class='bx bxs-user'></i><span>Perfil</span></a>
     </nav>
 
-    <div id="toast-container"></div>
+    <!-- REMOVIDO: <div id="toast-container"></div> -->
     
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -224,34 +258,60 @@
                 changePicBtn: document.getElementById('change-pic-btn'),
                 profileDetailsContainer: document.getElementById('profile-details-container'),
                 logoutBtn: document.getElementById('logout-btn'),
+                feedbackBarContainer: document.getElementById('feedback-bar-container') // NOVO ELEMENTO
             };
 
+            // Obter os sub-elementos dos botões APÓS o objeto elements ser definido
+            const logoutBtnText = elements.logoutBtn.querySelector('span');
+            const logoutBtnSpinner = elements.logoutBtn.querySelector('.spinner');
+
             const fetchAPI = async (endpoint, options = {}) => {
-                const defaultHeaders = { 'Authorization': `Bearer ${TOKEN}` };
-                if (!(options.body instanceof FormData)) {
-                    defaultHeaders['Content-Type'] = 'application/json';
+                options.headers = { ...options.headers, 'Authorization': `Bearer ${TOKEN}` };
+                // Lógica corrigida para Content-Type:
+                if (options.body && !(options.body instanceof FormData)) {
+                    options.headers['Content-Type'] = 'application/json';
+                } else if (options.body instanceof FormData) {
+                    delete options.headers['Content-Type']; // Remover Content-Type se for FormData
                 }
-                options.headers = { ...defaultHeaders, ...options.headers };
 
                 const response = await fetch(`${API_URL}${endpoint}`, options);
                 if (response.status === 401) { 
                     localStorage.removeItem('chivo-token'); 
                     window.location.href = 'login.html'; 
-                    throw new Error('Sessão expirada.');
+                    throw new Error('Sessão expirada. Por favor, faça login novamente.');
                 }
+                const data = await response.json(); // Tenta sempre ler o JSON
                 if (!response.ok) { 
-                    const err = await response.json(); 
-                    throw new Error(err.message || 'Ocorreu um erro.');
+                    throw new Error(data.message || `Ocorreu um erro na API: ${response.statusText}`);
                 }
-                return response.json();
+                return data;
             };
+
+            // Função para exibir a barra de feedback (idêntica às outras)
+            function showFeedbackBar(message, type = 'error') {
+                elements.feedbackBarContainer.innerHTML = ''; 
+                let iconClass = type === 'success' ? 'bx bx-check-circle' : 'bx bx-x-circle';
+
+                const feedbackBar = document.createElement('div');
+                feedbackBar.className = `feedback-bar ${type}`;
+                feedbackBar.innerHTML = `<i class='${iconClass}'></i> <span></span>`;
+                feedbackBar.querySelector('span').textContent = message; // Proteção contra XSS
+                elements.feedbackBarContainer.appendChild(feedbackBar);
+
+                setTimeout(() => { feedbackBar.classList.add('show'); }, 50); 
+                setTimeout(() => {
+                    feedbackBar.classList.remove('show');
+                    feedbackBar.addEventListener('transitionend', () => feedbackBar.remove(), { once: true });
+                }, 4000);
+            }
 
             const loadProfileData = async () => {
                 try {
                     const user = await fetchAPI('/api/users/me');
                     renderProfile(user);
                 } catch (error) {
-                    showToast(error.message, 'error');
+                    showFeedbackBar(error.message, 'error'); // Usar a nova função
+                    elements.profileDetailsContainer.innerHTML = `<p style="text-align: center; color: var(--text-light);">Não foi possível carregar o perfil: ${error.message}</p>`;
                 }
             };
 
@@ -285,7 +345,10 @@
 
             const handlePhotoUpload = async (event) => {
                 const file = event.target.files[0];
-                if (!file) return;
+                if (!file) {
+                    showFeedbackBar('Nenhum arquivo selecionado para upload.', 'error'); // Usar a nova função
+                    return;
+                }
 
                 const formData = new FormData();
                 formData.append('image', file);
@@ -296,14 +359,15 @@
                 try {
                     const result = await fetchAPI('/api/users/profile/picture', {
                         method: 'POST',
-                        body: formData,
+                        body: formData, // FormData é enviado diretamente
                     });
                     
                     elements.profilePicDisplay.src = result.profilePictureUrl; 
-                    showToast(result.message, 'success');
+                    elements.profilePicDisplay.style.opacity = '1'; // Força a exibição da nova imagem
+                    showFeedbackBar(result.message, 'success'); // Usar a nova função
 
                 } catch (error) {
-                    showToast(error.message, 'error');
+                    showFeedbackBar(error.message, 'error'); // Usar a nova função
                 } finally {
                     elements.changePicBtn.disabled = false;
                     elements.changePicBtn.textContent = 'Alterar Foto';
@@ -311,21 +375,15 @@
             };
             
             const handleLogout = () => {
+                elements.logoutBtn.disabled = true;
+                logoutBtnText.textContent = 'Saindo...';
+                logoutBtnSpinner.style.display = 'inline-block';
+
                 localStorage.removeItem('chivo-token');
-                showToast('Sessão encerrada com sucesso.', 'success');
+                showFeedbackBar('Sessão encerrada com sucesso.', 'success'); // Usar a nova função
                 setTimeout(() => {
                     window.location.href = 'login.html';
                 }, 1000);
-            };
-
-            const showToast = (message, type = 'success') => {
-                const toastContainer = document.getElementById('toast-container');
-                if (!toastContainer) return;
-                const toast = document.createElement('div');
-                toast.className = `toast ${type}`;
-                toast.textContent = message;
-                toastContainer.appendChild(toast);
-                setTimeout(() => toast.remove(), 3400);
             };
 
             elements.changePicBtn.addEventListener('click', () => elements.profilePicInput.click());

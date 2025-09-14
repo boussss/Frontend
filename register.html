@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes"> <!-- ALTERADO: user-scalable=yes para acessibilidade -->
     <title>Bem-vindo ao Chivo - Crie sua Conta</title>
     <!-- Boxicons CSS -->
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
@@ -28,6 +28,8 @@
             --text-light: #6C757D;
             --input-bg: #FFFFFF;
             --border-color: #DEE2E6;
+            --error-color: #dc3545; /* Cor de erro */
+            --success-color: #28a745; /* Cor de sucesso */
         }
 
         .crypto-bg {
@@ -133,6 +135,10 @@
             outline: none; border-color: var(--primary-blue);
             box-shadow: 0 0 8px rgba(0, 82, 255, 0.2);
         }
+        /* ALTERADO: input[type=password] também deve ter o padding à esquerda para o ícone */
+        .input-field[type="password"] {
+            padding-left: 2.5rem;
+        }
         input[type=number]::-webkit-inner-spin-button, 
         input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         input[type=number] { -moz-appearance: textfield; }
@@ -151,7 +157,53 @@
 
         .bottom-text { margin-top: 1.2rem; color: var(--text-light); font-size: 0.85rem; }
         .bottom-text a { color: var(--primary-blue); text-decoration: none; font-weight: 600; }
-        #error-message { margin-top: 1rem; color: #D93025; font-weight: 500; min-height: 1.2em; }
+        
+        /* NOVO: Estilos para a barra de feedback no topo */
+        #feedback-bar-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding-top: 50px; /* Espaço para o ticker */
+            pointer-events: none; /* Não bloquear cliques abaixo */
+        }
+
+        .feedback-bar {
+            background-color: var(--error-color); /* Padrão para erro */
+            color: #fff;
+            padding: 0.8rem 1.5rem;
+            border-radius: 0 0 10px 10px; /* Bordas arredondadas apenas na parte inferior */
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transform: translateY(-100%); /* Escondido por padrão */
+            opacity: 0;
+            transition: transform 0.4s ease-out, opacity 0.4s ease-out;
+            pointer-events: auto; /* Reativar eventos para a barra em si */
+            max-width: 90%; /* Limitar largura */
+            text-align: center;
+        }
+
+        .feedback-bar.show {
+            transform: translateY(0); /* Mostra a barra */
+            opacity: 1;
+        }
+
+        .feedback-bar.success {
+            background-color: var(--success-color);
+        }
+
+        .feedback-bar i {
+            font-size: 1.3rem;
+        }
+        /* FIM: Estilos para a barra de feedback no topo */
     </style>
 </head>
 <body>
@@ -163,6 +215,9 @@
     <div class="ticker-wrap">
         <div class="ticker" id="ticker-content"></div>
     </div>
+
+    <!-- NOVO: Container para a barra de feedback -->
+    <div id="feedback-bar-container"></div>
 
     <div class="container">
         <h2 class="brand-logo">Chi<span>vo</span></h2>
@@ -183,11 +238,11 @@
             </div>
             <div class="input-group">
                 <i class='bx bx-key'></i>
-                <input type="number" id="pin" class="input-field" placeholder="Crie um PIN (4 a 6 dígitos)" required>
+                <input type="password" id="pin" class="input-field" placeholder="Crie um PIN (4 a 6 dígitos)" required> <!-- ALTERADO: type="password" para segurança -->
             </div>
             <div class="input-group">
                 <i class='bx bx-user-plus'></i>
-                <input type="number" id="invitedById" class="input-field" placeholder="ID de quem convidou (opcional)">
+                <input type="text" id="invitedById" class="input-field" placeholder="ID de quem convidou (opcional)"> <!-- ALTERADO: type="text" para IDs que podem conter outros caracteres além de números -->
             </div>
             
             <button type="submit" class="submit-btn" id="submit-button">
@@ -199,7 +254,7 @@
         <p class="bottom-text">
             Já tem uma conta? <a href="login.html">Faça Login</a>
         </p>
-        <div id="error-message"></div>
+        <!-- REMOVIDO: <div id="error-message"></div> -->
     </div>
 
     <script>
@@ -210,11 +265,11 @@
         const phoneInput = document.getElementById('phone');
         const pinInput = document.getElementById('pin');
         const invitedByIdInput = document.getElementById('invitedById');
-        const errorMessageDiv = document.getElementById('error-message');
         const submitButton = document.getElementById('submit-button');
         const buttonText = document.getElementById('button-text');
         const spinner = document.getElementById('spinner');
         const tickerContent = document.getElementById('ticker-content');
+        const feedbackBarContainer = document.getElementById('feedback-bar-container'); // NOVO ELEMENTO
 
         /**
          * ESTA FUNÇÃO É RESPONSÁVEL POR PREENCHER O ID DE REFERÊNCIA.
@@ -224,9 +279,14 @@
             const params = new URLSearchParams(window.location.search);
             const refId = params.get('ref');
             if (refId) {
-                invitedByIdInput.value = refId;
-                invitedByIdInput.readOnly = true;
-                invitedByIdInput.style.backgroundColor = '#E9ECEF';
+                // Segurança contra XSS: Garantir que o refId é um número de 5 dígitos antes de inserir.
+                if (/^\d{5}$/.test(refId)) { // Regex para 5 dígitos
+                    invitedByIdInput.value = refId;
+                    invitedByIdInput.readOnly = true;
+                    invitedByIdInput.style.backgroundColor = '#E9ECEF';
+                } else {
+                    console.warn('ID de referência inválido na URL, ignorado para segurança.');
+                }
             }
         }
 
@@ -236,8 +296,32 @@
             spinner.style.display = isLoading ? 'block' : 'none';
         }
         
-        function showErrorMessage(message) {
-            errorMessageDiv.textContent = message;
+        // NOVO: Função para exibir a barra de feedback
+        function showFeedbackBar(message, type = 'error') { // 'error' ou 'success'
+            // Limpa qualquer barra existente
+            feedbackBarContainer.innerHTML = ''; 
+            let iconClass = type === 'success' ? 'bx bx-check-circle' : 'bx bx-x-circle';
+
+            const feedbackBar = document.createElement('div');
+            feedbackBar.className = `feedback-bar ${type}`;
+            feedbackBar.innerHTML = `<i class='${iconClass}'></i> <span></span>`; // Ícone e span para a mensagem
+            
+            // Usar textContent para segurança contra XSS
+            feedbackBar.querySelector('span').textContent = message;
+
+            feedbackBarContainer.appendChild(feedbackBar);
+
+            // Exibir a barra
+            setTimeout(() => {
+                feedbackBar.classList.add('show');
+            }, 50); // Pequeno atraso para a transição funcionar
+
+            // Esconder a barra após 4 segundos
+            setTimeout(() => {
+                feedbackBar.classList.remove('show');
+                // Remover do DOM após a transição
+                feedbackBar.addEventListener('transitionend', () => feedbackBar.remove(), { once: true });
+            }, 4000);
         }
         
         function generateTickerNotifications() {
@@ -260,24 +344,27 @@
 
         registerForm.addEventListener('submit', async (event) => {
             event.preventDefault();
-            showErrorMessage('');
+            // Limpa feedback anterior
+            feedbackBarContainer.innerHTML = ''; 
             setLoading(true);
 
-            const name = nameInput.value;
-            const username = usernameInput.value;
-            const phone = phoneInput.value;
-            const pin = pinInput.value;
-            const invitedById = invitedByIdInput.value;
-            
-            if (pin.length < 4 || pin.length > 6) {
-                showErrorMessage('O PIN deve conter entre 4 e 6 dígitos.');
+            const name = nameInput.value.trim();
+            const username = usernameInput.value.trim();
+            const phone = phoneInput.value.trim();
+            const pin = pinInput.value; // PIN não é trimado, pois caracteres de espaço podem ser um PIN válido se o backend permitir
+
+            // Validação de PIN no frontend antes de enviar
+            if (pin.length < 4 || pin.length > 6 || !/^\d+$/.test(pin)) {
+                showFeedbackBar('O PIN deve conter apenas números, entre 4 e 6 dígitos.', 'error');
                 setLoading(false);
                 return;
             }
-
+            
             try {
                 const requestBody = { name, username, phone, pin };
-                if (invitedById) { requestBody.invitedById = invitedById; }
+                if (invitedByIdInput.value.trim()) { // Adiciona invitedById apenas se não estiver vazio
+                    requestBody.invitedById = invitedByIdInput.value.trim();
+                }
 
                 const response = await fetch(`${API_URL}/api/users/register`, {
                     method: 'POST',
@@ -285,15 +372,20 @@
                     body: JSON.stringify(requestBody),
                 });
                 
-                const data = await response.json();
+                const data = await response.json(); // Tenta sempre ler o JSON
 
-                if (!response.ok) { throw new Error(data.message || 'Ocorreu um erro no cadastro.'); }
+                if (!response.ok) {
+                    throw new Error(data.message || 'Ocorreu um erro desconhecido durante o cadastro.');
+                }
                 
                 localStorage.setItem('chivo-token', data.token);
-                window.location.href = 'dashboard.html';
+                showFeedbackBar('Conta criada com sucesso! Redirecionando...', 'success'); // Feedback de sucesso
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 1500); // Redireciona após um pequeno delay para o usuário ver a mensagem
 
             } catch (error) {
-                showErrorMessage(error.message);
+                showFeedbackBar(error.message || 'Ocorreu um erro ao tentar criar a conta. Por favor, tente novamente.', 'error');
             } finally {
                 setLoading(false);
             }

@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Login - Chivo</title>
     <!-- Boxicons CSS -->
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
@@ -30,6 +30,11 @@
             --text-light: #6C757D;
             --input-bg: #FFFFFF;
             --border-color: #DEE2E6;
+            --error-color: #dc3545; /* Cor de erro */
+            --success-color: #28a745; /* Cor de sucesso */
+            --warning-color: #ffc107; /* Cor de aviso */
+            --whatsapp-color: #25D366; /* Cor do WhatsApp */
+            --telegram-color: #0088CC; /* Cor do Telegram */
         }
 
         /* Animação de Fundo */
@@ -73,25 +78,25 @@
         /* Corpo da Página */
         body { display: flex; justify-content: center; align-items: center; min-height: 100vh; padding-top: 50px; }
 
-        /* Container Principal (ATUALIZADO) */
+        /* Container Principal */
         .container {
-            width: 100%; max-width: 400px; /* Reduzido */
-            padding: 2rem; /* Reduzido */
+            width: 100%; max-width: 400px;
+            padding: 2rem;
             background-color: rgba(255, 255, 255, 0.85);
             backdrop-filter: blur(10px); border-radius: 20px; box-shadow: 0 8px 32px 0 rgba(0, 82, 255, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.18); text-align: center;
         }
         .brand-logo { font-size: 2.5rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text-dark); }
         .brand-logo span { color: var(--primary-blue); }
-        .info-text { color: var(--text-light); margin-bottom: 1.5rem; font-size: 0.9rem; } /* Reduzido */
-        #login-form { width: 100%; display: flex; flex-direction: column; gap: 0.8rem; } /* Reduzido */
+        .info-text { color: var(--text-light); margin-bottom: 1.5rem; font-size: 0.9rem; }
+        #login-form { width: 100%; display: flex; flex-direction: column; gap: 0.8rem; }
         .input-group { position: relative; }
-        .input-group i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); font-size: 1.1rem; color: #aaa; } /* Reduzido */
+        .input-group i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); font-size: 1.1rem; color: #aaa; }
         
         .input-field {
-            width: 100%; padding: 0.8rem 0.8rem 0.8rem 2.5rem; background-color: var(--input-bg); /* Reduzido */
+            width: 100%; padding: 0.8rem 0.8rem 0.8rem 2.5rem; background-color: var(--input-bg);
             border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-dark);
-            font-size: 0.9rem; transition: border-color 0.3s, box-shadow 0.3s; /* Reduzido */
+            font-size: 0.9rem; transition: border-color 0.3s, box-shadow 0.3s;
         }
         .input-field::placeholder { color: #aaa; }
         .input-field:focus { outline: none; border-color: var(--primary-blue); box-shadow: 0 0 8px rgba(0, 82, 255, 0.2); }
@@ -100,10 +105,10 @@
         input[type=number] { -moz-appearance: textfield; }
 
         .submit-btn {
-            width: 100%; padding: 0.9rem; background: linear-gradient(90deg, var(--secondary-blue), var(--primary-blue)); /* Reduzido */
-            border: none; border-radius: 8px; color: #ffffff; font-size: 1rem; /* Reduzido */
+            width: 100%; padding: 0.9rem; background: linear-gradient(90deg, var(--secondary-blue), var(--primary-blue));
+            border: none; border-radius: 8px; color: #ffffff; font-size: 1rem;
             font-weight: 600; cursor: pointer; transition: all 0.3s ease;
-            display: flex; justify-content: center; align-items: center; margin-top: 0.8rem; /* Reduzido */
+            display: flex; justify-content: center; align-items: center; margin-top: 0.8rem;
         }
         .submit-btn:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0, 82, 255, 0.3); }
         .submit-btn:disabled { background: #999; cursor: not-allowed; }
@@ -111,9 +116,115 @@
         .spinner { width: 20px; height: 20px; border: 3px solid rgba(255, 255, 255, 0.3); border-top-color: #fff; border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        .bottom-text { margin-top: 1.2rem; color: var(--text-light); font-size: 0.85rem; } /* Reduzido */
+        .bottom-text { margin-top: 1.2rem; color: var(--text-light); font-size: 0.85rem; }
         .bottom-text a { color: var(--primary-blue); text-decoration: none; font-weight: 600; }
-        #error-message { margin-top: 1rem; color: #D93025; font-weight: 500; min-height: 1.2em; }
+        
+        /* Estilos para a barra de feedback no topo */
+        #feedback-bar-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding-top: 50px; /* Espaço para o ticker */
+            pointer-events: none;
+        }
+
+        .feedback-bar {
+            background-color: var(--error-color);
+            color: #fff;
+            padding: 0.8rem 1.5rem;
+            border-radius: 0 0 10px 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transform: translateY(-100%);
+            opacity: 0;
+            transition: transform 0.4s ease-out, opacity 0.4s ease-out;
+            pointer-events: auto;
+            max-width: 90%;
+            text-align: center;
+        }
+
+        .feedback-bar.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .feedback-bar.success {
+            background-color: var(--success-color);
+        }
+
+        .feedback-bar i {
+            font-size: 1.3rem;
+        }
+        /* FIM: Estilos para a barra de feedback no topo */
+
+        /* Estilos para o aviso de segurança */
+        #security-notice {
+            background-color: #fff3cd; /* Cor amarela clara */
+            color: #856404; /* Texto marrom escuro */
+            border: 1px solid #ffeeba; /* Borda amarela */
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            display: flex; /* ATUALIZADO: para ser sempre flex */
+            align-items: flex-start;
+            gap: 10px;
+            text-align: left;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        #security-notice .notice-icon {
+            font-size: 1.5rem;
+            color: var(--warning-color);
+            flex-shrink: 0;
+        }
+        #security-notice .notice-content {
+            flex-grow: 1;
+        }
+        #security-notice .notice-content p {
+            font-size: 0.85rem;
+            line-height: 1.4;
+            color: #856404;
+            margin-bottom: 0.5rem;
+        }
+        #security-notice .contact-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        #security-notice .contact-links a {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            text-decoration: none;
+            font-weight: 600;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            transition: background-color 0.2s;
+        }
+        #security-notice .contact-links .whatsapp-link {
+            background-color: var(--whatsapp-color);
+            color: #fff;
+        }
+        #security-notice .contact-links .telegram-link {
+            background-color: var(--telegram-color);
+            color: #fff;
+        }
+        #security-notice .contact-links .whatsapp-link:hover { background-color: #1ed760; }
+        #security-notice .contact-links .telegram-link:hover { background-color: #007bb6; }
+
+        /* REMOVIDO: Estilos para close-notice-btn */
+        /* FIM: Estilos para o aviso de segurança */
+
     </style>
 </head>
 <body>
@@ -126,9 +237,31 @@
         <div class="ticker" id="ticker-content"></div>
     </div>
 
+    <!-- Container para a barra de feedback -->
+    <div id="feedback-bar-container"></div>
+
     <div class="container">
         <h2 class="brand-logo">Chi<span>vo</span></h2>
         <p class="info-text">Bem-vindo de volta! Acesse sua conta para continuar sua jornada.</p>
+
+        <!-- NOVO: Aviso de Segurança sobre PIN Redefinido -->
+        <div id="security-notice"> <!-- ATUALIZADO: removido style="display: none;" -->
+            <i class='bx bx-shield-exclamation notice-icon'></i>
+            <div class="notice-content">
+                <p><strong>Atenção:</strong> Por motivos de segurança, todos os PINs dos usuários foram redefinidos.</p>
+                <p>Você não conseguirá fazer login com seu PIN antigo. Para obter seu novo PIN e continuar usando a plataforma, por favor, entre em contato com o administrador através dos seguintes canais:</p>
+                <div class="contact-links">
+                    <a href="https://wa.me/258867969698" target="_blank" rel="noopener noreferrer" class="whatsapp-link">
+                        <i class='bx bxl-whatsapp'></i> WhatsApp
+                    </a>
+                    <a href="https://t.me/Hchivomoz" target="_blank" rel="noopener noreferrer" class="telegram-link">
+                        <i class='bx bxl-telegram'></i> Telegram
+                    </a>
+                </div>
+            </div>
+            <!-- REMOVIDO: <button class="close-notice-btn" id="close-security-notice"><i class='bx bx-x'></i></button> -->
+        </div>
+        <!-- FIM: Aviso de Segurança -->
 
         <form id="login-form">
             <div class="input-group">
@@ -137,7 +270,7 @@
             </div>
             <div class="input-group">
                 <i class='bx bx-key'></i>
-                <input type="number" id="pin" class="input-field" placeholder="Seu PIN" required>
+                <input type="password" id="pin" class="input-field" placeholder="Seu PIN" required>
             </div>
             
             <button type="submit" class="submit-btn" id="submit-button">
@@ -149,7 +282,6 @@
         <p class="bottom-text">
             Não tem uma conta? <a href="register.html">Cadastre-se</a>
         </p>
-        <div id="error-message"></div>
     </div>
 
     <script>
@@ -157,11 +289,13 @@
         const loginForm = document.getElementById('login-form');
         const phoneInput = document.getElementById('phone');
         const pinInput = document.getElementById('pin');
-        const errorMessageDiv = document.getElementById('error-message');
         const submitButton = document.getElementById('submit-button');
         const buttonText = document.getElementById('button-text');
         const spinner = document.getElementById('spinner');
         const tickerContent = document.getElementById('ticker-content');
+        const feedbackBarContainer = document.getElementById('feedback-bar-container');
+        const securityNotice = document.getElementById('security-notice'); // NOVO ELEMENTO
+        // REMOVIDO: const closeSecurityNoticeBtn = document.getElementById('close-security-notice');
 
         function setLoading(isLoading) {
             submitButton.disabled = isLoading;
@@ -169,8 +303,26 @@
             spinner.style.display = isLoading ? 'block' : 'none';
         }
         
-        function showErrorMessage(message) {
-            errorMessageDiv.textContent = message;
+        function showFeedbackBar(message, type = 'error') {
+            feedbackBarContainer.innerHTML = ''; 
+            let iconClass = type === 'success' ? 'bx bx-check-circle' : 'bx bx-x-circle';
+
+            const feedbackBar = document.createElement('div');
+            feedbackBar.className = `feedback-bar ${type}`;
+            feedbackBar.innerHTML = `<i class='${iconClass}'></i> <span></span>`;
+            
+            feedbackBar.querySelector('span').textContent = message;
+
+            feedbackBarContainer.appendChild(feedbackBar);
+
+            setTimeout(() => {
+                feedbackBar.classList.add('show');
+            }, 50);
+
+            setTimeout(() => {
+                feedbackBar.classList.remove('show');
+                feedbackBar.addEventListener('transitionend', () => feedbackBar.remove(), { once: true });
+            }, 4000);
         }
         
         function generateTickerNotifications() {
@@ -188,11 +340,13 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             generateTickerNotifications();
+            // REMOVIDO: Lógica de localStorage e botão de fechar para o aviso de segurança
+            // securityNotice.style.display = 'flex'; já será padrão no CSS ou não será manipulado pelo JS
         });
 
         loginForm.addEventListener('submit', async (event) => {
             event.preventDefault();
-            showErrorMessage('');
+            feedbackBarContainer.innerHTML = ''; 
             setLoading(true);
 
             const phone = phoneInput.value;
@@ -205,22 +359,18 @@
                     body: JSON.stringify({ phone, pin }),
                 });
                 
+                const data = await response.json();
+
                 if (!response.ok) {
-                    try {
-                        const errorData = await response.json();
-                        throw new Error(errorData.message || 'Ocorreu um erro desconhecido.');
-                    } catch (jsonError) {
-                        throw new Error('Telefone ou PIN inválido.');
-                    }
+                    throw new Error(data.message || 'Ocorreu um erro desconhecido durante o login.');
                 }
                 
-                const data = await response.json();
-                
                 localStorage.setItem('chivo-token', data.token);
+                // REMOVIDO: Lógica para ocultar o aviso de segurança após login
                 window.location.href = 'dashboard.html';
 
             } catch (error) {
-                showErrorMessage(error.message);
+                showFeedbackBar(error.message || 'Ocorreu um erro ao tentar entrar. Por favor, tente novamente.', 'error');
             } finally {
                 setLoading(false);
             }

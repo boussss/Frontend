@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes"> <!-- ALTERADO: user-scalable=yes para acessibilidade -->
     <title>Início - Chivo</title>
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -60,6 +60,7 @@
         .action-btn[data-action="deposit"] .action-icon { background-color: var(--success-color); }
         .action-btn[data-action="withdraw"] .action-icon { background-color: var(--error-color); }
         .action-btn[data-action="invite"] .action-icon { background-color: var(--accent-yellow); }
+        .action-btn[data-action="lottery"] .action-icon { background-color: var(--primary-blue); } /* NOVO: Estilo para botão de Sorteio */
         .action-btn[data-action="history"] .action-icon { background-color: var(--secondary-blue); }
 
         .collection-station { text-align: center; }
@@ -131,21 +132,44 @@
         .nav-link span { font-size: 0.6rem; }
         .nav-link.active { color: var(--primary-blue); }
 
-        #toast-container { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); z-index: 200; }
-        .toast { padding: 0.7rem 1.2rem; border-radius: 8px; color: #fff; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); opacity: 0; transform: translateY(20px); animation: slide-in-out 3.5s forwards; }
-        @keyframes slide-in-out { 0%, 100% { opacity: 0; transform: translateY(20px); } 15%, 85% { opacity: 1; transform: translateY(0); } }
-        .toast.success { background-color: var(--success-color); }
-        .toast.error { background-color: var(--error-color); }
+        /* NOVO: Estilos para a barra de feedback no topo */
+        #feedback-bar-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 2000; /* Mais alto que o modal */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding-top: 20px;
+            pointer-events: none;
+        }
+        .feedback-bar {
+            background-color: var(--error-color); color: #fff; padding: 0.8rem 1.5rem;
+            border-radius: 10px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            display: flex; align-items: center; gap: 10px; font-size: 0.9rem;
+            font-weight: 500; transform: translateY(-150%); opacity: 0;
+            transition: transform 0.4s ease-out, opacity 0.4s ease-out;
+            pointer-events: auto; max-width: 90%; text-align: center;
+        }
+        .feedback-bar.show { transform: translateY(0); opacity: 1; }
+        .feedback-bar.success { background-color: var(--success-color); }
+        .feedback-bar i { font-size: 1.3rem; }
+        /* FIM: Estilos para a barra de feedback no topo */
 
     </style>
 </head>
 <body>
 
+    <!-- NOVO: Container para a barra de feedback -->
+    <div id="feedback-bar-container"></div>
+
     <div class="main-container">
         <header class="header"><div class="greeting"><h2 id="user-greeting">Olá!</h2><p>Bem-vindo de volta</p></div><a href="profile.html" class="profile-pic-container"><div class="profile-icon"><i class='bx bxs-user-circle'></i></div><img src="" alt="Foto de Perfil" id="profile-pic-header" class="profile-pic"></a></header>
         <div id="dashboard-content">
             <div id="skeleton-loader"><div class="skeleton skeleton-banner"></div><div class="card"><div class="balances-grid"><div class="balance-item"><div class="skeleton skeleton-text"></div><div class="skeleton skeleton-balance"></div></div><div class="balance-item"><div class="skeleton skeleton-text"></div><div class="skeleton skeleton-balance"></div></div></div></div><div class="skeleton skeleton-title"></div><div class="card"><div class="stats-grid"><div class="skeleton skeleton-stat-item"></div><div class="skeleton skeleton-stat-item"></div><div class="skeleton skeleton-stat-item"></div><div class="skeleton skeleton-stat-item"></div></div></div><div class="card"><div class="skeleton-actions"><div class="skeleton skeleton-action-item"></div><div class="skeleton skeleton-action-item"></div><div class="skeleton skeleton-action-item"></div><div class="skeleton skeleton-action-item"></div></div></div><div class="skeleton skeleton-title"></div><div class="card skeleton-plan-card"></div></div>
-            <div id="real-content" style="display: none;"><div class="banner-carousel-container" id="banner-container" style="display: none;"><div class="banner-carousel" id="banner-carousel"></div></div><div class="card balances-grid"><div class="balance-item"><h3>Carteira</h3><p id="wallet-balance"></p></div><div class="balance-item"><h3>Bônus</h3><p id="bonus-balance" class="bonus"></p></div></div><h3 class="section-title">Minhas Estatísticas</h3><div class="card stats-grid"><div class="stat-item"><div class="stat-info"><p class="stat-value" id="today-profit">--</p><p class="stat-label">Lucro Hoje</p></div><i class='bx bx-sun stat-icon'></i></div><div class="stat-item"><div class="stat-info"><p class="stat-value" id="yesterday-profit">--</p><p class="stat-label">Lucro Ontem</p></div><i class='bx bx-wind stat-icon'></i></div><div class="stat-item"><div class="stat-info"><p class="stat-value" id="month-profit">--</p><p class="stat-label">Lucro Mês</p></div><i class='bx bx-calendar stat-icon'></i></div><div class="stat-item"><div class="stat-info"><p class="stat-value" id="referral-profit">--</p><p class="stat-label">Ganhos c/ Convidados</p></div><i class='bx bx-group stat-icon'></i></div></div><div class="card actions-grid"><a href="wallet.html" class="action-btn" data-action="deposit"><div class="action-icon"><i class='bx bx-down-arrow-alt'></i></div><span>Depositar</span></a><a href="wallet.html" class="action-btn" data-action="withdraw"><div class="action-icon"><i class='bx bx-up-arrow-alt'></i></div><span>Sacar</span></a><a href="invite.html" class="action-btn" data-action="invite"><div class="action-icon"><i class='bx bx-user-plus'></i></div><span>Convidar</span></a><a href="history.html" class="action-btn" data-action="history"><div class="action-icon"><i class='bx bx-history'></i></div><span>Histórico</span></a></div><h3 class="section-title">Meu Plano Ativo</h3><div id="active-plan-container"></div></div>
+            <div id="real-content" style="display: none;"><div class="banner-carousel-container" id="banner-container" style="display: none;"><div class="banner-carousel" id="banner-carousel"></div></div><div class="card balances-grid"><div class="balance-item"><h3>Carteira</h3><p id="wallet-balance"></p></div><div class="balance-item"><h3>Bônus</h3><p id="bonus-balance" class="bonus"></p></div></div><h3 class="section-title">Minhas Estatísticas</h3><div class="card stats-grid"><div class="stat-item"><div class="stat-info"><p class="stat-value" id="today-profit">--</p><p class="stat-label">Lucro Hoje</p></div><i class='bx bx-sun stat-icon'></i></div><div class="stat-item"><div class="stat-info"><p class="stat-value" id="yesterday-profit">--</p><p class="stat-label">Lucro Ontem</p></div><i class='bx bx-wind stat-icon'></i></div><div class="stat-item"><div class="stat-info"><p class="stat-value" id="month-profit">--</p><p class="stat-label">Lucro Mês</p></div><i class='bx bx-calendar stat-icon'></i></div><div class="stat-item"><div class="stat-info"><p class="stat-value" id="referral-profit">--</p><p class="stat-label">Ganhos c/ Convidados</p></div><i class='bx bx-group stat-icon'></i></div></div><div class="card actions-grid"><a href="wallet.html" class="action-btn" data-action="deposit"><div class="action-icon"><i class='bx bx-down-arrow-alt'></i></div><span>Depositar</span></a><a href="wallet.html" class="action-btn" data-action="withdraw"><div class="action-icon"><i class='bx bx-up-arrow-alt'></i></div><span>Sacar</span></a><a href="invite.html" class="action-btn" data-action="invite"><div class="action-icon"><i class='bx bx-user-plus'></i></div><span>Convidar</span></a><a href="lottery.html" class="action-btn" data-action="lottery"><div class="action-icon" style="background-color: var(--primary-blue);"><i class='bx bx-gift'></i></div><span>Sorteio</span></a><a href="history.html" class="action-btn" data-action="history"><div class="action-icon"><i class='bx bx-history'></i></div><span>Histórico</span></a></div><h3 class="section-title">Meu Plano Ativo</h3><div id="active-plan-container"></div></div>
         </div>
     </div>
 
@@ -163,7 +187,7 @@
     </div>
 
     <nav class="bottom-nav"><a href="dashboard.html" class="nav-link active"><i class='bx bxs-home'></i><span>Início</span></a><a href="plans.html" class="nav-link"><i class='bx bxs-rocket'></i><span>Planos</span></a><a href="wallet.html" class="nav-link"><i class='bx bxs-wallet'></i><span>Carteira</span></a><a href="profile.html" class="nav-link"><i class='bx bxs-user'></i><span>Perfil</span></a></nav>
-    <div id="toast-container"></div>
+    <!-- REMOVIDO: <div id="toast-container"></div> -->
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -175,7 +199,6 @@
 
             const elements = {
                 activePlanContainer: document.getElementById('active-plan-container'),
-                toastContainer: document.getElementById('toast-container'),
                 userGreeting: document.getElementById('user-greeting'),
                 profilePicHeader: document.getElementById('profile-pic-header'),
                 walletBalance: document.getElementById('wallet-balance'),
@@ -190,16 +213,54 @@
                 bannerCarousel: document.getElementById('banner-carousel'),
                 welcomeModal: document.getElementById('welcome-modal'),
                 closeWelcomeBtn: document.getElementById('close-welcome-btn'),
+                feedbackBarContainer: document.getElementById('feedback-bar-container') // NOVO ELEMENTO
             };
 
             const fetchAPI = async (endpoint, options = {}) => {
                 options.headers = { ...options.headers, 'Authorization': `Bearer ${TOKEN}` };
+                // Lógica corrigida para Content-Type:
+                if (options.body && !(options.body instanceof FormData)) {
+                    options.headers['Content-Type'] = 'application/json';
+                } else if (options.body instanceof FormData) {
+                    delete options.headers['Content-Type']; // Remover Content-Type se for FormData
+                }
+
                 const response = await fetch(`${API_URL}${endpoint}`, options);
-                if (response.status === 401) { localStorage.removeItem('chivo-token'); window.location.href = 'login.html'; throw new Error('Sessão expirada.'); }
-                if (!response.ok) { const err = await response.json(); throw new Error(err.message || 'Ocorreu um erro.'); }
-                return response.json();
+                if (response.status === 401) { 
+                    localStorage.removeItem('chivo-token'); 
+                    window.location.href = 'login.html'; 
+                    throw new Error('Sessão expirada. Por favor, faça login novamente.');
+                }
+                const data = await response.json(); // Tenta sempre ler o JSON
+                if (!response.ok) { 
+                    throw new Error(data.message || `Ocorreu um erro na API: ${response.statusText}`); 
+                }
+                return data;
             };
             
+            const formatCurrency = (value, currency = 'MZN', precision = 2) => {
+                if (typeof value !== 'number') value = 0;
+                return new Intl.NumberFormat('pt-MZ', { style: 'currency', currency: currency, minimumFractionDigits: precision, maximumFractionDigits: precision }).format(value);
+            }
+
+            // Função para exibir a barra de feedback (idêntica às outras)
+            function showFeedbackBar(message, type = 'error') {
+                elements.feedbackBarContainer.innerHTML = ''; 
+                let iconClass = type === 'success' ? 'bx bx-check-circle' : 'bx bx-x-circle';
+
+                const feedbackBar = document.createElement('div');
+                feedbackBar.className = `feedback-bar ${type}`;
+                feedbackBar.innerHTML = `<i class='${iconClass}'></i> <span></span>`;
+                feedbackBar.querySelector('span').textContent = message; // Proteção contra XSS
+                elements.feedbackBarContainer.appendChild(feedbackBar);
+
+                setTimeout(() => { feedbackBar.classList.add('show'); }, 50); 
+                setTimeout(() => {
+                    feedbackBar.classList.remove('show');
+                    feedbackBar.addEventListener('transitionend', () => feedbackBar.remove(), { once: true });
+                }, 4000);
+            }
+
             const fetchDashboardData = async () => {
                 try {
                     const data = await fetchAPI('/api/users/dashboard');
@@ -209,7 +270,7 @@
                     elements.skeletonLoader.style.display = 'none';
                     elements.realContent.style.display = 'block';
                 } catch (error) {
-                    showToast(error.message, 'error');
+                    showFeedbackBar(error.message, 'error'); // Usar a nova função
                 }
             };
 
@@ -253,6 +314,8 @@
             };
             
             const renderActivePlan = (planInstance) => {
+                if(countdownInterval) clearInterval(countdownInterval);
+                
                 if (planInstance) {
                     const plan = planInstance.plan;
                     elements.activePlanContainer.innerHTML = `
@@ -331,11 +394,11 @@
                     collectBtn.querySelector('.countdown-timer').textContent = 'Coletando...';
                 }
                 try {
-                    const result = await fetchAPI('/api/plans/collect', { method: 'POST' });
-                    showToast(result.message, 'success');
+                    const result = await fetchAPI('/api/plans/collect', { method: 'POST', body: JSON.stringify({}) });
+                    showFeedbackBar(result.message, 'success'); // Usar a nova função
                     fetchDashboardData();
                 } catch (error) {
-                    showToast(error.message, 'error');
+                    showFeedbackBar(error.message, 'error'); // Usar a nova função
                     if (collectBtn) { 
                         collectBtn.disabled = false; 
                         collectBtn.querySelector('.countdown-timer').textContent = 'Tente Novamente';
@@ -343,19 +406,6 @@
                 }
             };
             
-            const formatCurrency = (value, currency = 'MZN', precision = 2) => {
-                if (typeof value !== 'number') value = 0;
-                return new Intl.NumberFormat('pt-MZ', { style: 'currency', currency: currency, minimumFractionDigits: precision, maximumFractionDigits: precision }).format(value);
-            }
-
-            const showToast = (message, type = 'success') => {
-                const toast = document.createElement('div');
-                toast.className = `toast ${type}`;
-                toast.textContent = message;
-                elements.toastContainer.appendChild(toast);
-                setTimeout(() => toast.remove(), 3400);
-            };
-
             const showWelcomeModal = () => {
                 // Usando sessionStorage para mostrar o modal uma vez por sessão de navegação
                 if (!sessionStorage.getItem('welcomeModalShown')) {

@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes"> <!-- ALTERADO: user-scalable=yes para acessibilidade -->
     <title>Histórico - Chivo</title>
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -51,6 +51,7 @@
             font-weight: 500;
             cursor: pointer;
             transition: background-color 0.2s;
+            display: flex; justify-content: center; align-items: center;
         }
         .renew-btn:disabled { background-color: var(--text-light); cursor: not-allowed; }
 
@@ -64,7 +65,7 @@
         .transaction-amount.positive { color: var(--success-color); }
         .transaction-amount.negative { color: var(--error-color); }
         
-        .transaction-status {
+        .transaction-status-tag {
             padding: 0.15rem 0.5rem;
             border-radius: 10px;
             font-size: 0.6rem;
@@ -84,14 +85,39 @@
         .nav-link span { font-size: 0.6rem; }
         .nav-link.active { color: var(--primary-blue); }
         
-        #toast-container { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); z-index: 200; display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
-        .toast { padding: 0.7rem 1.2rem; border-radius: 8px; color: #fff; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); opacity: 0; transform: translateY(20px); animation: slide-in-out 3.5s forwards; }
-        .toast.success { background-color: var(--success-color); }
-        .toast.error { background-color: var(--error-color); }
-        @keyframes slide-in-out { 0%, 100% { opacity: 0; transform: translateY(20px); } 15%, 85% { opacity: 1; transform: translateY(0); } }
+        /* NOVO: Estilos para a barra de feedback no topo */
+        #feedback-bar-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 2000; /* Mais alto que o modal */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding-top: 20px;
+            pointer-events: none;
+        }
+        .feedback-bar {
+            background-color: var(--error-color); color: #fff; padding: 0.8rem 1.5rem;
+            border-radius: 10px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            display: flex; align-items: center; gap: 10px; font-size: 0.9rem;
+            font-weight: 500; transform: translateY(-150%); opacity: 0;
+            transition: transform 0.4s ease-out, opacity 0.4s ease-out;
+            pointer-events: auto; max-width: 90%; text-align: center;
+        }
+        .feedback-bar.show { transform: translateY(0); opacity: 1; }
+        .feedback-bar.success { background-color: var(--success-color); }
+        .feedback-bar i { font-size: 1.3rem; }
+        /* FIM: Estilos para a barra de feedback no topo */
+        .spinner { width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.3); border-top-color:#fff; border-radius:50%; animation: spin 1s linear infinite; margin-left: 10px;}
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
+
+    <!-- NOVO: Container para a barra de feedback -->
+    <div id="feedback-bar-container"></div>
 
     <div class="main-container">
         <header class="header">
@@ -121,7 +147,7 @@
         <a href="profile.html" class="nav-link"><i class='bx bxs-user'></i><span>Perfil</span></a>
     </nav>
     
-    <div id="toast-container"></div>
+    <!-- REMOVIDO: <div id="toast-container"></div> -->
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -132,19 +158,54 @@
             const elements = {
                 planHistoryContainer: document.getElementById('plan-history-container'),
                 transactionListContainer: document.getElementById('transaction-list-container'),
+                feedbackBarContainer: document.getElementById('feedback-bar-container') // NOVO ELEMENTO
             };
 
             const fetchAPI = async (endpoint, options = {}) => {
                 options.headers = { ...options.headers, 'Authorization': `Bearer ${TOKEN}` };
+                // Lógica corrigida para Content-Type:
+                if (options.body && !(options.body instanceof FormData)) {
+                    options.headers['Content-Type'] = 'application/json';
+                } else if (options.body instanceof FormData) {
+                    delete options.headers['Content-Type']; // Remover Content-Type se for FormData
+                }
+
                 const response = await fetch(`${API_URL}${endpoint}`, options);
-                if (response.status === 401) { localStorage.removeItem('chivo-token'); window.location.href = 'login.html'; throw new Error('Sessão expirada.'); }
-                if (!response.ok) { const err = await response.json(); throw new Error(err.message || 'Ocorreu um erro.'); }
-                return response.json();
+                if (response.status === 401) { 
+                    localStorage.removeItem('chivo-token'); 
+                    window.location.href = 'login.html'; 
+                    throw new Error('Sessão expirada. Por favor, faça login novamente.');
+                }
+                const data = await response.json();
+                if (!response.ok) { 
+                    throw new Error(data.message || `Ocorreu um erro na API: ${response.statusText}`); 
+                }
+                return data;
             };
 
             const formatCurrency = (value = 0, currency = 'MZN', precision = 2) => {
                 if (typeof value !== 'number') value = 0;
                 return new Intl.NumberFormat('pt-MZ', { style: 'currency', currency: currency, minimumFractionDigits: precision, maximumFractionDigits: precision }).format(value);
+            }
+            const formatDate = (dateString) => new Date(dateString).toLocaleString('pt-BR');
+
+
+            // Função para exibir a barra de feedback (idêntica às outras)
+            function showFeedbackBar(message, type = 'error') {
+                elements.feedbackBarContainer.innerHTML = ''; 
+                let iconClass = type === 'success' ? 'bx bx-check-circle' : 'bx bx-x-circle';
+
+                const feedbackBar = document.createElement('div');
+                feedbackBar.className = `feedback-bar ${type}`;
+                feedbackBar.innerHTML = `<i class='${iconClass}'></i> <span></span>`;
+                feedbackBar.querySelector('span').textContent = message; // Proteção contra XSS
+                elements.feedbackBarContainer.appendChild(feedbackBar);
+
+                setTimeout(() => { feedbackBar.classList.add('show'); }, 50); 
+                setTimeout(() => {
+                    feedbackBar.classList.remove('show');
+                    feedbackBar.addEventListener('transitionend', () => feedbackBar.remove(), { once: true });
+                }, 4000);
             }
 
             const loadHistoryData = async () => {
@@ -153,40 +214,45 @@
                     renderPlanHistory(data.planInstances);
                     renderTransactions(data.transactions);
                 } catch (error) { 
-                    showToast(error.message, 'error');
-                    elements.planHistoryContainer.innerHTML = '<p>Não foi possível carregar o histórico de planos.</p>';
-                    elements.transactionListContainer.innerHTML = '<p>Não foi possível carregar o histórico de transações.</p>';
+                    showFeedbackBar(error.message, 'error'); // Usar a nova função
+                    elements.planHistoryContainer.innerHTML = `<p style="text-align: center; color: var(--text-light);">Não foi possível carregar o histórico de planos: ${error.message}</p>`;
+                    elements.transactionListContainer.innerHTML = `<p style="text-align: center; color: var(--text-light);">Não foi possível carregar o histórico de transações: ${error.message}</p>`;
                 }
             };
 
             const renderPlanHistory = (plans) => {
                 const container = elements.planHistoryContainer;
                 if (!plans || plans.length === 0) {
-                    container.innerHTML = '<p style="text-align: center;">Nenhum plano foi ativado ainda.</p>';
+                    container.innerHTML = '<p style="text-align: center; color: var(--text-light);">Você ainda não ativou nenhum plano.</p>';
                     return;
                 }
                 
-                container.innerHTML = plans.map(p => `
-                    <div class="plan-item">
-                        <div class="plan-item-header">
-                            <h4>${p.plan.name}</h4>
-                            <span class="plan-status ${p.status === 'active' ? 'status-active' : 'status-expired'}">${p.status === 'active' ? 'Ativo' : 'Expirado'}</span>
+                container.innerHTML = plans.map(p => {
+                    const renewButton = p.status === 'expired' 
+                        ? `<button class="renew-btn" data-instance-id="${p._id}"><span>Renovar Plano</span><div class="spinner" style="display: none;"></div></button>` 
+                        : '';
+                    return `
+                        <div class="plan-item">
+                            <div class="plan-item-header">
+                                <h4>${p.plan.name}</h4>
+                                <span class="plan-status ${p.status === 'active' ? 'status-active' : 'status-expired'}">${p.status === 'active' ? 'Ativo' : 'Expirado'}</span>
+                            </div>
+                            <div class="plan-item-details">
+                                <p>Início: <strong>${new Date(p.startDate).toLocaleDateString('pt-BR')}</strong></p>
+                                <p>Fim: <strong>${new Date(p.endDate).toLocaleDateString('pt-BR')}</strong></p>
+                                <p>Total Investido: <strong>${formatCurrency(p.investedAmount)}</strong></p>
+                                <p>Lucro Coletado: <strong>${formatCurrency(p.totalCollected)}</strong></p>
+                            </div>
+                            ${renewButton}
                         </div>
-                        <div class="plan-item-details">
-                            <p>Início: <strong>${new Date(p.startDate).toLocaleDateString('pt-BR')}</strong></p>
-                            <p>Fim: <strong>${new Date(p.endDate).toLocaleDateString('pt-BR')}</strong></p>
-                            <p>Total Investido: <strong>${formatCurrency(p.investedAmount)}</strong></p>
-                            <p>Lucro Coletado: <strong>${formatCurrency(p.totalCollected)}</strong></p>
-                        </div>
-                        ${p.status === 'expired' ? `<button class="renew-btn" data-instance-id="${p._id}">Renovar Plano</button>` : ''}
-                    </div>
-                `).join('');
+                    `;
+                }).join('');
             };
 
             const renderTransactions = (transactions) => {
                 const container = elements.transactionListContainer;
                 if (!transactions || transactions.length === 0) {
-                    container.innerHTML = '<p style="text-align: center;">Nenhuma transação encontrada.</p>';
+                    container.innerHTML = '<p style="text-align: center; color: var(--text-light);">Nenhuma transação encontrada.</p>';
                     return;
                 }
                 
@@ -197,26 +263,33 @@
                 };
 
                 container.innerHTML = transactions.map(t => {
-                    const isPositive = ['deposit', 'collection', 'commission', 'welcome_bonus'].includes(t.type) && t.amount > 0 && t.status !== 'rejected';
+                    // Valor do amount para exibição (sempre positivo para depósito/lucro, negativo para saque/investimento)
+                    const displayAmount = (t.type === 'withdrawal' || t.type === 'investment') ? Math.abs(t.amount) : t.amount;
+                    const isPositive = ['deposit', 'collection', 'commission', 'welcome_bonus', 'lottery_win'].includes(t.type) && t.status !== 'rejected';
                     const amountClass = isPositive ? 'positive' : 'negative';
-                    const prefix = isPositive ? '+' : '';
+                    const prefix = isPositive ? '+' : '-'; // Usar prefix '-' explicitamente para negativos
+                    
                     const statusInfo = statusMap[t.status] || { text: t.status, class: '' };
                     
                     let feeHtml = '';
                     if (t.type === 'withdrawal' && t.transactionDetails && t.transactionDetails.fee) {
-                        feeHtml = `<p class="transaction-fee">Taxa: ${formatCurrency(t.transactionDetails.fee)}</p>`;
+                        feeHtml = `<p class="transaction-info-detail">Taxa: ${formatCurrency(t.transactionDetails.fee)}</p>`;
                     }
+                    if (t.type === 'withdrawal' && t.transactionDetails && t.transactionDetails.network) {
+                        feeHtml += `<p class="transaction-info-detail">Rede: ${t.transactionDetails.network}</p>`;
+                    }
+
 
                     return `
                         <div class="transaction-item">
                             <div class="transaction-info">
                                 <h4>${t.description}</h4>
-                                <p>${new Date(t.createdAt).toLocaleString('pt-BR')}</p>
+                                <p>${formatDate(t.createdAt)}</p>
                                 ${feeHtml}
                             </div>
                             <div class="transaction-right">
-                                <span class="transaction-amount ${amountClass}">${prefix}${formatCurrency(t.amount)}</span>
-                                <span class="transaction-status ${statusInfo.class}">${statusInfo.text}</span>
+                                <span class="transaction-amount ${amountClass}">${prefix}${formatCurrency(displayAmount)}</span>
+                                <span class="transaction-status-tag ${statusInfo.class}">${statusInfo.text}</span>
                             </div>
                         </div>
                     `;
@@ -224,35 +297,30 @@
             };
             
             const handleRenewPlan = async (event) => {
-                const btn = event.target;
-                if (!btn.classList.contains('renew-btn')) return;
+                const btn = event.target.closest('.renew-btn');
+                if (!btn) return;
 
                 const instanceId = btn.dataset.instanceId;
+                const btnText = btn.querySelector('span');
+                const btnSpinner = btn.querySelector('.spinner');
+
                 btn.disabled = true;
-                btn.textContent = 'Processando...';
+                btnText.textContent = 'Processando...';
+                btnSpinner.style.display = 'inline-block';
 
                 try {
-                    const result = await fetchAPI(`/api/plans/${instanceId}/renew`, { method: 'POST' });
-                    showToast(result.message, 'success');
+                    const result = await fetchAPI(`/api/plans/${instanceId}/renew`, { method: 'POST', body: JSON.stringify({}) });
+                    showFeedbackBar(result.message, 'success'); // Usar a nova função
                     setTimeout(() => { window.location.href = 'dashboard.html'; }, 1500);
                 } catch (error) {
-                    showToast(error.message, 'error');
+                    showFeedbackBar(error.message, 'error'); // Usar a nova função
                     btn.disabled = false;
-                    btn.textContent = 'Renovar Plano';
+                    btnText.textContent = 'Renovar Plano';
+                    btnSpinner.style.display = 'none';
                 }
             };
 
             elements.planHistoryContainer.addEventListener('click', handleRenewPlan);
-
-            const showToast = (message, type = 'success') => {
-                const toastContainer = document.getElementById('toast-container');
-                if (!toastContainer) return;
-                const toast = document.createElement('div');
-                toast.className = `toast ${type}`;
-                toast.textContent = message;
-                toastContainer.appendChild(toast);
-                setTimeout(() => toast.remove(), 3400);
-            };
 
             loadHistoryData();
         });
