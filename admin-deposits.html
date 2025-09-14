@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes"> <!-- ALTERADO: user-scalable=yes para acessibilidade -->
+    <title>Aprovar Depósitos - Admin Chivo</title>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        :root {
+            --bg-dark: #121826; --primary-blue: #0052FF; --card-bg: #1A2233;
+            --text-light: #F4F7FC; --text-muted: #8A93A2; --border-color: #333d52;
+            --accent-green: #28a745; --accent-red: #dc3545;
+        }
+        body { background-color: var(--bg-dark); color: var(--text-light); }
+        .main-container { padding: 2rem 1.5rem; max-width: 900px; margin: auto; }
+        .header { display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; }
+        .back-button {
+            background: none; border: none; font-size: 2rem;
+            color: var(--text-light); cursor: pointer;
+        }
+        .header h1 { font-size: 1.8rem; }
+
+        .deposits-list { display: flex; flex-direction: column; gap: 1.5rem; }
+        .deposit-card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+            padding: 1.5rem;
+        }
+        @media (min-width: 768px) {
+            .deposit-card { grid-template-columns: 1fr 1fr 120px; }
+        }
+
+        .deposit-info h4, .proof-container h4 {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+        .deposit-info p { font-size: 1.1rem; font-weight: 500; }
+        .info-item { margin-bottom: 1rem; }
+        .info-item strong { color: var(--primary-blue); }
+
+        .proof-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 2px solid var(--border-color);
+        }
+        .proof-container pre {
+            background-color: var(--bg-dark);
+            padding: 1rem;
+            border-radius: 8px;
+            white-space: pre-wrap; /* Quebra de linha no texto do SMS */
+            word-wrap: break-word;
+            font-size: 0.9rem;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .deposit-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            justify-content: center;
+        }
+        .action-btn {
+            padding: 0.8rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            color: #fff;
+        }
+        .approve-btn { background-color: var(--accent-green); }
+        .reject-btn { background-color: var(--accent-red); }
+        .action-btn:disabled { background-color: var(--text-muted); }
+
+        #empty-message { text-align: center; color: var(--text-muted); padding: 2rem; }
+        .skeleton-card {
+            background-color: var(--card-bg); padding: 1.5rem; border-radius: 12px;
+            border: 1px solid var(--border-color); margin-bottom: 1.5rem;
+        }
+        .skeleton { animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite; background-color: rgba(255,255,255,0.1); border-radius: 4px; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+        .skeleton-line { height: 1em; margin-bottom: 0.5rem; }
+
+        /* NOVO: Estilos para a barra de feedback no topo */
+        #feedback-bar-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding-top: 20px; 
+            pointer-events: none;
+        }
+
+        .feedback-bar {
+            background-color: var(--accent-red);
+            color: #fff;
+            padding: 0.8rem 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transform: translateY(-150%);
+            opacity: 0;
+            transition: transform 0.4s ease-out, opacity 0.4s ease-out;
+            pointer-events: auto;
+            max-width: 90%;
+            text-align: center;
+        }
+
+        .feedback-bar.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .feedback-bar.success {
+            background-color: var(--accent-green);
+        }
+
+        .feedback-bar i {
+            font-size: 1.3rem;
+        }
+        /* FIM: Estilos para a barra de feedback no topo */
+    </style>
+</head>
+<body>
+
+    <!-- NOVO: Container para a barra de feedback -->
+    <div id="feedback-bar-container"></div>
+
+    <div class="main-container">
+        <header class="header">
+            <button class="back-button" onclick="window.location.href='admin-dashboard.html'"><i class='bx bx-arrow-back'></i></button>
+            <h1>Aprovar Depósitos</h1>
+        </header>
+
+        <div id="skeleton-loader">
+            <div class="skeleton-card">
+                <div class="skeleton skeleton-line" style="width: 40%;"></div>
+                <div class="skeleton skeleton-line" style="width: 80%;"></div>
+                <div class="skeleton skeleton-line" style="width: 60%; height: 100px; margin-top: 1rem;"></div>
+            </div>
+             <div class="skeleton-card">
+                <div class="skeleton skeleton-line" style="width: 40%;"></div>
+                <div class="skeleton skeleton-line" style="width: 80%;"></div>
+                <div class="skeleton skeleton-line" style="width: 60%; height: 100px; margin-top: 1rem;"></div>
+            </div>
+        </div>
+
+        <div id="deposits-container" class="deposits-list">
+            <!-- Os cards de depósito serão inseridos aqui -->
+        </div>
+
+        <p id="empty-message" style="display: none;">Não há depósitos pendentes no momento.</p>
+    </div>
+
+    <!-- REMOVIDO: <div id="toast-container"></div> -->
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const API_URL = "https://daksk.onrender.com";
+            const TOKEN = localStorage.getItem('chivo-admin-token');
+            if (!TOKEN) {
+                window.location.href = 'admin-login.html';
+                return;
+            }
+
+            const elements = {
+                container: document.getElementById('deposits-container'),
+                skeleton: document.getElementById('skeleton-loader'),
+                emptyMessage: document.getElementById('empty-message'),
+                feedbackBarContainer: document.getElementById('feedback-bar-container') // NOVO ELEMENTO
+            };
+
+            const fetchAPI = async (endpoint, options = {}) => {
+                options.headers = { ...options.headers, 'Authorization': `Bearer ${TOKEN}` };
+                // A API de depósito pode receber FormData (para imagem) ou JSON (para texto).
+                // Evitar definir Content-Type se for FormData; o navegador fará isso.
+                if (!(options.body instanceof FormData) && options.body && options.body.toString() === '[object Object]') {
+                    options.headers['Content-Type'] = 'application/json';
+                }
+                
+                const response = await fetch(`${API_URL}${endpoint}`, options);
+                
+                if (response.status === 401) {
+                    localStorage.removeItem('chivo-admin-token');
+                    window.location.href = 'admin-login.html';
+                    throw new Error('Sessão expirada. Faça login novamente.');
+                }
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.message || `Erro na API: ${response.statusText}`);
+                }
+                return data;
+            };
+
+            const formatCurrency = (value = 0) => new Intl.NumberFormat('pt-MZ', { style: 'currency', currency: 'MZN' }).format(value);
+
+            // Função para exibir a barra de feedback
+            function showFeedbackBar(message, type = 'error') {
+                elements.feedbackBarContainer.innerHTML = ''; 
+                let iconClass = type === 'success' ? 'bx bx-check-circle' : 'bx bx-x-circle';
+
+                const feedbackBar = document.createElement('div');
+                feedbackBar.className = `feedback-bar ${type}`;
+                feedbackBar.innerHTML = `<i class='${iconClass}'></i> <span></span>`;
+                
+                feedbackBar.querySelector('span').textContent = message; // Proteção contra XSS
+                elements.feedbackBarContainer.appendChild(feedbackBar);
+
+                setTimeout(() => { feedbackBar.classList.add('show'); }, 50); 
+                setTimeout(() => {
+                    feedbackBar.classList.remove('show');
+                    feedbackBar.addEventListener('transitionend', () => feedbackBar.remove(), { once: true });
+                }, 4000);
+            }
+
+            const renderDeposits = (deposits) => {
+                elements.container.innerHTML = '';
+                if (deposits.length === 0) {
+                    elements.emptyMessage.style.display = 'block';
+                    return;
+                }
+                elements.emptyMessage.style.display = 'none';
+
+                deposits.forEach(deposit => {
+                    const card = document.createElement('div');
+                    card.className = 'deposit-card';
+                    card.setAttribute('data-id', deposit._id);
+
+                    let proofHTML = '<h4>Comprovativo</h4><p>Não fornecido</p>';
+                    const details = deposit.transactionDetails;
+                    if (details) {
+                        if (details.proofType === 'image' && details.proofImageUrl) {
+                            proofHTML = `<h4>Comprovativo (Imagem)</h4>
+                                       <a href="${details.proofImageUrl}" target="_blank" rel="noopener noreferrer">
+                                           <img src="${details.proofImageUrl}" alt="Comprovativo de depósito">
+                                       </a>`;
+                        } else if (details.proofType === 'text' && details.proofText) {
+                            proofHTML = `<h4>Comprovativo (Texto)</h4>
+                                       <pre>${details.proofText}</pre>`;
+                        }
+                    }
+
+                    // NOVO: Exibir nome e telefone do usuário
+                    const userName = deposit.user ? deposit.user.name : 'N/A';
+                    const userPhone = deposit.user ? deposit.user.phone : 'N/A';
+                    const userIdVal = deposit.user ? deposit.user.userId : 'N/A';
+
+                    card.innerHTML = `
+                        <div class="deposit-info">
+                            <div class="info-item">
+                                <h4>Usuário</h4>
+                                <p>${userName} (ID: <strong>${userIdVal}</strong>)</p>
+                            </div>
+                            <div class="info-item">
+                                <h4>Telefone</h4>
+                                <p>${userPhone}</p>
+                            </div>
+                            <div class="info-item">
+                                <h4>Valor do Depósito</h4>
+                                <p><strong>${formatCurrency(deposit.amount)}</strong></p>
+                            </div>
+                             <div class="info-item">
+                                <h4>Data do Pedido</h4>
+                                <p>${new Date(deposit.createdAt).toLocaleString('pt-BR')}</p>
+                            </div>
+                        </div>
+                        <div class="proof-container">
+                            ${proofHTML}
+                        </div>
+                        <div class="deposit-actions">
+                            <button class="action-btn approve-btn"><i class='bx bx-check'></i> Aprovar</button>
+                            <button class="action-btn reject-btn"><i class='bx bx-x'></i> Rejeitar</button>
+                        </div>
+                    `;
+                    elements.container.appendChild(card);
+                });
+            };
+
+            const loadPendingDeposits = async () => {
+                elements.skeleton.style.display = 'block';
+                elements.emptyMessage.style.display = 'none';
+                elements.container.innerHTML = '';
+                try {
+                    const deposits = await fetchAPI('/api/admin/deposits');
+                    renderDeposits(deposits);
+                } catch (error) {
+                    showFeedbackBar(error.message, 'error');
+                    elements.skeleton.innerHTML = `<p style="color: var(--text-muted); text-align: center;">Erro ao carregar depósitos: ${error.message}</p>`; // Mostrar erro no lugar do skeleton
+                } finally {
+                    elements.skeleton.style.display = 'none';
+                }
+            };
+
+            const handleAction = async (transactionId, action) => {
+                const card = document.querySelector(`.deposit-card[data-id="${transactionId}"]`);
+                if (!card) {
+                    showFeedbackBar('Erro: Cartão de transação não encontrado.', 'error');
+                    return;
+                }
+
+                card.querySelectorAll('.action-btn').forEach(btn => btn.disabled = true);
+
+                try {
+                    const result = await fetchAPI(`/api/admin/deposits/${transactionId}/${action}`, { method: 'POST', body: JSON.stringify({}) }); // Envia um corpo vazio
+                    showFeedbackBar(result.message, 'success');
+                    card.style.transition = 'opacity 0.5s ease';
+                    card.style.opacity = '0';
+                    setTimeout(() => {
+                        card.remove();
+                        if (elements.container.children.length === 0) {
+                            elements.emptyMessage.style.display = 'block';
+                        }
+                    }, 500);
+
+                } catch (error) {
+                    showFeedbackBar(error.message, 'error');
+                    card.querySelectorAll('.action-btn').forEach(btn => btn.disabled = false);
+                }
+            };
+            
+            elements.container.addEventListener('click', (e) => {
+                const approveBtn = e.target.closest('.approve-btn');
+                const rejectBtn = e.target.closest('.reject-btn');
+                const card = e.target.closest('.deposit-card');
+                
+                if (!card) return;
+                const transactionId = card.dataset.id;
+
+                if (approveBtn) {
+                    handleAction(transactionId, 'approve');
+                } else if (rejectBtn) {
+                    handleAction(transactionId, 'reject');
+                }
+            });
+
+            loadPendingDeposits();
+        });
+    </script>
+</body>
+</html>

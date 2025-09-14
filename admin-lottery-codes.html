@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Gerenciar Sorteios - Admin Chivo</title>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        :root {
+            --bg-dark: #121826; --primary-blue: #0052FF; --card-bg: #1A2233;
+            --text-light: #F4F7FC; --text-muted: #8A93A2; --border-color: #333d52;
+            --accent-green: #28a745; --accent-red: #dc3545; --accent-yellow: #FFC107;
+        }
+        body { background-color: var(--bg-dark); color: var(--text-light); }
+        .main-container { padding: 2rem 1.5rem; max-width: 900px; margin: auto; }
+        
+        .header { display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; }
+        .back-button { background: none; border: none; font-size: 2rem; color: var(--text-light); cursor: pointer; }
+        .header h1 { font-size: 1.8rem; }
+
+        .section-title {
+            font-size: 1.3rem; margin-bottom: 1.5rem; padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .card {
+            background-color: var(--card-bg); padding: 2rem;
+            border-radius: 12px; border: 1px solid var(--border-color);
+            margin-bottom: 2rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+        @media (min-width: 600px) {
+            .form-grid { grid-template-columns: 1fr 1fr; }
+        }
+
+        .form-group { display: flex; flex-direction: column; gap: 0.5rem; }
+        .form-group label { color: var(--text-muted); font-weight: 500; }
+        .form-group input {
+            background-color: var(--bg-dark); border: 1px solid var(--border-color);
+            border-radius: 8px; padding: 0.8rem 1rem; color: var(--text-light);
+            font-size: 1rem;
+        }
+
+        .submit-btn {
+            display: flex; justify-content: center; align-items: center;
+            width: 100%; padding: 0.8rem; background-color: var(--primary-blue);
+            border: none; border-radius: 8px; color: #fff; font-size: 1.1rem;
+            font-weight: 600; cursor: pointer; margin-top: 1rem;
+        }
+        .submit-btn:disabled { background-color: #555; cursor: not-allowed; }
+        .spinner { width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.3); border-top-color:#fff; border-radius:50%; animation: spin 1s linear infinite; margin-left: 10px;}
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Lista de Códigos de Sorteio */
+        .lottery-codes-list { display: flex; flex-direction: column; gap: 1rem; }
+        .code-card {
+            background-color: var(--bg-dark); padding: 1.5rem; border-radius: 10px;
+            border: 1px solid var(--border-color); display: grid;
+            grid-template-columns: 1fr auto; gap: 1rem; align-items: center;
+        }
+        .code-info h3 { font-size: 1.2rem; margin-bottom: 0.5rem; }
+        .code-info p { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.3rem;}
+        .code-info strong { color: var(--text-light); }
+
+        .code-actions { display: flex; flex-direction: column; gap: 0.5rem; }
+        .code-actions button {
+            background: none; border: none; font-size: 1.5rem; cursor: pointer;
+            color: var(--text-muted); padding: 0.5rem; border-radius: 5px;
+            transition: background-color 0.2s;
+        }
+        .code-actions button:hover { background-color: var(--card-bg); }
+        .delete-btn { color: var(--accent-red); }
+        .toggle-status-btn.active { color: var(--accent-green); }
+        .toggle-status-btn.inactive { color: var(--accent-yellow); }
+
+        #empty-message { text-align: center; color: var(--text-muted); padding: 2rem; }
+
+        /* NOVO: Estilos para a barra de feedback no topo */
+        #feedback-bar-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding-top: 20px;
+            pointer-events: none;
+        }
+        .feedback-bar {
+            background-color: var(--accent-red); color: #fff; padding: 0.8rem 1.5rem;
+            border-radius: 10px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            display: flex; align-items: center; gap: 10px; font-size: 0.9rem;
+            font-weight: 500; transform: translateY(-150%); opacity: 0;
+            transition: transform 0.4s ease-out, opacity 0.4s ease-out;
+            pointer-events: auto; max-width: 90%; text-align: center;
+        }
+        .feedback-bar.show { transform: translateY(0); opacity: 1; }
+        .feedback-bar.success { background-color: var(--accent-green); }
+        .feedback-bar i { font-size: 1.3rem; }
+        /* FIM: Estilos para a barra de feedback no topo */
+    </style>
+</head>
+<body>
+
+    <!-- NOVO: Container para a barra de feedback -->
+    <div id="feedback-bar-container"></div>
+
+    <div class="main-container">
+        <header class="header">
+            <button class="back-button" onclick="window.location.href='admin-dashboard.html'"><i class='bx bx-arrow-back'></i></button>
+            <h1>Gerenciar Sorteios</h1>
+        </header>
+
+        <section id="create-lottery-code-section">
+            <h2 class="section-title">Criar Novo Código de Sorteio</h2>
+            <form id="lottery-code-form" class="card">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="valueMin">Valor Mínimo de Prêmio (MT)</label>
+                        <input type="number" id="valueMin" min="1" placeholder="Ex: 10" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="valueMax">Valor Máximo de Prêmio (MT)</label>
+                        <input type="number" id="valueMax" min="1" placeholder="Ex: 100" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="maxUses">Máximo de Usos</label>
+                        <input type="number" id="maxUses" min="1" placeholder="Ex: 50" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="durationHours">Duração (horas)</label>
+                        <input type="number" id="durationHours" min="1" placeholder="Ex: 24 (expira em 24h)" required>
+                    </div>
+                </div>
+                <button type="submit" id="submit-btn" class="submit-btn">
+                    <span>Gerar Código</span>
+                    <div class="spinner" style="display: none;"></div>
+                </button>
+            </form>
+        </section>
+
+        <section id="current-lottery-codes-section">
+            <h2 class="section-title">Códigos de Sorteio Atuais</h2>
+            <div id="lottery-codes-container" class="lottery-codes-list">
+                <p id="empty-message" style="display: block;">Carregando códigos de sorteio...</p>
+            </div>
+        </section>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const API_URL = "https://daksk.onrender.com";
+            const TOKEN = localStorage.getItem('chivo-admin-token');
+            if (!TOKEN) {
+                window.location.href = 'admin-login.html';
+                return;
+            }
+
+            const elements = {
+                form: document.getElementById('lottery-code-form'),
+                valueMinInput: document.getElementById('valueMin'),
+                valueMaxInput: document.getElementById('valueMax'),
+                maxUsesInput: document.getElementById('maxUses'),
+                durationHoursInput: document.getElementById('durationHours'),
+                submitBtn: document.getElementById('submit-btn'),
+                codesContainer: document.getElementById('lottery-codes-container'),
+                emptyMessage: document.getElementById('empty-message'),
+                feedbackBarContainer: document.getElementById('feedback-bar-container')
+            };
+
+            // CORREÇÃO DO ERRO 'Cannot access elements before initialization'
+            // Obter os sub-elementos do botão APÓS o objeto elements ser definido
+            const submitBtnText = elements.submitBtn.querySelector('span');
+            const submitBtnSpinner = elements.submitBtn.querySelector('.spinner');
+
+
+            const fetchAPI = async (endpoint, options = {}) => {
+                const headers = { ...options.headers, 'Authorization': `Bearer ${TOKEN}` };
+                
+                // CORREÇÃO PARA O Content-Type
+                // Se o corpo for fornecido e NÃO for uma instância de FormData,
+                // assumimos que é JSON e definimos o cabeçalho Content-Type.
+                if (options.body && !(options.body instanceof FormData)) {
+                    headers['Content-Type'] = 'application/json';
+                }
+                
+                options.headers = headers; // Atribuir os cabeçalhos potencialmente atualizados
+                
+                const response = await fetch(`${API_URL}${endpoint}`, options);
+                
+                if (response.status === 401) {
+                    localStorage.removeItem('chivo-admin-token');
+                    window.location.href = 'admin-login.html';
+                    throw new Error('Sessão expirada. Faça login novamente.');
+                }
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.message || `Erro na API: ${response.statusText}`);
+                }
+                return data;
+            };
+            
+            const formatCurrency = (value = 0) => new Intl.NumberFormat('pt-MZ', { style: 'currency', currency: 'MZN' }).format(value);
+            const formatDate = (dateString) => new Date(dateString).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+
+            function showFeedbackBar(message, type = 'error') {
+                elements.feedbackBarContainer.innerHTML = ''; 
+                let iconClass = type === 'success' ? 'bx bx-check-circle' : 'bx bx-x-circle';
+
+                const feedbackBar = document.createElement('div');
+                feedbackBar.className = `feedback-bar ${type}`;
+                feedbackBar.innerHTML = `<i class='${iconClass}'></i> <span></span>`;
+                feedbackBar.querySelector('span').textContent = message; // Proteção contra XSS
+                elements.feedbackBarContainer.appendChild(feedbackBar);
+
+                setTimeout(() => { feedbackBar.classList.add('show'); }, 50); 
+                setTimeout(() => {
+                    feedbackBar.classList.remove('show');
+                    feedbackBar.addEventListener('transitionend', () => feedbackBar.remove(), { once: true });
+                }, 4000);
+            }
+
+            const setLoading = (isLoading) => {
+                elements.submitBtn.disabled = isLoading;
+                submitBtnText.style.display = isLoading ? 'none' : 'block';
+                submitBtnSpinner.style.display = isLoading ? 'inline-block' : 'none';
+            };
+
+            const renderLotteryCodes = (codes) => {
+                elements.codesContainer.innerHTML = '';
+                if (!codes || codes.length === 0) {
+                    elements.emptyMessage.textContent = 'Nenhum código de sorteio encontrado. Crie um novo!';
+                    elements.emptyMessage.style.display = 'block';
+                    return;
+                }
+                elements.emptyMessage.style.display = 'none';
+
+                codes.forEach(code => {
+                    const isExpired = new Date(code.expiresAt) < new Date();
+                    const statusText = code.isActive && !isExpired ? 'Ativo' : (isExpired ? 'Expirado' : 'Inativo');
+                    const statusClass = code.isActive && !isExpired ? 'active' : (isExpired ? 'expired' : 'inactive'); // Corrigido 'inactive' para 'expired' na classe CSS
+
+                    const codeCard = document.createElement('div');
+                    codeCard.className = 'code-card';
+                    codeCard.setAttribute('data-id', code._id);
+                    codeCard.innerHTML = `
+                        <div class="code-info">
+                            <h3>Código: <strong>${code.code}</strong></h3>
+                            <p>Prêmio: <strong>${formatCurrency(code.valueMin)} - ${formatCurrency(code.valueMax)}</strong></p>
+                            <p>Usos: <strong>${code.currentUses} / ${code.maxUses}</strong></p>
+                            <p>Expira em: <strong>${formatDate(code.expiresAt)}</strong></p>
+                            <p>Status: <strong style="color: var(--accent-${statusClass === 'active' ? 'green' : (statusClass === 'expired' ? 'red' : 'yellow')});">${statusText}</strong></p>
+                        </div>
+                        <div class="code-actions">
+                            <button class="toggle-status-btn ${statusClass}" data-id="${code._id}" title="${code.isActive ? 'Desativar' : 'Ativar'}" ${isExpired ? 'disabled' : ''}>
+                                <i class='bx ${code.isActive ? 'bx-toggle-right' : 'bx-toggle-left'}'></i>
+                            </button>
+                            <button class="delete-btn" data-id="${code._id}" title="Deletar">
+                                <i class='bx bxs-trash'></i>
+                            </button>
+                        </div>
+                    `;
+                    elements.codesContainer.appendChild(codeCard);
+                });
+            };
+
+            const loadLotteryCodes = async () => {
+                elements.emptyMessage.textContent = 'Carregando códigos de sorteio...';
+                elements.emptyMessage.style.display = 'block';
+                elements.codesContainer.innerHTML = '';
+                try {
+                    const codes = await fetchAPI('/api/admin/lottery-codes');
+                    renderLotteryCodes(codes);
+                } catch (error) {
+                    showFeedbackBar(error.message, 'error');
+                    elements.emptyMessage.textContent = `Erro ao carregar códigos de sorteio: ${error.message}`;
+                }
+            };
+
+            const handleCreateLotteryCode = async (e) => {
+                e.preventDefault();
+                setLoading(true);
+
+                const valueMin = elements.valueMinInput.value;
+                const valueMax = elements.valueMaxInput.value;
+                const maxUses = elements.maxUsesInput.value;
+                const durationHours = elements.durationHoursInput.value;
+
+                try {
+                    const result = await fetchAPI('/api/admin/lottery-codes', {
+                        method: 'POST',
+                        body: JSON.stringify({ valueMin, valueMax, maxUses, durationHours }) // O corpo já é stringificado aqui
+                    });
+                    showFeedbackBar(result.message, 'success');
+                    elements.form.reset();
+                    await loadLotteryCodes();
+                } catch (error) {
+                    showFeedbackBar(error.message, 'error');
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            const handleToggleStatus = async (codeId) => {
+                try {
+                    const result = await fetchAPI(`/api/admin/lottery-codes/${codeId}/toggle-status`, {
+                        method: 'PUT',
+                        body: JSON.stringify({}) // Envia um corpo vazio
+                    });
+                    showFeedbackBar(result.message, 'success');
+                    await loadLotteryCodes();
+                } catch (error) {
+                    showFeedbackBar(error.message, 'error');
+                }
+            };
+
+            const handleDeleteCode = async (codeId) => {
+                if (!confirm('Tem certeza que deseja deletar este código de sorteio?')) {
+                    return;
+                }
+                try {
+                    const result = await fetchAPI(`/api/admin/lottery-codes/${codeId}`, { method: 'DELETE' });
+                    showFeedbackBar(result.message, 'success');
+                    await loadLotteryCodes();
+                } catch (error) {
+                    showFeedbackBar(error.message, 'error');
+                }
+            };
+
+            // Event Listeners
+            elements.form.addEventListener('submit', handleCreateLotteryCode);
+            elements.codesContainer.addEventListener('click', (e) => {
+                const toggleBtn = e.target.closest('.toggle-status-btn');
+                const deleteBtn = e.target.closest('.delete-btn');
+                
+                if (toggleBtn) {
+                    // Verificação para não desabilitar se já estiver desabilitado (expirado)
+                    if (!toggleBtn.disabled) { 
+                        toggleBtn.disabled = true; 
+                        handleToggleStatus(toggleBtn.dataset.id);
+                    }
+                } else if (deleteBtn) {
+                    deleteBtn.disabled = true;
+                    handleDeleteCode(deleteBtn.dataset.id);
+                }
+            });
+
+            loadLotteryCodes();
+        });
+    </script>
+</body>
+</html>
