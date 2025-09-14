@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes"> <!-- ALTERADO: user-scalable=yes para acessibilidade -->
+    <title>Planos de Investimento - Chivo</title>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        :root {
+            --bg-color: #F4F7FC; --primary-blue: #0052FF; --secondary-blue: #007BFF;
+            --accent-yellow: #FFC107; --text-dark: #121826; --text-light: #6C757D;
+            --card-bg: #FFFFFF; --border-color: #DEE2E6; --success-color: #28a745; --error-color: #dc3545;
+            --skeleton-bg: #e2e8f0;
+        }
+        body { background-color: var(--bg-color); color: var(--text-dark); padding-bottom: 64px; }
+        
+        .main-container { padding: 1.2rem 0.8rem; }
+        
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+        .back-button {
+            position: absolute;
+            left: 0;
+            font-size: 1.8rem;
+            color: var(--text-dark);
+            text-decoration: none;
+        }
+        .header-content h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin: 0;
+        }
+        .header-content p {
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        .plans-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.2rem;
+        }
+
+        .plan-card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 82, 255, 0.08);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            padding: 1.2rem;
+            text-align: center;
+        }
+
+        .plan-image-wrapper {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 1.2rem auto;
+            border-radius: 50%;
+            background-color: var(--bg-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 0.8rem;
+            box-shadow: inset 0 2px 8px rgba(0,0,0,0.07);
+        }
+
+        .plan-image-wrapper img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        @keyframes spin { 
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); } 
+        }
+        .spinning-fan {
+            animation: spin 4s linear infinite;
+        }
+
+        .plan-card h2 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1.2rem;
+        }
+
+        .plan-details {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+            margin-bottom: 1.2rem;
+            text-align: left;
+        }
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.8rem;
+            font-size: 0.9rem;
+        }
+        .detail-item:last-child {
+            border-bottom: none;
+        }
+        .detail-item .label {
+            color: var(--text-light);
+        }
+        .detail-item .value {
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+        .detail-item .value.profit {
+            color: var(--success-color);
+            font-size: 1rem;
+        }
+
+        .action-button {
+            width: 100%;
+            padding: 0.8rem;
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .action-button:hover {
+            transform: translateY(-2px);
+        }
+        .invest-btn {
+            background: linear-gradient(90deg, var(--secondary-blue), var(--primary-blue));
+            box-shadow: 0 4px 15px rgba(0, 82, 255, 0.3);
+        }
+        .upgrade-btn {
+            background: linear-gradient(90deg, #ffc107, #ff8c00);
+            box-shadow: 0 4px 15px rgba(255, 140, 0, 0.3);
+        }
+        .action-button:disabled {
+            background: var(--text-light);
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+        
+        .skeleton { animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+        .skeleton-card .skeleton-circle {
+            width: 120px; height: 120px; border-radius: 50%;
+            background-color: var(--skeleton-bg); margin: 0 auto 1.2rem auto;
+        }
+        .skeleton-card .skeleton-line { height: 1em; background-color: var(--skeleton-bg); border-radius: 4px; }
+        .skeleton-card .skeleton-line.w-40 { width: 40%; }
+        .skeleton-card .skeleton-line.h-title { height: 1.5em; width: 60%; margin: 0 auto 1.2rem auto; }
+        
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 0; right: 0; background-color: var(--card-bg);
+            box-shadow: 0 -2px 15px rgba(0,0,0,0.05); display: flex;
+            justify-content: space-around; padding: 0.4rem 0;
+            border-top-left-radius: 18px; border-top-right-radius: 18px;
+        }
+        .nav-link {
+            display: flex; flex-direction: column; align-items: center; text-decoration: none;
+            gap: 0.1rem; padding: 0.4rem; color: var(--text-light); flex-grow: 1; text-align: center;
+        }
+        .nav-link i { font-size: 1.3rem; }
+        .nav-link span { font-size: 0.6rem; }
+        .nav-link.active { color: var(--primary-blue); }
+        
+        .modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.5); backdrop-filter: blur(5px);
+            display: none; justify-content: center; align-items: center; z-index: 100;
+        }
+        .modal.show { display: flex; }
+        .modal-content {
+            background-color: var(--card-bg); width: 90%; max-width: 400px;
+            padding: 1.5rem; border-radius: 12px;
+        }
+        .modal-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 1.2rem;
+        }
+        .modal-header h2 { font-size: 1.1rem; }
+        .modal-header .close-btn { font-size: 1.5rem; cursor: pointer; border: none; background: none; }
+        .modal-body .input-group { position: relative; margin-bottom: 1rem; }
+        .modal-body input {
+            width: 100%; padding: 0.8rem; border: 1px solid var(--border-color);
+            border-radius: 8px; font-size: 1rem;
+        }
+        .modal-submit-btn {
+            width: 100%; padding: 0.8rem; background-color: var(--primary-blue);
+            border: none; border-radius: 8px; color: #fff; font-size: 1rem; cursor: pointer;
+        }
+        .modal-submit-btn:disabled { background-color: var(--text-light); }
+
+        /* NOVO: Estilos para a barra de feedback no topo */
+        #feedback-bar-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 2000; /* Mais alto que o modal */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding-top: 20px;
+            pointer-events: none;
+        }
+        .feedback-bar {
+            background-color: var(--error-color); color: #fff; padding: 0.8rem 1.5rem;
+            border-radius: 10px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            display: flex; align-items: center; gap: 10px; font-size: 0.9rem;
+            font-weight: 500; transform: translateY(-150%); opacity: 0;
+            transition: transform 0.4s ease-out, opacity 0.4s ease-out;
+            pointer-events: auto; max-width: 90%; text-align: center;
+        }
+        .feedback-bar.show { transform: translateY(0); opacity: 1; }
+        .feedback-bar.success { background-color: var(--success-color); }
+        .feedback-bar i { font-size: 1.3rem; }
+        /* FIM: Estilos para a barra de feedback no topo */
+    </style>
+</head>
+<body>
+
+    <!-- NOVO: Container para a barra de feedback -->
+    <div id="feedback-bar-container"></div>
+
+    <div class="main-container">
+        <header class="header">
+            <a href="dashboard.html" class="back-button"><i class='bx bx-chevron-left'></i></a>
+            <div class="header-content">
+                <h1>Nossos Planos</h1>
+                <p>Escolha o melhor plano para seus objetivos.</p>
+            </div>
+        </header>
+
+        <div id="plans-container" class="plans-grid">
+            <div class="plan-card skeleton-card">
+                <div class="skeleton skeleton-circle"></div>
+                <div class="skeleton skeleton-line h-title"></div>
+                <div class="plan-details">
+                    <div class="detail-item"><div class="skeleton skeleton-line w-40"></div><div class="skeleton skeleton-line w-40"></div></div>
+                    <div class="detail-item"><div class="skeleton skeleton-line w-40"></div><div class="skeleton skeleton-line w-40"></div></div>
+                    <div class="detail-item"><div class="skeleton skeleton-line w-40"></div><div class="skeleton skeleton-line w-40"></div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="invest-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="invest-modal-title"></h2>
+                <button class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="invest-form">
+                    <p id="invest-modal-details" style="margin-bottom: 1rem; font-size: 0.9rem;"></p>
+                    <div class="input-group" id="invest-amount-group">
+                        <input type="number" id="invest-amount-input" placeholder="Valor" required>
+                    </div>
+                    <div id="bonus-usage-info" style="font-size: 0.8rem; color: var(--text-light); margin-bottom: 1rem;"></div>
+                    <button type="submit" class="modal-submit-btn" id="modal-confirm-btn">Confirmar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="dashboard.html" class="nav-link"><i class='bx bxs-home'></i><span>Início</span></a>
+        <a href="plans.html" class="nav-link active"><i class='bx bxs-rocket'></i><span>Planos</span></a>
+        <a href="wallet.html" class="nav-link"><i class='bx bxs-wallet'></i><span>Carteira</span></a>
+        <a href="profile.html" class="nav-link"><i class='bx bxs-user'></i><span>Perfil</span></a>
+    </nav>
+
+    <!-- REMOVIDO: <div id="toast-container"></div> -->
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const API_URL = "https://daksk.onrender.com";
+            const TOKEN = localStorage.getItem('chivo-token');
+            if (!TOKEN) { window.location.href = 'login.html'; return; }
+
+            const plansContainer = document.getElementById('plans-container');
+            const investModal = document.getElementById('invest-modal');
+            const investForm = document.getElementById('invest-form');
+            const investModalTitle = document.getElementById('invest-modal-title');
+            const investModalDetails = document.getElementById('invest-modal-details');
+            const investAmountGroup = document.getElementById('invest-amount-group');
+            const investAmountInput = document.getElementById('invest-amount-input');
+            const bonusUsageInfo = document.getElementById('bonus-usage-info');
+            const modalConfirmBtn = document.getElementById('modal-confirm-btn');
+            const feedbackBarContainer = document.getElementById('feedback-bar-container'); // NOVO ELEMENTO
+
+            let activePlan = null;
+            let currentAction = {};
+
+            const fetchAPI = async (endpoint, options = {}) => {
+                options.headers = { ...options.headers, 'Authorization': `Bearer ${TOKEN}` };
+                // Lógica corrigida para Content-Type:
+                if (options.body && !(options.body instanceof FormData)) {
+                    options.headers['Content-Type'] = 'application/json';
+                } else if (options.body instanceof FormData) {
+                    delete options.headers['Content-Type']; // Remover Content-Type se for FormData
+                }
+                
+                const response = await fetch(`${API_URL}${endpoint}`, options);
+                if (response.status === 401) { 
+                    localStorage.removeItem('chivo-token'); 
+                    window.location.href = 'login.html'; 
+                    throw new Error('Sessão expirada. Por favor, faça login novamente.');
+                }
+                const data = await response.json(); // Tenta sempre ler o JSON
+                if (!response.ok) { 
+                    throw new Error(data.message || `Ocorreu um erro na API: ${response.statusText}`);
+                }
+                return data;
+            };
+            
+            const formatCurrency = (value, currency = 'MZN', precision = 2) => {
+                if (typeof value !== 'number') value = 0;
+                return new Intl.NumberFormat('pt-MZ', { style: 'currency', currency: currency, minimumFractionDigits: precision, maximumFractionDigits: precision }).format(value);
+            }
+
+            // Função para exibir a barra de feedback (idêntica às outras)
+            function showFeedbackBar(message, type = 'error') {
+                feedbackBarContainer.innerHTML = ''; 
+                let iconClass = type === 'success' ? 'bx bx-check-circle' : 'bx bx-x-circle';
+
+                const feedbackBar = document.createElement('div');
+                feedbackBar.className = `feedback-bar ${type}`;
+                feedbackBar.innerHTML = `<i class='${iconClass}'></i> <span></span>`;
+                feedbackBar.querySelector('span').textContent = message; // Proteção contra XSS
+                feedbackBarContainer.appendChild(feedbackBar);
+
+                setTimeout(() => { feedbackBar.classList.add('show'); }, 50); 
+                setTimeout(() => {
+                    feedbackBar.classList.remove('show');
+                    feedbackBar.addEventListener('transitionend', () => feedbackBar.remove(), { once: true });
+                }, 4000);
+            }
+
+            const fetchAndRenderPlans = async () => {
+                try {
+                    const data = await fetchAPI('/api/plans');
+                    activePlan = data.activePlanInstance;
+                    const plans = data.plans;
+                    
+                    plans.sort((a, b) => a.minAmount - b.minAmount);
+                    renderPlans(plans);
+                } catch (error) {
+                    showFeedbackBar(error.message, 'error'); // Usar a nova função
+                    plansContainer.innerHTML = `<p style="text-align: center; color: var(--text-light);">Não foi possível carregar os planos: ${error.message}</p>`;
+                }
+            };
+
+            const renderPlans = (plans) => {
+                plansContainer.innerHTML = ''; 
+
+                if (!plans || plans.length === 0) {
+                    plansContainer.innerHTML = `<p style="text-align: center; padding: 1rem 0; color: var(--text-light);">Nenhum plano disponível no momento.</p>`;
+                    return;
+                }
+                
+                let plansHTML = '';
+                for (const plan of plans) {
+                    const totalProfit = plan.dailyYieldValue * plan.durationDays;
+                    let buttonHTML = '';
+                    
+                    if (activePlan) {
+                         if (plan._id === activePlan.plan._id) {
+                            buttonHTML = `<button class="action-button" disabled>Plano Ativo</button>`;
+                        } else if (plan.minAmount > activePlan.plan.minAmount) {
+                            const upgradeCost = plan.minAmount - activePlan.plan.minAmount;
+                            buttonHTML = `<button class="action-button upgrade-btn" data-action="upgrade" data-plan-id="${plan._id}" data-plan-name="${plan.name}" data-cost="${upgradeCost}">Upgrade (${formatCurrency(upgradeCost)})</button>`;
+                        } else {
+                            buttonHTML = `<button class="action-button" disabled>Valor inferior</button>`; // Mensagem mais clara
+                        }
+                    } else {
+                        buttonHTML = `<button class="action-button invest-btn" data-action="invest" data-plan-id="${plan._id}" data-plan-name="${plan.name}" data-min="${plan.minAmount}" data-max="${plan.maxAmount}">Investir Agora</button>`;
+                    }
+                    
+                    plansHTML += `
+                        <div class="plan-card">
+                            <div class="plan-image-wrapper">
+                                <img src="${plan.imageUrl || 'https://via.placeholder.com/600x300.png?text=Chivo+Plan'}" alt="Imagem do plano ${plan.name}" class="spinning-fan">
+                            </div>
+                            <h2>${plan.name}</h2>
+                            <div class="plan-details">
+                                <div class="detail-item"><span class="label">Preço</span><span class="value">${formatCurrency(plan.minAmount, 'MZN')}</span></div>
+                                <div class="detail-item"><span class="label">Lucro Diário</span><span class="value">${plan.dailyYieldType === 'fixed' ? formatCurrency(plan.dailyYieldValue, 'MZN') : `${plan.dailyYieldValue}%`}</span></div>
+                                <div class="detail-item"><span class="label">Hash</span><span class="value">${plan.hashRate}</span></div>
+                                <div class="detail-item"><span class="label">Período</span><span class="value">${plan.durationDays} dias</span></div>
+                                <div class="detail-item"><span class="label">Lucro Final</span><span class="value profit">${formatCurrency(totalProfit, 'MZN')}</span></div>
+                            </div>
+                            ${buttonHTML}
+                        </div>
+                    `;
+                }
+                plansContainer.innerHTML = plansHTML;
+            };
+            
+            const openModal = async (action, planId, planName, details) => {
+                currentAction = { action, planId };
+                investModalTitle.textContent = action === 'invest' ? `Investir em ${planName}` : `Upgrade para ${planName}`;
+                investModalDetails.textContent = details;
+                bonusUsageInfo.textContent = '';
+                investForm.reset();
+                
+                if (action === 'upgrade') {
+                    investAmountGroup.style.display = 'none';
+                    investAmountInput.required = false;
+                    modalConfirmBtn.textContent = 'Confirmar Upgrade';
+                } else {
+                    investAmountGroup.style.display = 'block';
+                    investAmountInput.required = true;
+                    modalConfirmBtn.textContent = 'Confirmar Investimento';
+                    
+                    try {
+                        const user = await fetchAPI('/api/users/me'); // Busca dados do usuário para o bônus
+                        if(user.bonusBalance > 0){
+                           bonusUsageInfo.textContent = `Você usará ${formatCurrency(user.bonusBalance, 'MZN')} do seu saldo de bônus nesta compra.`;
+                        } else {
+                           bonusUsageInfo.textContent = 'Você não possui saldo de bônus para usar.';
+                        }
+                    } catch(error){
+                        showFeedbackBar('Não foi possível buscar o saldo de bônus.', 'error');
+                    }
+                }
+                
+                investModal.classList.add('show');
+            };
+
+            plansContainer.addEventListener('click', async (e) => {
+                const target = e.target;
+                if (!target.dataset.action) return;
+
+                const { action, planId, planName, min, max, cost } = target.dataset;
+
+                if (action === 'invest') {
+                    openModal(action, planId, planName, `Valor do investimento:`);
+                } else if (action === 'upgrade') {
+                    try {
+                        const user = await fetchAPI('/api/users/me');
+                        const upgradeCost = Number(cost);
+                        if (user.walletBalance < upgradeCost) {
+                            showFeedbackBar('Saldo insuficiente para fazer o upgrade. Por favor, deposite mais fundos.', 'error');
+                        } else {
+                            openModal(action, planId, planName, `Custo do Upgrade: ${formatCurrency(upgradeCost, 'MZN')}`);
+                        }
+                    } catch(error) {
+                        showFeedbackBar('Não foi possível verificar o saldo para o upgrade. Por favor, tente novamente.', 'error');
+                    }
+                }
+            });
+
+            investForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const submitButton = e.target.querySelector('button');
+                const originalButtonText = submitButton.textContent;
+                submitButton.disabled = true;
+                submitButton.textContent = 'Processando...';
+
+                try {
+                    let response;
+                    if (currentAction.action === 'invest') {
+                        const amount = parseFloat(investAmountInput.value);
+                        if (isNaN(amount) || amount <= 0) {
+                            showFeedbackBar('Por favor, insira um valor de investimento válido e positivo.', 'error');
+                            return;
+                        }
+                        const body = { investedAmount: amount };
+                        response = await fetchAPI(`/api/plans/${currentAction.planId}/activate`, { method: 'POST', body: JSON.stringify(body) });
+                    } else { // Upgrade
+                        response = await fetchAPI(`/api/plans/upgrade/${currentAction.planId}`, {
+                            method: 'POST',
+                            body: JSON.stringify({}) // Enviar corpo vazio para compatibilidade
+                        });
+                    }
+                    showFeedbackBar(response.message, 'success');
+                    investModal.classList.remove('show');
+                    fetchAndRenderPlans(); // Recarrega os planos e o estado do usuário
+                } catch (error) {
+                    showFeedbackBar(error.message, 'error');
+                } finally {
+                    submitButton.disabled = false;
+                    submitButton.textContent = originalButtonText; // Restaura o texto original
+                }
+            });
+
+            investModal.querySelector('.close-btn').addEventListener('click', () => investModal.classList.remove('show'));
+            investModal.addEventListener('click', (e) => { // Clicar fora do modal fecha
+                if (e.target === investModal) {
+                    investModal.classList.remove('show');
+                }
+            });
+
+            fetchAndRenderPlans();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes"> <!-- ALTERADO: user-scalable=yes para acessibilidade -->
+    <title>Início - Chivo</title>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        :root {
+            --bg-color: #F4F7FC; --primary-blue: #0052FF; --secondary-blue: #007BFF;
+            --accent-yellow: #FFC107; --text-dark: #121826; --text-light: #6C757D;
+            --card-bg: #FFFFFF; --border-color: #DEE2E6; --success-color: #28a745; --error-color: #dc3545;
+            --telegram-color: #2AABEE; /* Cor do Telegram */
+            --skeleton-base-color: #e2e8f0;
+        }
+        body { background-color: var(--bg-color); color: var(--text-dark); padding-bottom: 64px; }
+        
+        .main-container { padding: 1.2rem 0.8rem; }
+        
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem; }
+        .greeting h2 { font-size: 1.2rem; font-weight: 600; }
+        .greeting p { color: var(--text-light); font-size: 0.8rem; }
+        
+        a.profile-pic-container { position: relative; width: 40px; height: 40px; display: block; text-decoration: none; }
+        .profile-pic, .profile-icon { width: 100%; height: 100%; border-radius: 50%; border: 2px solid var(--primary-blue); }
+        .profile-icon { display: flex; justify-content: center; align-items: center; background-color: #eee; color: var(--text-light); font-size: 2rem; }
+        .profile-pic { position: absolute; top: 0; left: 0; object-fit: cover; opacity: 0; transition: opacity 0.3s; }
+        
+        .banner-carousel-container {
+            position: relative; width: 100%; height: 0; padding-bottom: 56.25%;
+            margin-bottom: 1.2rem; border-radius: 10px; overflow: hidden;
+            background-color: var(--skeleton-base-color);
+        }
+        .banner-carousel {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; transition: transform 0.7s ease-in-out;
+        }
+        .banner-carousel a { flex-shrink: 0; width: 100%; height: 100%; display: block; }
+        .banner-carousel img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+        .card { background-color: var(--card-bg); padding: 1.2rem; border-radius: 10px; box-shadow: 0 4px 20px rgba(0, 82, 255, 0.08); margin-bottom: 1.2rem; }
+        
+        .balances-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
+        .balance-item h3 { font-size: 0.7rem; color: var(--text-light); margin-bottom: 0.25rem; }
+        .balance-item p { font-size: 1.3rem; font-weight: 600; color: var(--text-dark); }
+        .balance-item p.bonus { color: var(--accent-yellow); }
+
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .stat-item { background-color: #f8f9fa; padding: 0.8rem; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; }
+        .stat-info .stat-value { font-size: 1.1rem; font-weight: 600; color: var(--text-dark); }
+        .stat-info .stat-label { font-size: 0.7rem; color: var(--text-light); }
+        .stat-icon { font-size: 1.8rem; color: var(--primary-blue); opacity: 0.7; }
+
+        .actions-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.2rem; text-align: center; }
+        .action-btn { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; color: var(--text-dark); text-decoration: none; font-size: 0.8rem; }
+        .action-icon { width: 44px; height: 44px; border-radius: 14px; display: flex; justify-content: center; align-items: center; font-size: 1.5rem; color: #fff; }
+        .action-btn[data-action="deposit"] .action-icon { background-color: var(--success-color); }
+        .action-btn[data-action="withdraw"] .action-icon { background-color: var(--error-color); }
+        .action-btn[data-action="invite"] .action-icon { background-color: var(--accent-yellow); }
+        .action-btn[data-action="lottery"] .action-icon { background-color: var(--primary-blue); } /* NOVO: Estilo para botão de Sorteio */
+        .action-btn[data-action="history"] .action-icon { background-color: var(--secondary-blue); }
+
+        .collection-station { text-align: center; }
+        .station-header { margin-bottom: 1.5rem; }
+        .station-header h3 { font-size: 1.1rem; font-weight: 600; }
+        .station-header p { font-size: 0.8rem; color: var(--text-light); }
+
+        .collect-ui-wrapper { display: flex; justify-content: space-between; align-items: center; gap: 1.5rem; }
+        .plan-image-container { flex-shrink: 0; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .plan-image-spin { width: 100px; height: 100px; animation: spin 1.44s linear infinite; }
+        
+        .progress-button-container { flex-grow: 1; position: relative; height: 120px; }
+        .collect-button { width: 100%; height: 100%; border: 2px solid var(--border-color); background-color: var(--bg-color); border-radius: 12px; cursor: pointer; position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .progress-fill { position: absolute; bottom: 0; left: 0; width: 100%; height: 0%; background: linear-gradient(to top, var(--primary-blue), var(--secondary-blue)); transition: height 0.5s linear, background-color 0.5s; z-index: 1; }
+        .collect-button.ready .progress-fill { background: linear-gradient(to top, #FFC107, #FFD54F); }
+        .collect-button-content { position: relative; z-index: 2; color: var(--text-dark); transition: color 0.5s; }
+        .collect-button.ready .collect-button-content { color: var(--text-dark); }
+        .profit-display { font-size: 1.8rem; font-weight: 700; }
+        .countdown-timer { font-size: 0.9rem; font-weight: 500; }
+        .collect-button:disabled { cursor: not-allowed; }
+        
+        .no-plan-card { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .no-plan-card i { font-size: 3.2rem; color: var(--border-color); margin-bottom: 0.8rem; }
+        .no-plan-card p { margin-bottom: 1.2rem; color: var(--text-light); font-size: 0.9rem; text-align: center; }
+        .no-plan-card a { padding: 0.8rem 1.6rem; background-color: var(--primary-blue); color: #fff; border-radius: 8px; text-decoration: none; font-weight: 500; font-size: 0.9rem; }
+
+        .section-title { font-size: 1rem; font-weight: 600; margin-bottom: 0.8rem; }
+        
+        .skeleton { background-color: var(--skeleton-base-color); border-radius: 8px; animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+        .skeleton-banner { width: 100%; height: 0; padding-bottom: 56.25%; margin-bottom: 1.2rem; border-radius: 10px; }
+        .balance-item .skeleton-text { height: 0.7rem; width: 60%; }
+        .balance-item .skeleton-balance { height: 1.3rem; margin-top: 0.25rem; width: 80%; }
+        .skeleton-title { height: 1rem; width: 40%; margin: 1.5rem 0 0.8rem 0; }
+        .skeleton-stat-item { height: 64px; }
+        .skeleton-actions { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.2rem; }
+        .skeleton-action-item { height: 75px; }
+        .skeleton-plan-card { height: 250px; }
+
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); backdrop-filter: blur(5px); display: none; justify-content: center; align-items: center; z-index: 1000; animation: fadeIn 0.3s; }
+        .modal.show { display: flex; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .welcome-modal-content {
+            background-color: var(--card-bg); width: 90%; max-width: 400px;
+            padding: 1.5rem; border-radius: 12px; text-align: center;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.2);
+        }
+        .welcome-modal-content h2 { font-size: 1.5rem; margin-bottom: 0.5rem; color: var(--primary-blue); }
+        .welcome-modal-content p { font-size: 0.9rem; color: var(--text-light); margin-bottom: 1.5rem; line-height: 1.6; }
+        .welcome-modal-actions { display: flex; flex-direction: column; gap: 0.8rem; }
+        .welcome-btn {
+            padding: 0.8rem; border-radius: 8px; border: none; font-size: 1rem;
+            font-weight: 600; cursor: pointer; text-decoration: none;
+            display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+            transition: transform 0.2s;
+        }
+        .welcome-btn:hover { transform: scale(1.03); }
+        .telegram-group-btn { background-color: var(--telegram-color); color: #fff; }
+        .telegram-support-btn { background-color: var(--secondary-blue); color: #fff; }
+        #close-welcome-btn {
+            margin-top: 1rem; background: none; border: none;
+            color: var(--text-light); cursor: pointer; font-size: 0.8rem;
+        }
+
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background-color: var(--card-bg); box-shadow: 0 -2px 15px rgba(0, 0, 0, 0.05); display: flex; justify-content: space-around; padding: 0.4rem 0; border-top-left-radius: 18px; border-top-right-radius: 18px; }
+        .nav-link { display: flex; flex-direction: column; align-items: center; text-decoration: none; gap: 0.1rem; padding: 0.4rem; color: var(--text-light); flex-grow: 1; text-align: center; }
+        .nav-link i { font-size: 1.3rem; }
+        .nav-link span { font-size: 0.6rem; }
+        .nav-link.active { color: var(--primary-blue); }
+
+        /* NOVO: Estilos para a barra de feedback no topo */
+        #feedback-bar-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 2000; /* Mais alto que o modal */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding-top: 20px;
+            pointer-events: none;
+        }
+        .feedback-bar {
+            background-color: var(--error-color); color: #fff; padding: 0.8rem 1.5rem;
+            border-radius: 10px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            display: flex; align-items: center; gap: 10px; font-size: 0.9rem;
+            font-weight: 500; transform: translateY(-150%); opacity: 0;
+            transition: transform 0.4s ease-out, opacity 0.4s ease-out;
+            pointer-events: auto; max-width: 90%; text-align: center;
+        }
+        .feedback-bar.show { transform: translateY(0); opacity: 1; }
+        .feedback-bar.success { background-color: var(--success-color); }
+        .feedback-bar i { font-size: 1.3rem; }
+        /* FIM: Estilos para a barra de feedback no topo */
+
+    </style>
+</head>
+<body>
+
+    <!-- NOVO: Container para a barra de feedback -->
+    <div id="feedback-bar-container"></div>
+
+    <div class="main-container">
+        <header class="header"><div class="greeting"><h2 id="user-greeting">Olá!</h2><p>Bem-vindo de volta</p></div><a href="profile.html" class="profile-pic-container"><div class="profile-icon"><i class='bx bxs-user-circle'></i></div><img src="" alt="Foto de Perfil" id="profile-pic-header" class="profile-pic"></a></header>
+        <div id="dashboard-content">
+            <div id="skeleton-loader"><div class="skeleton skeleton-banner"></div><div class="card"><div class="balances-grid"><div class="balance-item"><div class="skeleton skeleton-text"></div><div class="skeleton skeleton-balance"></div></div><div class="balance-item"><div class="skeleton skeleton-text"></div><div class="skeleton skeleton-balance"></div></div></div></div><div class="skeleton skeleton-title"></div><div class="card"><div class="stats-grid"><div class="skeleton skeleton-stat-item"></div><div class="skeleton skeleton-stat-item"></div><div class="skeleton skeleton-stat-item"></div><div class="skeleton skeleton-stat-item"></div></div></div><div class="card"><div class="skeleton-actions"><div class="skeleton skeleton-action-item"></div><div class="skeleton skeleton-action-item"></div><div class="skeleton skeleton-action-item"></div><div class="skeleton skeleton-action-item"></div></div></div><div class="skeleton skeleton-title"></div><div class="card skeleton-plan-card"></div></div>
+            <div id="real-content" style="display: none;"><div class="banner-carousel-container" id="banner-container" style="display: none;"><div class="banner-carousel" id="banner-carousel"></div></div><div class="card balances-grid"><div class="balance-item"><h3>Carteira</h3><p id="wallet-balance"></p></div><div class="balance-item"><h3>Bônus</h3><p id="bonus-balance" class="bonus"></p></div></div><h3 class="section-title">Minhas Estatísticas</h3><div class="card stats-grid"><div class="stat-item"><div class="stat-info"><p class="stat-value" id="today-profit">--</p><p class="stat-label">Lucro Hoje</p></div><i class='bx bx-sun stat-icon'></i></div><div class="stat-item"><div class="stat-info"><p class="stat-value" id="yesterday-profit">--</p><p class="stat-label">Lucro Ontem</p></div><i class='bx bx-wind stat-icon'></i></div><div class="stat-item"><div class="stat-info"><p class="stat-value" id="month-profit">--</p><p class="stat-label">Lucro Mês</p></div><i class='bx bx-calendar stat-icon'></i></div><div class="stat-item"><div class="stat-info"><p class="stat-value" id="referral-profit">--</p><p class="stat-label">Ganhos c/ Convidados</p></div><i class='bx bx-group stat-icon'></i></div></div><div class="card actions-grid"><a href="wallet.html" class="action-btn" data-action="deposit"><div class="action-icon"><i class='bx bx-down-arrow-alt'></i></div><span>Depositar</span></a><a href="wallet.html" class="action-btn" data-action="withdraw"><div class="action-icon"><i class='bx bx-up-arrow-alt'></i></div><span>Sacar</span></a><a href="invite.html" class="action-btn" data-action="invite"><div class="action-icon"><i class='bx bx-user-plus'></i></div><span>Convidar</span></a><a href="lottery.html" class="action-btn" data-action="lottery"><div class="action-icon" style="background-color: var(--primary-blue);"><i class='bx bx-gift'></i></div><span>Sorteio</span></a><a href="history.html" class="action-btn" data-action="history"><div class="action-icon"><i class='bx bx-history'></i></div><span>Histórico</span></a></div><h3 class="section-title">Meu Plano Ativo</h3><div id="active-plan-container"></div></div>
+        </div>
+    </div>
+
+    <!-- HTML DO MODAL ATUALIZADO PARA TELEGRAM -->
+    <div id="welcome-modal" class="modal">
+        <div class="welcome-modal-content">
+            <h2>Bem-vindo à Chivo!</h2>
+            <p>Sua jornada para o sucesso financeiro começa agora. Junte-se à nossa comunidade para receber suporte e ficar por dentro de todas as novidades.</p>
+            <div class="welcome-modal-actions">
+                <a href="https://t.me/chivomoz" class="welcome-btn telegram-group-btn" target="_blank"><i class='bx bxl-telegram'></i> Entrar no Grupo</a>
+                <a href="https://t.me/Hchivomoz" class="welcome-btn telegram-support-btn" target="_blank"><i class='bx bxl-telegram'></i> Contactar Suporte</a>
+            </div>
+            <button id="close-welcome-btn" class="close-welcome-btn">Fechar</button>
+        </div>
+    </div>
+
+    <nav class="bottom-nav"><a href="dashboard.html" class="nav-link active"><i class='bx bxs-home'></i><span>Início</span></a><a href="plans.html" class="nav-link"><i class='bx bxs-rocket'></i><span>Planos</span></a><a href="wallet.html" class="nav-link"><i class='bx bxs-wallet'></i><span>Carteira</span></a><a href="profile.html" class="nav-link"><i class='bx bxs-user'></i><span>Perfil</span></a></nav>
+    <!-- REMOVIDO: <div id="toast-container"></div> -->
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const API_URL = "https://daksk.onrender.com";
+            const TOKEN = localStorage.getItem('chivo-token');
+            if (!TOKEN) { window.location.href = 'login.html'; return; }
+
+            let countdownInterval = null;
+
+            const elements = {
+                activePlanContainer: document.getElementById('active-plan-container'),
+                userGreeting: document.getElementById('user-greeting'),
+                profilePicHeader: document.getElementById('profile-pic-header'),
+                walletBalance: document.getElementById('wallet-balance'),
+                bonusBalance: document.getElementById('bonus-balance'),
+                skeletonLoader: document.getElementById('skeleton-loader'),
+                realContent: document.getElementById('real-content'),
+                todayProfit: document.getElementById('today-profit'),
+                yesterdayProfit: document.getElementById('yesterday-profit'),
+                monthProfit: document.getElementById('month-profit'),
+                referralProfit: document.getElementById('referral-profit'),
+                bannerContainer: document.getElementById('banner-container'),
+                bannerCarousel: document.getElementById('banner-carousel'),
+                welcomeModal: document.getElementById('welcome-modal'),
+                closeWelcomeBtn: document.getElementById('close-welcome-btn'),
+                feedbackBarContainer: document.getElementById('feedback-bar-container') // NOVO ELEMENTO
+            };
+
+            const fetchAPI = async (endpoint, options = {}) => {
+                options.headers = { ...options.headers, 'Authorization': `Bearer ${TOKEN}` };
+                // Lógica corrigida para Content-Type:
+                if (options.body && !(options.body instanceof FormData)) {
+                    options.headers['Content-Type'] = 'application/json';
+                } else if (options.body instanceof FormData) {
+                    delete options.headers['Content-Type']; // Remover Content-Type se for FormData
+                }
+
+                const response = await fetch(`${API_URL}${endpoint}`, options);
+                if (response.status === 401) { 
+                    localStorage.removeItem('chivo-token'); 
+                    window.location.href = 'login.html'; 
+                    throw new Error('Sessão expirada. Por favor, faça login novamente.');
+                }
+                const data = await response.json(); // Tenta sempre ler o JSON
+                if (!response.ok) { 
+                    throw new Error(data.message || `Ocorreu um erro na API: ${response.statusText}`); 
+                }
+                return data;
+            };
+            
+            const formatCurrency = (value, currency = 'MZN', precision = 2) => {
+                if (typeof value !== 'number') value = 0;
+                return new Intl.NumberFormat('pt-MZ', { style: 'currency', currency: currency, minimumFractionDigits: precision, maximumFractionDigits: precision }).format(value);
+            }
+
+            // Função para exibir a barra de feedback (idêntica às outras)
+            function showFeedbackBar(message, type = 'error') {
+                elements.feedbackBarContainer.innerHTML = ''; 
+                let iconClass = type === 'success' ? 'bx bx-check-circle' : 'bx bx-x-circle';
+
+                const feedbackBar = document.createElement('div');
+                feedbackBar.className = `feedback-bar ${type}`;
+                feedbackBar.innerHTML = `<i class='${iconClass}'></i> <span></span>`;
+                feedbackBar.querySelector('span').textContent = message; // Proteção contra XSS
+                elements.feedbackBarContainer.appendChild(feedbackBar);
+
+                setTimeout(() => { feedbackBar.classList.add('show'); }, 50); 
+                setTimeout(() => {
+                    feedbackBar.classList.remove('show');
+                    feedbackBar.addEventListener('transitionend', () => feedbackBar.remove(), { once: true });
+                }, 4000);
+            }
+
+            const fetchDashboardData = async () => {
+                try {
+                    const data = await fetchAPI('/api/users/dashboard');
+                    renderDashboard(data.user);
+                    renderStats(data.stats);
+                    renderBanners(data.banners);
+                    elements.skeletonLoader.style.display = 'none';
+                    elements.realContent.style.display = 'block';
+                } catch (error) {
+                    showFeedbackBar(error.message, 'error'); // Usar a nova função
+                }
+            };
+
+            const renderDashboard = (user) => {
+                elements.userGreeting.textContent = `Olá, ${user.name.split(' ')[0]}!`;
+                if (user.profilePicture) {
+                    elements.profilePicHeader.src = user.profilePicture;
+                    elements.profilePicHeader.onload = () => { elements.profilePicHeader.style.opacity = '1'; };
+                }
+                elements.walletBalance.textContent = formatCurrency(user.walletBalance, 'MZN');
+                elements.bonusBalance.textContent = formatCurrency(user.bonusBalance, 'MZN');
+                renderActivePlan(user.activePlanInstance);
+            };
+
+            const renderStats = (stats) => {
+                elements.todayProfit.textContent = formatCurrency(stats.todayProfit, 'MZN');
+                elements.yesterdayProfit.textContent = formatCurrency(stats.yesterdayProfit, 'MZN');
+                elements.monthProfit.textContent = formatCurrency(stats.monthProfit, 'MZN');
+                elements.referralProfit.textContent = formatCurrency(stats.totalReferralProfit, 'MZN');
+            };
+
+            const renderBanners = (banners) => {
+                if (!banners || banners.length === 0) {
+                    elements.bannerContainer.style.display = 'none';
+                    return;
+                }
+                elements.bannerContainer.style.display = 'block';
+                elements.bannerCarousel.innerHTML = banners.map(banner => `
+                    <a href="${banner.linkUrl || '#'}" target="_blank" rel="noopener noreferrer">
+                        <img src="${banner.imageUrl}" alt="Banner Promocional">
+                    </a>
+                `).join('');
+
+                if (banners.length > 1) {
+                    let currentIndex = 0;
+                    setInterval(() => {
+                        currentIndex = (currentIndex + 1) % banners.length;
+                        elements.bannerCarousel.style.transform = `translateX(-${currentIndex * 100}%)`;
+                    }, 5000);
+                }
+            };
+            
+            const renderActivePlan = (planInstance) => {
+                if(countdownInterval) clearInterval(countdownInterval);
+                
+                if (planInstance) {
+                    const plan = planInstance.plan;
+                    elements.activePlanContainer.innerHTML = `
+                        <div class="card collection-station"><div class="station-header"><h3>${plan.name}</h3><p>Próxima coleta disponível em breve</p></div><div class="collect-ui-wrapper"><div class="plan-image-container"><img src="${plan.imageUrl || ''}" alt="${plan.name}" class="plan-image-spin"></div><div class="progress-button-container"><button id="collect-btn" class="collect-button" disabled><div id="progress-fill" class="progress-fill"></div><div class="collect-button-content"><span id="dynamic-profit-display" class="profit-display">--</span><span id="countdown-timer" class="countdown-timer">Calculando...</span></div></button></div></div></div>
+                    `;
+                    document.getElementById('collect-btn').addEventListener('click', handleCollectProfit);
+                    setupCountdownAndProfit(planInstance);
+                } else {
+                    elements.activePlanContainer.innerHTML = `
+                        <div class="card no-plan-card"><i class='bx bxs-server'></i><p>Você não tem um plano ativo. Comece a investir agora!</p><a href="plans.html">Ver Planos de Investimento</a></div>
+                    `;
+                }
+            };
+
+            const setupCountdownAndProfit = (planInstance) => {
+                if(countdownInterval) clearInterval(countdownInterval);
+                
+                const countdownEl = document.getElementById('countdown-timer');
+                const profitEl = document.getElementById('dynamic-profit-display');
+                const collectBtn = document.getElementById('collect-btn');
+                const progressFill = document.getElementById('progress-fill');
+
+                let isFirstCollection = true;
+                let lastActionTime = 0;
+
+                if (planInstance.lastCollectedDate) {
+                    const lastCollectionDateObj = new Date(planInstance.lastCollectedDate);
+                    if (!isNaN(lastCollectionDateObj.getTime())) {
+                        isFirstCollection = false;
+                        lastActionTime = lastCollectionDateObj.getTime();
+                    }
+                }
+                
+                if (isFirstCollection) {
+                    countdownEl.textContent = "Coleta Pronta!";
+                    profitEl.textContent = `+ ${formatCurrency(planInstance.dailyProfit, 'MZN')}`;
+                    progressFill.style.height = '100%';
+                    collectBtn.disabled = false;
+                    collectBtn.classList.add('ready');
+                    return;
+                }
+
+                const nextCollectionTime = lastActionTime + (24 * 60 * 60 * 1000);
+                const totalDuration = 24 * 60 * 60 * 1000;
+                
+                countdownInterval = setInterval(() => {
+                    const now = Date.now();
+                    const distance = nextCollectionTime - now;
+                    const elapsedTime = now - lastActionTime; 
+                    const progress = Math.min(elapsedTime / totalDuration, 1);
+                    const accruedProfit = planInstance.dailyProfit * progress;
+
+                    profitEl.textContent = `+ ${formatCurrency(accruedProfit, 'MZN')}`;
+                    progressFill.style.height = `${progress * 100}%`;
+
+                    if (distance < 0) {
+                        clearInterval(countdownInterval);
+                        countdownEl.textContent = "Coleta Pronta!";
+                        profitEl.textContent = `+ ${formatCurrency(planInstance.dailyProfit, 'MZN')}`;
+                        collectBtn.disabled = false;
+                        collectBtn.classList.add('ready');
+                        return;
+                    }
+                    
+                    const h = String(Math.floor(distance / (1000 * 60 * 60))).padStart(2, '0');
+                    const m = String(Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60))).padStart(2, '0');
+                    const s = String(Math.floor((distance % (1000 * 60)) / 1000)).padStart(2, '0');
+                    countdownEl.textContent = `${h}:${m}:${s}`;
+                }, 1000);
+            };
+            
+            const handleCollectProfit = async () => {
+                const collectBtn = document.getElementById('collect-btn');
+                if (collectBtn) { 
+                    collectBtn.disabled = true;
+                    collectBtn.querySelector('.countdown-timer').textContent = 'Coletando...';
+                }
+                try {
+                    const result = await fetchAPI('/api/plans/collect', { method: 'POST', body: JSON.stringify({}) });
+                    showFeedbackBar(result.message, 'success'); // Usar a nova função
+                    fetchDashboardData();
+                } catch (error) {
+                    showFeedbackBar(error.message, 'error'); // Usar a nova função
+                    if (collectBtn) { 
+                        collectBtn.disabled = false; 
+                        collectBtn.querySelector('.countdown-timer').textContent = 'Tente Novamente';
+                    }
+                }
+            };
+            
+            const showWelcomeModal = () => {
+                // Usando sessionStorage para mostrar o modal uma vez por sessão de navegação
+                if (!sessionStorage.getItem('welcomeModalShown')) {
+                    elements.welcomeModal.classList.add('show');
+                    sessionStorage.setItem('welcomeModalShown', 'true');
+                }
+            };
+
+            const hideWelcomeModal = () => {
+                elements.welcomeModal.classList.remove('show');
+            };
+
+            elements.closeWelcomeBtn.addEventListener('click', hideWelcomeModal);
+            elements.welcomeModal.addEventListener('click', (event) => {
+                if (event.target === elements.welcomeModal) {
+                    hideWelcomeModal();
+                }
+            });
+            
+            fetchDashboardData();
+            showWelcomeModal();
+        });
+    </script>
+</body>
+</html>
