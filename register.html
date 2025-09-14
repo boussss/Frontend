@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes"> <!-- ALTERADO: user-scalable=yes para acessibilidade -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Bem-vindo ao Chivo - Crie sua Conta</title>
     <!-- Boxicons CSS -->
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
@@ -10,6 +10,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- NOVO: Iconify para ícones de bandeira -->
+    <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
 
     <style>
         * {
@@ -123,8 +125,31 @@
         .info-text { color: var(--text-light); margin-bottom: 1.5rem; font-size: 0.9rem; }
         #register-form { width: 100%; display: flex; flex-direction: column; gap: 0.8rem; }
         .input-group { position: relative; }
-        .input-group i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); font-size: 1.1rem; color: #aaa; }
+        .input-group i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); font-size: 1.1rem; color: #aaa; z-index: 1; }
         
+        /* Estilos para o prefixo do telefone e ícone de bandeira */
+        .input-group .phone-prefix-display {
+            position: absolute;
+            left: 45px; /* Ajustado para ficar após o ícone do telefone */
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.9rem;
+            color: var(--text-dark);
+            font-weight: 500;
+            pointer-events: none; /* Não interage com cliques */
+            z-index: 2; /* Garante que está acima do input */
+            white-space: nowrap; /* Impede quebra de linha */
+            display: flex; /* Para alinhar bandeira e texto */
+            align-items: center;
+            gap: 5px; /* Espaço entre bandeira e +258 */
+        }
+        /* NOVO: Estilo para o ícone Iconify da bandeira */
+        .input-group .phone-prefix-display iconify-icon {
+            width: 1.2rem; /* Define a largura para o ícone Iconify */
+            height: 1.2rem; /* Define a altura para o ícone Iconify */
+            vertical-align: middle; /* Alinha verticalmente com o texto */
+        }
+
         .input-field {
             width: 100%; padding: 0.8rem 0.8rem 0.8rem 2.5rem; background-color: var(--input-bg);
             border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-dark);
@@ -135,10 +160,14 @@
             outline: none; border-color: var(--primary-blue);
             box-shadow: 0 0 8px rgba(0, 82, 255, 0.2);
         }
-        /* ALTERADO: input[type=password] também deve ter o padding à esquerda para o ícone */
         .input-field[type="password"] {
             padding-left: 2.5rem;
         }
+        /* Padding específico para o campo de telefone */
+        #phone.input-field {
+            padding-left: 110px; /* Ajustado para acomodar ícone do telefone, ícone da bandeira e "+258" */
+        }
+
         input[type=number]::-webkit-inner-spin-button, 
         input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         input[type=number] { -moz-appearance: textfield; }
@@ -234,15 +263,17 @@
             </div>
              <div class="input-group">
                 <i class='bx bx-phone'></i>
-                <input type="tel" id="phone" class="input-field" placeholder="Número de Telefone" required>
+                <!-- ALTERADO: Usando iconify-icon para a bandeira de Moçambique -->
+                <span class="phone-prefix-display"><iconify-icon icon="circle-flags:mz"></iconify-icon> +258</span>
+                <input type="tel" id="phone" class="input-field" placeholder="8X XXX XXXX" required maxlength="9">
             </div>
             <div class="input-group">
                 <i class='bx bx-key'></i>
-                <input type="password" id="pin" class="input-field" placeholder="Crie um PIN (4 a 6 dígitos)" required> <!-- ALTERADO: type="password" para segurança -->
+                <input type="password" id="pin" class="input-field" placeholder="Crie um PIN (4 a 6 dígitos)" required>
             </div>
             <div class="input-group">
                 <i class='bx bx-user-plus'></i>
-                <input type="text" id="invitedById" class="input-field" placeholder="ID de quem convidou (opcional)"> <!-- ALTERADO: type="text" para IDs que podem conter outros caracteres além de números -->
+                <input type="text" id="invitedById" class="input-field" placeholder="ID de quem convidou (opcional)">
             </div>
             
             <button type="submit" class="submit-btn" id="submit-button">
@@ -254,7 +285,6 @@
         <p class="bottom-text">
             Já tem uma conta? <a href="login.html">Faça Login</a>
         </p>
-        <!-- REMOVIDO: <div id="error-message"></div> -->
     </div>
 
     <script>
@@ -269,7 +299,7 @@
         const buttonText = document.getElementById('button-text');
         const spinner = document.getElementById('spinner');
         const tickerContent = document.getElementById('ticker-content');
-        const feedbackBarContainer = document.getElementById('feedback-bar-container'); // NOVO ELEMENTO
+        const feedbackBarContainer = document.getElementById('feedback-bar-container');
 
         /**
          * ESTA FUNÇÃO É RESPONSÁVEL POR PREENCHER O ID DE REFERÊNCIA.
@@ -296,30 +326,24 @@
             spinner.style.display = isLoading ? 'block' : 'none';
         }
         
-        // NOVO: Função para exibir a barra de feedback
-        function showFeedbackBar(message, type = 'error') { // 'error' ou 'success'
-            // Limpa qualquer barra existente
+        function showFeedbackBar(message, type = 'error') {
             feedbackBarContainer.innerHTML = ''; 
             let iconClass = type === 'success' ? 'bx bx-check-circle' : 'bx bx-x-circle';
 
             const feedbackBar = document.createElement('div');
             feedbackBar.className = `feedback-bar ${type}`;
-            feedbackBar.innerHTML = `<i class='${iconClass}'></i> <span></span>`; // Ícone e span para a mensagem
+            feedbackBar.innerHTML = `<i class='${iconClass}'></i> <span></span>`;
             
-            // Usar textContent para segurança contra XSS
             feedbackBar.querySelector('span').textContent = message;
 
             feedbackBarContainer.appendChild(feedbackBar);
 
-            // Exibir a barra
             setTimeout(() => {
                 feedbackBar.classList.add('show');
-            }, 50); // Pequeno atraso para a transição funcionar
+            }, 50);
 
-            // Esconder a barra após 4 segundos
             setTimeout(() => {
                 feedbackBar.classList.remove('show');
-                // Remover do DOM após a transição
                 feedbackBar.addEventListener('transitionend', () => feedbackBar.remove(), { once: true });
             }, 4000);
         }
@@ -338,31 +362,54 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            fillReferrerIdFromUrl(); // Executa a função assim que a página carrega
+            fillReferrerIdFromUrl();
             generateTickerNotifications();
+
+            // Lógica para o campo de telefone
+            phoneInput.addEventListener('input', () => {
+                let currentValue = phoneInput.value.replace(/\D/g, ''); // Remove tudo que não for dígito
+                // Limita a 9 dígitos
+                if (currentValue.length > 9) {
+                    currentValue = currentValue.substring(0, 9);
+                }
+                phoneInput.value = currentValue;
+            });
+
+            phoneInput.addEventListener('keydown', (e) => {
+                // Impede a barra de espaço
+                if (e.key === ' ') {
+                    e.preventDefault();
+                }
+            });
         });
 
         registerForm.addEventListener('submit', async (event) => {
             event.preventDefault();
-            // Limpa feedback anterior
             feedbackBarContainer.innerHTML = ''; 
             setLoading(true);
 
             const name = nameInput.value.trim();
             const username = usernameInput.value.trim();
-            const phone = phoneInput.value.trim();
-            const pin = pinInput.value; // PIN não é trimado, pois caracteres de espaço podem ser um PIN válido se o backend permitir
+            const rawPhone = phoneInput.value.trim(); // Pega o valor como o usuário digitou (só dígitos)
+            const pin = pinInput.value;
 
-            // Validação de PIN no frontend antes de enviar
             if (pin.length < 4 || pin.length > 6 || !/^\d+$/.test(pin)) {
                 showFeedbackBar('O PIN deve conter apenas números, entre 4 e 6 dígitos.', 'error');
                 setLoading(false);
                 return;
             }
+
+            // Validação do formato do telefone (agora espera 9 dígitos)
+            const fullPhoneNumber = `+258${rawPhone}`;
+            if (!/^\+258\d{9}$/.test(fullPhoneNumber)) {
+                showFeedbackBar('Por favor, insira um número de telefone válido de Moçambique (9 dígitos após +258).', 'error');
+                setLoading(false);
+                return;
+            }
             
             try {
-                const requestBody = { name, username, phone, pin };
-                if (invitedByIdInput.value.trim()) { // Adiciona invitedById apenas se não estiver vazio
+                const requestBody = { name, username, phone: fullPhoneNumber, pin }; // Envia o número completo
+                if (invitedByIdInput.value.trim()) {
                     requestBody.invitedById = invitedByIdInput.value.trim();
                 }
 
@@ -372,17 +419,17 @@
                     body: JSON.stringify(requestBody),
                 });
                 
-                const data = await response.json(); // Tenta sempre ler o JSON
+                const data = await response.json();
 
                 if (!response.ok) {
                     throw new Error(data.message || 'Ocorreu um erro desconhecido durante o cadastro.');
                 }
                 
                 localStorage.setItem('chivo-token', data.token);
-                showFeedbackBar('Conta criada com sucesso! Redirecionando...', 'success'); // Feedback de sucesso
+                showFeedbackBar('Conta criada com sucesso! Redirecionando...', 'success');
                 setTimeout(() => {
                     window.location.href = 'dashboard.html';
-                }, 1500); // Redireciona após um pequeno delay para o usuário ver a mensagem
+                }, 1500);
 
             } catch (error) {
                 showFeedbackBar(error.message || 'Ocorreu um erro ao tentar criar a conta. Por favor, tente novamente.', 'error');
