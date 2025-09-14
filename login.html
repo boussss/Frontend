@@ -66,7 +66,8 @@
         
         /* Ticker de Notificações */
         .ticker-wrap {
-            position: fixed; top: 0; left: 0; width: 100%; overflow: hidden;
+            position: fixed; top: 0; left: 0; width: 100%; height: 40px; /* Definido um height para não cobrir o feedback bar */
+            overflow: hidden;
             background-color: var(--text-dark); color: white; padding: 8px 0; z-index: 10;
         }
         .ticker { display: inline-block; white-space: nowrap; animation: ticker-scroll 60s linear infinite; }
@@ -246,8 +247,10 @@
         const submitButton = document.getElementById('submit-button');
         const buttonText = document.getElementById('button-text');
         const spinner = document.getElementById('spinner');
-        const tickerContent = document.getElementById('ticker-content');
-        const feedbackBarContainer = document.getElementById('feedback-bar-container');
+        
+        // MOVIDO: Declaração de feedbackBarContainer e tickerContent para o escopo global
+        let feedbackBarContainer;
+        let tickerContent; // Declaração global
 
         function setLoading(isLoading) {
             submitButton.disabled = isLoading;
@@ -256,6 +259,13 @@
         }
         
         function showFeedbackBar(message, type = 'error') {
+            // Garante que o contêiner existe antes de tentar manipulá-lo
+            if (!feedbackBarContainer) {
+                console.error('Feedback bar container not found or not yet initialized.');
+                return;
+            }
+
+            message = String(message || 'Ocorreu um erro desconhecido.'); 
             feedbackBarContainer.innerHTML = ''; 
             let iconClass = type === 'success' ? 'bx bx-check-circle' : 'bx bx-x-circle';
 
@@ -264,7 +274,6 @@
             feedbackBar.innerHTML = `<i class='${iconClass}'></i> <span></span>`;
             
             feedbackBar.querySelector('span').textContent = message;
-
             feedbackBarContainer.appendChild(feedbackBar);
 
             setTimeout(() => {
@@ -278,6 +287,12 @@
         }
         
         function generateTickerNotifications() {
+            // Garante que o tickerContent existe antes de tentar manipulá-lo
+            if (!tickerContent) {
+                console.error('Ticker content element not found or not yet initialized.');
+                return;
+            }
+
             const emojis = ['💰', '🎉', '🚀', '💵', '🎊', '🏆'];
             let notificationsHTML = '';
             for (let i = 0; i < 15; i++) {
@@ -285,15 +300,18 @@
                 const phonePrefix = ['84', '82', '86', '87', '85'][Math.floor(Math.random() * 5)];
                 const randomPhoneEnd = Math.floor(1000 + Math.random() * 9000);
                 const randomAmount = Math.floor(1000 + Math.random() * 8000);
-                notificationsHTML += `<span>${randomEmoji} ${phonePrefix}***${randomPhoneEnd} sacou ${randomAmount} MT</span>`;
+                notificationsHTML += `<span>${randomEmoji} ${phonePrefix}***${String(randomPhoneEnd)} sacou ${String(randomAmount)} MT</span>`;
             }
             tickerContent.innerHTML = notificationsHTML + notificationsHTML;
         }
 
         document.addEventListener('DOMContentLoaded', () => {
+            // Inicializa feedbackBarContainer e tickerContent aqui para garantir que os elementos existem
+            feedbackBarContainer = document.getElementById('feedback-bar-container');
+            tickerContent = document.getElementById('ticker-content');
+
             generateTickerNotifications();
 
-            // Lógica para o campo de telefone: permite apenas 9 dígitos numéricos
             phoneInput.addEventListener('input', () => {
                 let currentValue = phoneInput.value.replace(/\D/g, ''); // Remove tudo que não for dígito
                 if (currentValue.length > 9) {
@@ -311,25 +329,26 @@
 
         loginForm.addEventListener('submit', async (event) => {
             event.preventDefault();
-            feedbackBarContainer.innerHTML = ''; 
+            // Garante que o contêiner está limpo no início de cada submissão
+            if (feedbackBarContainer) {
+                feedbackBarContainer.innerHTML = ''; 
+            }
             setLoading(true);
 
-            const phone = phoneInput.value.trim(); // Pega apenas os 9 dígitos digitados pelo usuário
+            const rawPhone = phoneInput.value.trim();
             const pin = pinInput.value;
             
-            // Validação: Garante que o telefone tem exatamente 9 dígitos
-            if (!/^\d{9}$/.test(phone)) {
+            if (!/^\d{9}$/.test(rawPhone)) {
                 showFeedbackBar('Por favor, insira um número de telefone válido de Moçambique (9 dígitos).', 'error');
                 setLoading(false);
                 return;
             }
 
             try {
-                // Envia APENAS os 9 dígitos para o backend
                 const response = await fetch(`${API_URL}/api/users/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ phone, pin }), // <--- ATUALIZADO: envia 'phone' (9 dígitos)
+                    body: JSON.stringify({ phone: rawPhone, pin }),
                 });
                 
                 const data = await response.json();
@@ -342,7 +361,8 @@
                 window.location.href = 'dashboard.html';
 
             } catch (error) {
-                showFeedbackBar(error.message || 'Ocorreu um erro ao tentar entrar. Por favor, tente novamente.', 'error');
+                const errorMessage = error.message || 'Ocorreu um erro ao tentar entrar. Por favor, tente novamente.';
+                showFeedbackBar(errorMessage, 'error');
             } finally {
                 setLoading(false);
             }
